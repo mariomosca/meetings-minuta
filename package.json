@@ -6,6 +6,7 @@
   "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",
+    "dev": "npx tailwindcss -i ./src/index.css -o ./src/output.css --watch & electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
@@ -29,6 +30,7 @@
     "@electron/fuses": "^1.8.0",
     "@electron/rebuild": "^4.0.1",
     "@tailwindcss/postcss": "^4.1.7",
+    "@types/react-modal": "^3.16.3",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
@@ -52,6 +54,8 @@
     "electron-store": "^10.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-hot-toast": "^2.5.2",
+    "react-modal": "^3.16.3",
     "uuid": "^11.1.0"
   }
 }

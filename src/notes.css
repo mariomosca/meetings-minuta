@@ -1,0 +1,118 @@
+/* Stili per la sezione note */
+.notes-section {
+  background-color: white;
+  border-radius: var(--border-radius);
+  padding: var(--padding);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: var(--padding);
+}
+
+.note-form {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f5f8ff;
+  border-radius: var(--border-radius);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+button {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #0069d9;
+}
+
+.notes-list {
+  margin-top: 1rem;
+}
+
+.note-item {
+  padding: 1rem;
+  border: 1px solid #eee;
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+  background-color: #fff;
+}
+
+.note-item h3 {
+  margin-top: 0;
+  color: var(--color-primary);
+}
+
+.note-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.delete-note {
+  background-color: #dc3545;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.delete-note:hover {
+  background-color: #c82333;
+}
+
+.no-notes, .loading {
+  text-align: center;
+  color: var(--color-secondary);
+  font-style: italic;
+  padding: 1rem;
+}
+
+.notification {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--border-radius);
+  display: none;
+  text-align: center;
+}
+
+.notification.success {
+  display: block;
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.notification.error {
+  display: block;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+} 

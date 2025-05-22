@@ -147,7 +147,20 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   // Carica i dati all'avvio
   useEffect(() => {
     loadData();
+    
+    // Funzione di cleanup
+    return () => {
+      // Assicurati che eventuali interval attivi vengano cancellati
+      // quando il componente viene smontato
+      if (transcriptPollingInterval.current) {
+        clearInterval(transcriptPollingInterval.current);
+        transcriptPollingInterval.current = null;
+      }
+    };
   }, [meetingId]);
+  
+  // Riferimento per tenere traccia dell'intervallo di polling
+  const transcriptPollingInterval = useRef<NodeJS.Timeout | null>(null);
   
   // Carica i dati necessari
   async function loadData() {
@@ -205,8 +218,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         setTranscripts(prev => [transcript, ...prev]);
         setActiveTranscript(transcript);
         
+        // Cancella qualsiasi intervallo precedente
+        if (transcriptPollingInterval.current) {
+          clearInterval(transcriptPollingInterval.current);
+        }
+        
         // Controlla lo stato ogni 5 secondi
-        const intervalId = setInterval(async () => {
+        transcriptPollingInterval.current = setInterval(async () => {
           const updatedTranscripts = await electronAPI.transcripts?.getByMeetingId(meetingId);
           if (updatedTranscripts) {
             setTranscripts(updatedTranscripts);
@@ -218,7 +236,10 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               
               // Se la trascrizione è completata o in errore, ferma il polling
               if (updatedTranscript.status === 'completed' || updatedTranscript.status === 'error') {
-                clearInterval(intervalId);
+                if (transcriptPollingInterval.current) {
+                  clearInterval(transcriptPollingInterval.current);
+                  transcriptPollingInterval.current = null;
+                }
                 setIsTranscribing(false);
                 
                 if (updatedTranscript.status === 'completed') {
@@ -230,9 +251,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
             }
           }
         }, 5000);
-        
-        // Pulisci l'intervallo quando il componente viene smontato
-        return () => clearInterval(intervalId);
       }
     } catch (error) {
       console.error('Errore nell\'avvio della trascrizione:', error);

@@ -3,6 +3,9 @@
 
 import { contextBridge, ipcRenderer } from 'electron';
 
+// Aumentare il limite dei listener per evitare l'avviso di memory leak
+ipcRenderer.setMaxListeners(20);
+
 // Espone API sicure da utilizzare nel processo renderer
 contextBridge.exposeInMainWorld('electronAPI', {
   // Informazioni sull'applicazione

@@ -38,11 +38,14 @@ export class FileWatcher {
         ignored: /(^|[\/\\])\../, // ignora file nascosti
         persistent: true,
         ignoreInitial: false, // processa i file esistenti
-        awaitWriteFinish: true // attendi che il file sia completamente scritto
+        awaitWriteFinish: {
+          stabilityThreshold: 5000,  // attendi 5 secondi di stabilità
+          pollInterval: 1000         // controlla ogni secondo
+        }
       });
 
       // Gestione dell'evento 'add' (nuovo file)
-      this.watcher.on('add', async (filePath) => {
+      this.watcher.on('add', async (filePath: string) => {
         const ext = path.extname(filePath).toLowerCase();
         
         // Verifica se è un file audio supportato
@@ -67,7 +70,7 @@ export class FileWatcher {
       });
 
       // Gestione degli errori
-      this.watcher.on('error', (error) => {
+      this.watcher.on('error', (error: Error) => {
         console.error(`Errore nel monitoraggio:`, error);
         if (this.mainWindow) {
           this.mainWindow.webContents.send('directory:filesChanged', { 
@@ -111,6 +114,13 @@ export class FileWatcher {
    */
   private async processAudioFile(filePath: string): Promise<AudioFile> {
     try {
+      // Controlla ulteriormente che il file sia stabile prima di elaborarlo
+      const isStable = await this.checkFileStability(filePath);
+      if (!isStable) {
+        console.log(`File in fase di modifica, non verrà elaborato: ${filePath}`);
+        throw new Error("File non stabile");
+      }
+      
       const fileName = path.basename(filePath);
       const stats = fs.statSync(filePath);
       
@@ -137,5 +147,37 @@ export class FileWatcher {
       console.error(`Errore nel processare il file audio ${filePath}:`, error);
       throw error;
     }
+  }
+
+  /**
+   * Verifica che la dimensione del file rimanga stabile nel tempo
+   * @param filePath Percorso del file da controllare
+   * @returns true se il file è stabile
+   */
+  private async checkFileStability(filePath: string): Promise<boolean> {
+    // Prima dimensione del file
+    let size1 = 0;
+    try {
+      const stats = fs.statSync(filePath);
+      size1 = stats.size;
+    } catch (error) {
+      return false; // File non accessibile
+    }
+
+    // Attendi 10 secondi
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    
+    // Seconda dimensione del file
+    let size2 = 0;
+    try {
+      const stats = fs.statSync(filePath);
+      size2 = stats.size;
+    } catch (error) {
+      return false; // File non accessibile
+    }
+    
+    // Se le dimensioni sono uguali, il file è stabile
+    console.log(`Controllo stabilità file ${filePath}: dimensione iniziale ${size1}, dimensione finale ${size2}`);
+    return size1 === size2 && size1 > 0;
   }
 } 

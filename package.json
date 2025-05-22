@@ -1,6 +1,6 @@
 {
-  "name": "temp_project",
-  "productName": "temp_project",
+  "name": "meetings_minuta",
+  "productName": "meetings_minuta",
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",

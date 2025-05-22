@@ -32,6 +32,7 @@ interface ElectronAPI {
   audioFiles?: {
     import: () => Promise<AudioFile | null>;
     getByMeetingId: (meetingId: string) => Promise<AudioFile | null>;
+    save: (audioFile: any) => Promise<AudioFile>;
   };
   transcripts?: {
     getByMeetingId: (meetingId: string) => Promise<Transcript[]>;
@@ -86,12 +87,12 @@ const customModalStyles = {
     bottom: 'auto',
     marginRight: '-50%',
     transform: 'translate(-50%, -50%)',
-    borderRadius: '8px',
+    borderRadius: '12px',
     padding: '24px',
     maxWidth: '500px',
     width: '90%',
     border: 'none',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
   },
   overlay: {
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -284,7 +285,7 @@ const App: React.FC = () => {
   }
   
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-[#f8f9fa]">
       {/* Toast container */}
       <Toaster 
         position="top-right"
@@ -319,8 +320,8 @@ const App: React.FC = () => {
       />
       
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-5 px-6 shadow-md">
-        <div className="max-w-5xl mx-auto">
+      <header className="bg-[#7a5cf0] text-white py-5 px-6 shadow-md">
+        <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-center">Meetings Minuta</h1>
           <p className="text-sm mt-1 opacity-80 text-center">
             {electronAPI.appInfo?.name} v{electronAPI.appInfo?.version}
@@ -329,7 +330,7 @@ const App: React.FC = () => {
       </header>
       
       {/* Main Content */}
-      <main className="max-w-5xl mx-auto p-6 w-full flex-1">
+      <main className="max-w-4xl mx-auto p-6 w-full flex-1">
         {/* Azioni */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-800">Le mie riunioni</h2>
@@ -337,14 +338,14 @@ const App: React.FC = () => {
             <button
               onClick={() => setIsCreating(true)}
               disabled={isLoading || isCreating}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm font-medium shadow-sm"
+              className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 text-sm font-medium shadow-sm"
             >
               Nuova riunione
             </button>
             <button
               onClick={handleImportAudio}
               disabled={isLoading}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 text-sm font-medium shadow-sm"
+              className="px-4 py-2 bg-[#38b2ac] text-white rounded-md hover:bg-[#319795] transition-colors disabled:opacity-50 text-sm font-medium shadow-sm"
             >
               Importa Audio
             </button>
@@ -355,7 +356,7 @@ const App: React.FC = () => {
         {isCreating && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#7a5cf0] mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
               Crea una nuova riunione
@@ -371,7 +372,7 @@ const App: React.FC = () => {
                   id="title"
                   value={newMeeting.title}
                   onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
                   placeholder="Titolo della riunione"
                   required
                 />
@@ -385,7 +386,7 @@ const App: React.FC = () => {
                   id="description"
                   value={newMeeting.description}
                   onChange={(e) => setNewMeeting({ ...newMeeting, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
                   rows={3}
                   placeholder="Descrizione della riunione"
                 ></textarea>
@@ -400,7 +401,7 @@ const App: React.FC = () => {
                   id="date"
                   value={newMeeting.date}
                   onChange={(e) => setNewMeeting({ ...newMeeting, date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
                   required
                 />
               </div>
@@ -414,14 +415,14 @@ const App: React.FC = () => {
                     type="text"
                     value={newParticipant}
                     onChange={(e) => setNewParticipant(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
                     placeholder="Nome del partecipante"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddParticipant()}
                   />
                   <button
                     type="button"
                     onClick={handleAddParticipant}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm flex items-center"
+                    className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors shadow-sm flex items-center"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -465,7 +466,7 @@ const App: React.FC = () => {
                   type="button"
                   onClick={handleCreateMeeting}
                   disabled={isLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm"
+                  className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 shadow-sm"
                 >
                   Salva
                 </button>
@@ -477,7 +478,7 @@ const App: React.FC = () => {
         {/* Elenco riunioni */}
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0]"></div>
             <p className="text-gray-500 mt-3">Caricamento in corso...</p>
           </div>
         ) : meetings.length === 0 ? (
@@ -494,8 +495,8 @@ const App: React.FC = () => {
               <div key={meeting.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-5 hover:shadow transition-shadow">
                 <div className="flex justify-between items-start">
                   <div className="flex items-start space-x-4">
-                    <div className="rounded-full bg-purple-100 p-3 mt-1 flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                    <div className="rounded-full bg-[#f0eafb] p-3 mt-1 flex-shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#7a5cf0]" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                       </svg>
                     </div>
@@ -511,7 +512,7 @@ const App: React.FC = () => {
                         <div className="mt-3">
                           <div className="flex flex-wrap gap-1 mt-1">
                             {meeting.participants.map((participant, index) => (
-                              <span key={index} className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs">
+                              <span key={index} className="inline-block bg-[#eeedfd] text-[#7a5cf0] px-2 py-1 rounded-full text-xs">
                                 {participant}
                               </span>
                             ))}
@@ -521,7 +522,7 @@ const App: React.FC = () => {
                       
                       <div className="flex mt-3 space-x-2">
                         {meeting.audioFileId && (
-                          <span className="inline-flex items-center bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs">
+                          <span className="inline-flex items-center bg-[#e6f7f5] text-[#38b2ac] px-2 py-1 rounded-full text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                             </svg>
@@ -530,7 +531,7 @@ const App: React.FC = () => {
                         )}
                         
                         {meeting.transcriptId && (
-                          <span className="inline-flex items-center bg-purple-50 text-purple-700 px-2 py-1 rounded-full text-xs">
+                          <span className="inline-flex items-center bg-[#f0eafb] text-[#7a5cf0] px-2 py-1 rounded-full text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                             </svg>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 // Interfaccia per le API di Electron
 interface ElectronAPI {
@@ -55,6 +56,7 @@ interface MonitoringViewProps {
 }
 
 const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
+  const { t } = useTranslation();
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [isWatching, setIsWatching] = useState<boolean>(false);
@@ -289,7 +291,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
           onClick={() => startTranscription(audioFileId)}
           className="px-3 py-1 text-sm bg-[#7a5cf0] text-white rounded hover:bg-[#6146d9] transition-colors disabled:bg-gray-300 disabled:text-gray-800"
         >
-          Trascrivi
+          {t('transcription.start')}
         </button>
       );
     }
@@ -299,21 +301,21 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
         return (
           <span className="flex items-center">
             <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 animate-pulse"></span>
-            <span className="text-yellow-700">In coda</span>
+            <span className="text-yellow-700">{t('transcription.status.queued')}</span>
           </span>
         );
       case 'processing':
         return (
           <span className="flex items-center">
             <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
-            <span className="text-blue-700">In elaborazione</span>
+            <span className="text-blue-700">{t('transcription.status.processing')}</span>
           </span>
         );
       case 'completed':
         return (
           <span className="flex items-center">
             <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-            <span className="text-green-700">Completata</span>
+            <span className="text-green-700">{t('transcription.status.completed')}</span>
           </span>
         );
       case 'error':
@@ -321,18 +323,18 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
           <div className="flex items-center space-x-2">
             <span className="flex items-center">
               <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>
-              <span className="text-red-700">Errore</span>
+              <span className="text-red-700">{t('transcription.status.error')}</span>
             </span>
             <button
               onClick={() => startTranscription(audioFileId)}
               className="px-2 py-1 text-xs bg-[#7a5cf0] text-white rounded hover:bg-[#6146d9] transition-colors disabled:bg-gray-300 disabled:text-gray-800"
             >
-              Riprova
+              {t('common.retry')}
             </button>
           </div>
         );
       default:
-        return <span className="text-gray-500">Sconosciuto</span>;
+        return <span className="text-gray-500">{t('transcription.status.unknown')}</span>;
     }
   };
 
@@ -342,8 +344,8 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
         <div className="flex items-center">
           <div>
-            <h2 className="text-xl font-semibold text-gray-800">Monitoraggio</h2>
-            <p className="text-gray-500 text-sm">Monitora file audio e trascrizioni</p>
+            <h2 className="text-xl font-semibold text-gray-800">{t('monitoring.title')}</h2>
+            <p className="text-gray-500 text-sm">{t('monitoring.subtitle')}</p>
           </div>
         </div>
       </div>
@@ -351,13 +353,13 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0]"></div>
-          <p className="text-gray-500 ml-3">Caricamento in corso...</p>
+          <p className="text-gray-500 ml-3">{t('common.loading')}</p>
         </div>
       ) : (
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Sezione stato monitoraggio */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">Stato Monitoraggio</h3>
+            <h3 className="text-lg font-medium text-gray-800 mb-4">{t('monitoring.status')}</h3>
             
             <div className="space-y-4">
               <div>
@@ -367,38 +369,38 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                       isWatching ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
                     }`}></span>
                     <span className="text-sm text-gray-600">
-                      {isWatching ? 'Monitoraggio attivo' : 'Monitoraggio non attivo'}
+                      {isWatching ? t('monitoring.active') : t('monitoring.inactive')}
                     </span>
                   </div>
                   
                   <button
                     type="button"
                     onClick={toggleWatching}
-                    className={`px-4 py-2 rounded-md transition-colors shadow-sm ${
-                      isWatching
-                        ? 'bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300 disabled:text-gray-800'
-                        : 'bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-800'
+                    className={`px-4 py-2 rounded-md text-white shadow-sm text-sm font-medium transition-colors ${
+                      isWatching 
+                        ? 'bg-[#ef4444] hover:bg-[#dc2626]' 
+                        : 'bg-[#38b2ac] hover:bg-[#319795]'
                     }`}
                   >
-                    {isWatching ? 'Ferma Monitoraggio' : 'Avvia Monitoraggio'}
+                    {isWatching ? t('monitoring.stopWatching') : t('monitoring.startWatching')}
                   </button>
                 </div>
               </div>
               
               <div>
-                <div className="text-sm font-medium text-gray-700 mb-1">Directory monitorata</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">{t('monitoring.directoryPath')}</div>
                 <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-800 text-sm">
-                  {watchDirectory || 'Nessuna directory selezionata'}
+                  {watchDirectory || t('settings.monitoring.noDirectory')}
                 </div>
               </div>
               
               <div>
-                <div className="text-sm font-medium text-gray-700 mb-1">File rilevati</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">{t('monitoring.detectedFiles')}</div>
                 <div className="text-xl font-semibold text-[#7a5cf0]">{audioFiles.length}</div>
               </div>
               
               <div>
-                <div className="text-sm font-medium text-gray-700 mb-1">Trascrizioni</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">{t('transcription.title')}</div>
                 <div className="text-xl font-semibold text-[#7a5cf0]">{transcripts.length}</div>
               </div>
             </div>
@@ -406,11 +408,11 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
           
           {/* Sezione log */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">Log</h3>
+            <h3 className="text-lg font-medium text-gray-800 mb-4">{t('monitoring.logs')}</h3>
             
             <div className="h-64 overflow-y-auto border border-gray-200 rounded p-2 bg-gray-50">
               {logs.length === 0 ? (
-                <p className="text-gray-500 text-sm italic p-2">Nessun log disponibile</p>
+                <p className="text-gray-500 text-sm italic p-2">{t('monitoring.noLogs')}</p>
               ) : (
                 <div className="space-y-1">
                   {logs.map((log, index) => (
@@ -427,19 +429,24 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
           
           {/* Sezione file audio */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 md:col-span-2">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">File Audio</h3>
+            <h3 className="text-lg font-medium text-gray-800 mb-4">{t('audio.title')}</h3>
             
             {audioFiles.length === 0 ? (
-              <p className="text-gray-500 italic p-4 text-center">Nessun file audio rilevato</p>
+              <div className="text-center py-8">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <p className="text-gray-500">{t('monitoring.noFiles')}</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-gray-50 text-gray-700 text-sm">
-                      <th className="px-4 py-2 w-5/12">Nome File</th>
-                      <th className="px-4 py-2 w-2/12">Dimensione</th>
-                      <th className="px-4 py-2 w-3/12">Data</th>
-                      <th className="px-4 py-2 w-2/12">Stato</th>
+                      <th className="px-4 py-2 w-5/12">{t('monitoring.fileName')}</th>
+                      <th className="px-4 py-2 w-2/12">{t('audio.fileSize')}</th>
+                      <th className="px-4 py-2 w-3/12">{t('meetings.date')}</th>
+                      <th className="px-4 py-2 w-2/12">{t('transcription.status.title')}</th>
                     </tr>
                   </thead>
                   <tbody>

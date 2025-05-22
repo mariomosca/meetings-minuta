@@ -102,6 +102,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     
     // Impostare la chiave API AssemblyAI
     setAssemblyAiKey: (apiKey: string) => ipcRenderer.invoke('config:setAssemblyAiKey', apiKey),
+    
+    // Ottenere la lingua dell'interfaccia
+    getLanguage: () => ipcRenderer.invoke('config:getLanguage'),
+    
+    // Impostare la lingua dell'interfaccia
+    setLanguage: (language: string) => ipcRenderer.invoke('config:setLanguage', language),
   },
   
   // API per il monitoraggio dei file
@@ -200,6 +206,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
         return { success: !!result };
       } catch (error) {
         console.error('preload: errore in saveAssemblyAIApiKey:', error);
+        return { success: false };
+      }
+    },
+    
+    // Ottenere la lingua dell'interfaccia
+    getLanguage: async () => {
+      console.log('preload: chiamata a getLanguage');
+      try {
+        return await ipcRenderer.invoke('config:getLanguage');
+      } catch (error) {
+        console.error('preload: errore in getLanguage:', error);
+        return 'it'; // Default: italiano
+      }
+    },
+    
+    // Salvare la lingua dell'interfaccia
+    saveLanguage: async (language: string) => {
+      console.log('preload: chiamata a saveLanguage');
+      try {
+        const result = await ipcRenderer.invoke('config:setLanguage', language);
+        return { success: !!result };
+      } catch (error) {
+        console.error('preload: errore in saveLanguage:', error);
         return { success: false };
       }
     }

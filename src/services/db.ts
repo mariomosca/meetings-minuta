@@ -72,6 +72,7 @@ interface StoreSchema {
   config: {
     watchDirectories: string[];
     assemblyAiKey?: string;
+    language?: string; // 'it' o 'en'
   };
 }
 
@@ -627,6 +628,16 @@ export class Database {
   // Impostare la chiave API AssemblyAI
   setAssemblyAiKey(apiKey: string): void {
     this.store.set('config.assemblyAiKey', apiKey);
+  }
+  
+  // Ottenere la lingua dell'interfaccia
+  getLanguage(): string {
+    return this.store.get('config.language', 'it'); // Default: italiano
+  }
+  
+  // Impostare la lingua dell'interfaccia
+  setLanguage(language: string): void {
+    this.store.set('config.language', language);
   }
 }
 

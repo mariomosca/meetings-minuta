@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import toast, { Toaster } from 'react-hot-toast';
 import Modal from 'react-modal';
+import { useTranslation } from 'react-i18next';
 import TranscriptionView from './components/TranscriptionView';
 import SettingsView from './components/SettingsView';
 import MonitoringView from './components/MonitoringView';
@@ -107,6 +108,7 @@ const customModalStyles = {
 };
 
 const App: React.FC = () => {
+  const { t } = useTranslation();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -407,7 +409,7 @@ const App: React.FC = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
             </svg>
-            <span className="ml-2 font-semibold text-gray-800">Meetings Minuta</span>
+            <span className="ml-2 font-semibold text-gray-800">{t('app.title')}</span>
           </div>
         </div>
         
@@ -416,7 +418,7 @@ const App: React.FC = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Cerca nelle riunioni..."
+              placeholder={t('meetings.search')}
               className="w-full bg-gray-50 border border-gray-200 rounded-md pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
               disabled
             />
@@ -433,7 +435,7 @@ const App: React.FC = () => {
           <button 
             onClick={handleGoToSettings}
             className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 transition-colors"
-            title="Impostazioni"
+            title={t('settings.title')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
@@ -463,7 +465,7 @@ const App: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                <span>Riunioni</span>
+                <span>{t('meetings.title')}</span>
               </button>
               
               <button
@@ -475,7 +477,7 @@ const App: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                 </svg>
-                <span>Monitoraggio</span>
+                <span>{t('monitoring.title')}</span>
               </button>
               
               <button
@@ -488,7 +490,7 @@ const App: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>Impostazioni</span>
+                <span>{t('settings.title')}</span>
               </button>
             </div>
           </div>
@@ -499,21 +501,21 @@ const App: React.FC = () => {
           <main className="max-w-4xl mx-auto p-6 w-full flex-1">
             {/* Azioni */}
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">Le mie riunioni</h2>
+              <h2 className="text-xl font-semibold text-gray-800">{t('meetings.list')}</h2>
               <div className="space-x-3">
                 <button
                   onClick={() => setIsCreating(true)}
                   disabled={isLoading || isCreating}
                   className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-800 text-sm font-medium shadow-sm"
                 >
-                  Nuova riunione
+                  {t('meetings.new')}
                 </button>
                 <button
                   onClick={handleImportAudio}
                   disabled={isLoading}
                   className="px-4 py-2 bg-[#38b2ac] text-white rounded-md hover:bg-[#319795] transition-colors disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-800 text-sm font-medium shadow-sm"
                 >
-                  Importa Audio
+                  {t('audio.import')}
                 </button>
               </div>
             </div>
@@ -525,13 +527,13 @@ const App: React.FC = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#7a5cf0] mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
                   </svg>
-                  Crea una nuova riunione
+                  {t('meetings.new')}
                 </h3>
                 
                 <div className="space-y-5">
                   <div>
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                      Titolo
+                      {t('meetings.title')}
                     </label>
                     <input
                       type="text"
@@ -539,28 +541,28 @@ const App: React.FC = () => {
                       value={newMeeting.title}
                       onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
-                      placeholder="Titolo della riunione"
+                      placeholder={t('meetings.title')}
                       required
                     />
                   </div>
                   
                   <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                      Descrizione
+                      {t('meetings.description')}
                     </label>
                     <textarea
                       id="description"
                       value={newMeeting.description}
                       onChange={(e) => setNewMeeting({ ...newMeeting, description: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
+                      placeholder={t('meetings.description')}
                       rows={3}
-                      placeholder="Descrizione della riunione"
-                    ></textarea>
+                    />
                   </div>
                   
                   <div>
                     <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
-                      Data
+                      {t('meetings.date')}
                     </label>
                     <input
                       type="date"
@@ -574,69 +576,65 @@ const App: React.FC = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Partecipanti
+                      {t('meetings.participants')}
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex mb-2">
                       <input
                         type="text"
                         value={newParticipant}
                         onChange={(e) => setNewParticipant(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
-                        placeholder="Nome del partecipante"
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddParticipant()}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
+                        placeholder={t('meetings.addParticipant')}
                       />
                       <button
                         type="button"
                         onClick={handleAddParticipant}
-                        className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors shadow-sm flex items-center"
+                        className="px-4 py-2 bg-[#7a5cf0] text-white rounded-r-md hover:bg-[#6146d9] transition-colors"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
                         </svg>
-                        Aggiungi
                       </button>
                     </div>
                     
-                    {/* Lista partecipanti */}
-                    {newMeeting.participants && newMeeting.participants.length > 0 && (
-                      <div className="mt-3">
-                        <ul className="space-y-2">
-                          {newMeeting.participants.map((participant, index) => (
-                            <li key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
-                              <span className="text-gray-700">{participant}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveParticipant(index)}
-                                className="text-gray-400 hover:text-red-600 transition-colors"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
+                    {newMeeting.participants && newMeeting.participants.length > 0 ? (
+                      <div className="space-y-2">
+                        {newMeeting.participants.map((participant, index) => (
+                          <div key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                            <span className="text-sm">{participant}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveParticipant(index)}
+                              className="text-red-500 hover:text-red-700 transition-colors"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
                       </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">{t('meetings.empty')}</p>
                     )}
                   </div>
-                  
-                  <div className="flex justify-end space-x-3 pt-3 border-t border-gray-100">
-                    <button
-                      type="button"
-                      onClick={() => setIsCreating(false)}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors shadow-sm"
-                    >
-                      Annulla
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleCreateMeeting}
-                      disabled={isLoading}
-                      className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-800 shadow-sm"
-                    >
-                      Salva
-                    </button>
-                  </div>
+                </div>
+                
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreating(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors shadow-sm"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateMeeting}
+                    className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors shadow-sm"
+                  >
+                    {t('common.save')}
+                  </button>
                 </div>
               </div>
             )}
@@ -645,18 +643,18 @@ const App: React.FC = () => {
             {isLoading ? (
               <div className="text-center py-12">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0]"></div>
-                <p className="text-gray-500 mt-3">Caricamento in corso...</p>
+                <p className="text-gray-500 mt-3">{t('common.loading')}</p>
               </div>
             ) : meetings.length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                <p className="text-gray-500 text-lg">Nessuna riunione trovata</p>
+                <p className="text-gray-500 text-lg">{t('meetings.empty')}</p>
                 <p className="text-gray-500 text-sm mt-2 mb-6">
-                  Crea una nuova riunione o importa un file audio per iniziare
+                  {t('meetings.emptyDescription')}
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-700 mb-3">Prossime riunioni</h3>
+                <h3 className="text-lg font-medium text-gray-700 mb-3">{t('meetings.upcoming')}</h3>
                 {meetings.map((meeting) => (
                   <div 
                     key={meeting.id} 
@@ -696,7 +694,7 @@ const App: React.FC = () => {
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                 </svg>
-                                File audio presente
+                                {t('meetings.hasAudio')}
                               </span>
                             )}
                             
@@ -705,7 +703,7 @@ const App: React.FC = () => {
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                                 </svg>
-                                Trascrizione disponibile
+                                {t('meetings.hasTranscript')}
                               </span>
                             )}
                           </div>
@@ -757,10 +755,10 @@ const App: React.FC = () => {
         isOpen={deleteModal.isOpen}
         onRequestClose={() => setDeleteModal({ isOpen: false, meetingId: undefined })}
         style={customModalStyles}
-        contentLabel="Conferma eliminazione"
+        contentLabel={t('meetings.deleteConfirmTitle')}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Conferma eliminazione</h2>
+          <h2 className="text-xl font-semibold text-gray-800">{t('meetings.deleteConfirmTitle')}</h2>
           <button 
             onClick={() => setDeleteModal({ isOpen: false, meetingId: undefined })}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -778,8 +776,8 @@ const App: React.FC = () => {
             </svg>
           </div>
           <div>
-            <p className="text-gray-700">Sei sicuro di voler eliminare questa riunione?</p>
-            <p className="text-gray-500 text-sm mt-1">Questa operazione non può essere annullata.</p>
+            <p className="text-gray-700">{t('meetings.confirmDelete')}</p>
+            <p className="text-gray-500 text-sm mt-1">{t('meetings.deleteWarning')}</p>
           </div>
         </div>
         
@@ -788,13 +786,13 @@ const App: React.FC = () => {
             onClick={() => setDeleteModal({ isOpen: false, meetingId: undefined })}
             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors shadow-sm"
           >
-            Annulla
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleDeleteMeeting}
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors shadow-sm"
           >
-            Elimina
+            {t('common.delete')}
           </button>
         </div>
       </Modal>

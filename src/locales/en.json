@@ -1,0 +1,131 @@
+{
+  "app": {
+    "title": "Minuta Meetings",
+    "version": "Version"
+  },
+  "common": {
+    "back": "Back",
+    "save": "Save",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "search": "Search",
+    "select": "Select",
+    "import": "Import",
+    "export": "Export",
+    "create": "Create",
+    "edit": "Edit",
+    "retry": "Retry"
+  },
+  "meetings": {
+    "title": "Meetings",
+    "new": "New Meeting",
+    "details": "Meeting Details",
+    "list": "My Meetings",
+    "empty": "No meetings found",
+    "emptyDescription": "Create a new meeting or import an audio file to get started",
+    "upcoming": "Upcoming meetings",
+    "created": "Meeting created successfully",
+    "deleted": "Meeting deleted successfully",
+    "confirmDelete": "Are you sure you want to delete this meeting?",
+    "deleteConfirmTitle": "Confirm Deletion",
+    "date": "Date",
+    "description": "Description",
+    "participants": "Participants",
+    "addParticipant": "Add participant",
+    "deleteWarning": "This operation cannot be undone.",
+    "search": "Search in meetings...",
+    "hasAudio": "Audio file present",
+    "hasTranscript": "Transcript available"
+  },
+  "transcription": {
+    "title": "Transcription",
+    "start": "Transcribe Audio",
+    "inProgress": "Transcribing...",
+    "completed": "Transcription completed",
+    "error": "Transcription error",
+    "noAudio": "No audio file available",
+    "importAudio": "Import audio file",
+    "fullText": "Full Text",
+    "withSpeakers": "Transcription with speakers",
+    "searchPlaceholder": "Search in text...",
+    "status": {
+      "queued": "Queued",
+      "processing": "Processing",
+      "completed": "Completed",
+      "error": "Error",
+      "title": "Status",
+      "unknown": "Unknown"
+    }
+  },
+  "audio": {
+    "title": "Audio Files",
+    "import": "Import Audio",
+    "fileSize": "File size",
+    "duration": "Duration",
+    "imported": "Audio file imported successfully",
+    "noFile": "No audio file available"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configure application options",
+    "monitoring": {
+      "title": "Directory Monitoring",
+      "description": "Configure a directory to monitor for new audio files. When a new audio file is added, it will be automatically processed.",
+      "selectedDir": "Selected Directory",
+      "noDirectory": "No directory selected",
+      "enabled": "Monitoring active",
+      "disabled": "Monitoring disabled",
+      "directorySelected": "Directory selected successfully",
+      "directoryError": "Unable to select directory",
+      "noDirectoryError": "Please select a directory before enabling monitoring",
+      "toggleError": "Unable to change monitoring status"
+    },
+    "api": {
+      "title": "AssemblyAI API",
+      "description": "Configure the AssemblyAI API key for audio transcription.",
+      "key": "API Key",
+      "keyPlaceholder": "Enter your AssemblyAI API key",
+      "getKey": "Get a key",
+      "keySaved": "API key saved successfully",
+      "keyError": "Unable to save API key",
+      "keySaveError": "Error saving API key"
+    },
+    "language": {
+      "title": "Language",
+      "description": "Select the user interface language",
+      "italian": "Italian",
+      "english": "English",
+      "changed": "Language changed successfully",
+      "error": "Unable to change language"
+    }
+  },
+  "monitoring": {
+    "title": "Monitoring",
+    "description": "Manage monitored files",
+    "subtitle": "Monitor audio files and transcriptions",
+    "startWatching": "Start monitoring",
+    "stopWatching": "Stop monitoring",
+    "active": "Monitoring active",
+    "inactive": "Monitoring inactive",
+    "files": "Monitored files",
+    "noFiles": "No monitored files",
+    "directoryPath": "Directory path",
+    "status": "Monitoring Status",
+    "detectedFiles": "Detected files",
+    "logs": "Logs",
+    "noLogs": "No logs available",
+    "fileName": "File Name"
+  },
+  "errors": {
+    "loadingMeetings": "Unable to load meetings",
+    "creatingMeeting": "Unable to create meeting",
+    "deletingMeeting": "Unable to delete meeting",
+    "loadingTranscription": "Unable to load transcription data",
+    "startingTranscription": "Unable to start transcription",
+    "importingAudio": "Unable to import audio file",
+    "loadingSettings": "Unable to load settings",
+    "savingSettings": "Unable to save settings",
+    "requiredFields": "Title and date are required"
+  }
+} 

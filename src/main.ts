@@ -297,13 +297,30 @@ function setupIPCHandlers() {
   ipcMain.handle('config:setAssemblyAiKey', (_event, apiKey) => {
     try {
       database.setAssemblyAiKey(apiKey);
-      // Aggiorna la chiave nell'istanza di AssemblyAIService
-      if (assemblyAIService) {
-        assemblyAIService.setApiKey(apiKey);
-      }
       return true;
     } catch (error) {
       console.error('Errore nell\'handler config:setAssemblyAiKey:', error);
+      throw error;
+    }
+  });
+
+  // Ottenere la lingua dell'interfaccia
+  ipcMain.handle('config:getLanguage', () => {
+    try {
+      return database.getLanguage();
+    } catch (error) {
+      console.error('Errore nell\'handler config:getLanguage:', error);
+      throw error;
+    }
+  });
+  
+  // Impostare la lingua dell'interfaccia
+  ipcMain.handle('config:setLanguage', (_event, language) => {
+    try {
+      database.setLanguage(language);
+      return true;
+    } catch (error) {
+      console.error('Errore nell\'handler config:setLanguage:', error);
       throw error;
     }
   });

@@ -1,0 +1,131 @@
+{
+  "app": {
+    "title": "Minuta Meetings",
+    "version": "Versione"
+  },
+  "common": {
+    "back": "Indietro",
+    "save": "Salva",
+    "delete": "Elimina",
+    "cancel": "Annulla",
+    "loading": "Caricamento in corso...",
+    "search": "Cerca",
+    "select": "Seleziona",
+    "import": "Importa",
+    "export": "Esporta",
+    "create": "Crea",
+    "edit": "Modifica",
+    "retry": "Riprova"
+  },
+  "meetings": {
+    "title": "Riunioni",
+    "new": "Nuova Riunione",
+    "details": "Dettagli Riunione",
+    "list": "Le mie riunioni",
+    "empty": "Nessuna riunione trovata",
+    "emptyDescription": "Crea una nuova riunione o importa un file audio per iniziare",
+    "upcoming": "Prossime riunioni",
+    "created": "Riunione creata con successo",
+    "deleted": "Riunione eliminata con successo",
+    "confirmDelete": "Sei sicuro di voler eliminare questa riunione?",
+    "deleteConfirmTitle": "Conferma eliminazione",
+    "date": "Data",
+    "description": "Descrizione",
+    "participants": "Partecipanti",
+    "addParticipant": "Aggiungi partecipante",
+    "deleteWarning": "Questa operazione non può essere annullata.",
+    "search": "Cerca nelle riunioni...",
+    "hasAudio": "File audio presente",
+    "hasTranscript": "Trascrizione disponibile"
+  },
+  "transcription": {
+    "title": "Trascrizione",
+    "start": "Trascrivi Audio",
+    "inProgress": "Trascrivendo...",
+    "completed": "Trascrizione completata",
+    "error": "Errore di trascrizione",
+    "noAudio": "Nessun file audio disponibile",
+    "importAudio": "Importa file audio",
+    "fullText": "Testo completo",
+    "withSpeakers": "Trascrizione con parlanti",
+    "searchPlaceholder": "Cerca nel testo...",
+    "status": {
+      "queued": "In coda",
+      "processing": "In elaborazione",
+      "completed": "Completata",
+      "error": "Errore",
+      "title": "Stato",
+      "unknown": "Sconosciuto"
+    }
+  },
+  "audio": {
+    "title": "File Audio",
+    "import": "Importa Audio",
+    "fileSize": "Dimensione file",
+    "duration": "Durata",
+    "imported": "File audio importato con successo",
+    "noFile": "Nessun file audio disponibile"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "subtitle": "Configura le opzioni dell'applicazione",
+    "monitoring": {
+      "title": "Monitoraggio Directory",
+      "description": "Configura una directory da monitorare per nuovi file audio. Quando un nuovo file audio viene aggiunto, verrà automaticamente elaborato.",
+      "selectedDir": "Directory Selezionata",
+      "noDirectory": "Nessuna directory selezionata",
+      "enabled": "Monitoraggio attivo",
+      "disabled": "Monitoraggio disattivato",
+      "directorySelected": "Directory selezionata con successo",
+      "directoryError": "Impossibile selezionare la directory",
+      "noDirectoryError": "Seleziona una directory prima di attivare il monitoraggio",
+      "toggleError": "Impossibile modificare lo stato del monitoraggio"
+    },
+    "api": {
+      "title": "API AssemblyAI",
+      "description": "Configura la chiave API di AssemblyAI per la trascrizione dei file audio.",
+      "key": "Chiave API",
+      "keyPlaceholder": "Inserisci la chiave API di AssemblyAI",
+      "getKey": "Ottieni una chiave",
+      "keySaved": "Chiave API salvata con successo",
+      "keyError": "Impossibile salvare la chiave API",
+      "keySaveError": "Errore nel salvataggio della chiave API"
+    },
+    "language": {
+      "title": "Lingua",
+      "description": "Seleziona la lingua dell'interfaccia utente",
+      "italian": "Italiano",
+      "english": "Inglese",
+      "changed": "Lingua modificata con successo",
+      "error": "Impossibile modificare la lingua"
+    }
+  },
+  "monitoring": {
+    "title": "Monitoraggio",
+    "description": "Gestione dei file monitorati",
+    "subtitle": "Monitora file audio e trascrizioni",
+    "startWatching": "Avvia monitoraggio",
+    "stopWatching": "Ferma monitoraggio",
+    "active": "Monitoraggio attivo",
+    "inactive": "Monitoraggio inattivo",
+    "files": "File monitorati",
+    "noFiles": "Nessun file monitorato",
+    "directoryPath": "Percorso directory",
+    "status": "Stato Monitoraggio",
+    "detectedFiles": "File rilevati",
+    "logs": "Log",
+    "noLogs": "Nessun log disponibile",
+    "fileName": "Nome File"
+  },
+  "errors": {
+    "loadingMeetings": "Impossibile caricare le riunioni",
+    "creatingMeeting": "Impossibile creare la riunione",
+    "deletingMeeting": "Impossibile eliminare la riunione",
+    "loadingTranscription": "Impossibile caricare i dati della trascrizione",
+    "startingTranscription": "Impossibile avviare la trascrizione",
+    "importingAudio": "Impossibile importare il file audio",
+    "loadingSettings": "Impossibile caricare le impostazioni",
+    "savingSettings": "Impossibile salvare le impostazioni",
+    "requiredFields": "Titolo e data sono obbligatori"
+  }
+} 

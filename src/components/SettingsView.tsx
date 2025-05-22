@@ -171,18 +171,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
   }
   
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col p-6 overflow-auto">
       {/* Intestazione */}
-      <div className="flex items-center justify-between mb-6 pt-2 pb-4 border-b border-gray-200">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
         <div className="flex items-center">
-          <button
-            onClick={onBack}
-            className="mr-4 text-gray-600 hover:text-gray-800 transition-colors p-1"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
           <div>
             <h2 className="text-xl font-semibold text-gray-800">Impostazioni</h2>
             <p className="text-gray-500 text-sm">Configura le opzioni dell'applicazione</p>

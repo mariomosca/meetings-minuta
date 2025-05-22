@@ -8,9 +8,6 @@ import SettingsView from './components/SettingsView';
 import MonitoringView from './components/MonitoringView';
 import './notes.css';
 
-// Stile personalizzato per i pulsanti disabilitati
-import './buttonStyles.css';
-
 // Inizializza react-modal
 try {
   Modal.setAppElement('#root');
@@ -453,9 +450,9 @@ const App: React.FC = () => {
       
       {/* Contenuto principale in base alla vista */}
       <div className="flex flex-1">
-        {/* Sidebar (mostrata nella vista lista e monitoraggio) */}
-        {(view === 'list' || view === 'monitoring') && (
-          <div className="w-64 bg-white border-r border-gray-200 h-screen p-4">
+        {/* Sidebar (mostrata nella vista lista, monitoraggio e impostazioni) */}
+        {(view === 'list' || view === 'monitoring' || view === 'settings') && (
+          <div className="w-56 bg-white border-r border-gray-200 h-screen p-4">
             <div className="space-y-2">
               <button
                 onClick={() => setView('list')}
@@ -507,14 +504,14 @@ const App: React.FC = () => {
                 <button
                   onClick={() => setIsCreating(true)}
                   disabled={isLoading || isCreating}
-                  className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 disabled:text-gray-800 text-sm font-medium shadow-sm"
+                  className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-800 text-sm font-medium shadow-sm"
                 >
                   Nuova riunione
                 </button>
                 <button
                   onClick={handleImportAudio}
                   disabled={isLoading}
-                  className="px-4 py-2 bg-[#38b2ac] text-white rounded-md hover:bg-[#319795] transition-colors disabled:opacity-50 disabled:text-gray-800 text-sm font-medium shadow-sm"
+                  className="px-4 py-2 bg-[#38b2ac] text-white rounded-md hover:bg-[#319795] transition-colors disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-800 text-sm font-medium shadow-sm"
                 >
                   Importa Audio
                 </button>
@@ -635,7 +632,7 @@ const App: React.FC = () => {
                       type="button"
                       onClick={handleCreateMeeting}
                       disabled={isLoading}
-                      className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 disabled:text-gray-800 shadow-sm"
+                      className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-800 shadow-sm"
                     >
                       Salva
                     </button>
@@ -742,12 +739,16 @@ const App: React.FC = () => {
         
         {/* Vista impostazioni */}
         {view === 'settings' && (
-          <SettingsView onBack={handleBackToList} />
+          <div className="flex-1 overflow-auto">
+            <SettingsView onBack={handleBackToList} />
+          </div>
         )}
         
         {/* Vista di monitoraggio */}
         {view === 'monitoring' && (
-          <MonitoringView onBack={handleBackToList} />
+          <div className="flex-1 overflow-auto">
+            <MonitoringView onBack={handleBackToList} />
+          </div>
         )}
       </div>
       

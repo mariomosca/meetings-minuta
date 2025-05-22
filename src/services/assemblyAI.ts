@@ -1,7 +1,8 @@
 import axios from 'axios';
 import fs from 'fs';
-import { database, Transcript, Utterance } from './db';
+import { database, Transcript, Utterance, Meeting } from './db';
 import { BrowserWindow } from 'electron';
+import path from 'path';
 
 export class AssemblyAIService {
   private apiKey: string;
@@ -227,6 +228,11 @@ export class AssemblyAIService {
             
             // Notifica l'UI che la trascrizione è completata
             this.notifyTranscriptionUpdate(updatedTranscript);
+            
+            // Se la trascrizione non è associata a una riunione, creane una nuova
+            if (!transcript.meetingId || transcript.meetingId === '') {
+              await this.createMeetingFromTranscription(updatedTranscript);
+            }
           }
         } else if (status === 'error') {
           completed = true;
@@ -259,6 +265,65 @@ export class AssemblyAIService {
         // Notifica l'UI che la trascrizione è in errore
         this.notifyTranscriptionUpdate(updatedTranscript);
       }
+    }
+  }
+
+  /**
+   * Crea una nuova riunione a partire da una trascrizione completata
+   * @param transcript Trascrizione completata
+   */
+  private async createMeetingFromTranscription(transcript: Transcript): Promise<void> {
+    try {
+      if (!transcript.audioFileId) {
+        console.error('Impossibile creare riunione: audioFileId mancante nella trascrizione');
+        return;
+      }
+      
+      // Ottieni il file audio
+      const audioFile = await database.getAudioFileById(transcript.audioFileId);
+      if (!audioFile) {
+        console.error(`File audio non trovato: ${transcript.audioFileId}`);
+        return;
+      }
+      
+      // Estrai il nome del file senza estensione
+      const fileName = path.basename(audioFile.fileName, path.extname(audioFile.fileName));
+      
+      // Crea una nuova riunione
+      const meeting: Omit<Meeting, 'id' | 'type'> = {
+        title: `Riunione da ${fileName}`,
+        description: `Riunione creata automaticamente dalla trascrizione del file ${audioFile.fileName}`,
+        date: new Date().toISOString().split('T')[0],
+        participants: [],
+        createdAt: new Date().toISOString(),
+        audioFileId: audioFile.id,
+        transcriptId: transcript.id
+      };
+      
+      // Salva la riunione nel database
+      const savedMeeting = await database.saveMeeting(meeting);
+      console.log(`Riunione creata automaticamente: ${savedMeeting.id}`);
+      
+      // Aggiorna la trascrizione con l'ID della riunione
+      await database.saveTranscript({
+        ...transcript,
+        meetingId: savedMeeting.id
+      });
+      
+      // Aggiorna il file audio con l'ID della riunione
+      await database.saveAudioFile({
+        ...audioFile,
+        meetingId: savedMeeting.id,
+        transcriptId: transcript.id
+      });
+      
+      // Notifica l'UI che è stata creata una nuova riunione
+      if (this.mainWindow) {
+        this.mainWindow.webContents.send('meeting:created', savedMeeting);
+      }
+      
+    } catch (error) {
+      console.error('Errore nella creazione automatica della riunione:', error);
     }
   }
 

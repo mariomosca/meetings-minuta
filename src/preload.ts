@@ -210,7 +210,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       const validChannels = [
         'transcript:statusChanged',
         'audioFile:imported',
-        'directory:filesChanged'
+        'directory:filesChanged',
+        'meeting:created'
       ];
       
       if (validChannels.includes(channel)) {
@@ -224,7 +225,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       const validChannels = [
         'transcript:statusChanged',
         'audioFile:imported',
-        'directory:filesChanged'
+        'directory:filesChanged',
+        'meeting:created'
       ];
       
       if (validChannels.includes(channel)) {
@@ -240,6 +242,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Restituisce una funzione per rimuovere il listener
     return () => {
       ipcRenderer.removeListener('transcript:statusChanged', handler);
+    };
+  },
+  
+  // Helper per registrare un listener per la creazione di nuove riunioni
+  onNewMeetingCreated: (handler: (meeting: any) => void) => {
+    ipcRenderer.on('meeting:created', (_, meeting) => handler(meeting));
+    
+    // Restituisce una funzione per rimuovere il listener
+    return () => {
+      ipcRenderer.removeListener('meeting:created', handler);
     };
   }
 });

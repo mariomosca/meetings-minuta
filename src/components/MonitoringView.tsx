@@ -287,7 +287,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
       return (
         <button
           onClick={() => startTranscription(audioFileId)}
-          className="px-3 py-1 text-sm bg-[#7a5cf0] text-white rounded hover:bg-[#6146d9] transition-colors"
+          className="px-3 py-1 text-sm bg-[#7a5cf0] text-white rounded hover:bg-[#6146d9] transition-colors disabled:bg-gray-300 disabled:text-gray-800"
         >
           Trascrivi
         </button>
@@ -325,7 +325,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
             </span>
             <button
               onClick={() => startTranscription(audioFileId)}
-              className="px-2 py-1 text-xs bg-[#7a5cf0] text-white rounded hover:bg-[#6146d9] transition-colors"
+              className="px-2 py-1 text-xs bg-[#7a5cf0] text-white rounded hover:bg-[#6146d9] transition-colors disabled:bg-gray-300 disabled:text-gray-800"
             >
               Riprova
             </button>
@@ -337,9 +337,9 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col p-6 overflow-auto">
       {/* Intestazione */}
-      <div className="flex items-center justify-between mb-6 pt-2 pb-4 border-b border-gray-200">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
         <div className="flex items-center">
           <div>
             <h2 className="text-xl font-semibold text-gray-800">Monitoraggio</h2>
@@ -376,8 +376,8 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                     onClick={toggleWatching}
                     className={`px-4 py-2 rounded-md transition-colors shadow-sm ${
                       isWatching
-                        ? 'bg-red-600 text-white hover:bg-red-700'
-                        : 'bg-green-600 text-white hover:bg-green-700'
+                        ? 'bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300 disabled:text-gray-800'
+                        : 'bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-800'
                     }`}
                   >
                     {isWatching ? 'Ferma Monitoraggio' : 'Avvia Monitoraggio'}
@@ -436,10 +436,10 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-gray-50 text-gray-700 text-sm">
-                      <th className="px-4 py-2">Nome File</th>
-                      <th className="px-4 py-2">Dimensione</th>
-                      <th className="px-4 py-2">Data</th>
-                      <th className="px-4 py-2">Stato</th>
+                      <th className="px-4 py-2 w-5/12">Nome File</th>
+                      <th className="px-4 py-2 w-2/12">Dimensione</th>
+                      <th className="px-4 py-2 w-3/12">Data</th>
+                      <th className="px-4 py-2 w-2/12">Stato</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -451,7 +451,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                         </td>
                         <td className="px-4 py-3 text-sm">{formatFileSize(file.fileSize)}</td>
                         <td className="px-4 py-3 text-sm">{formatDate(file.createdAt)}</td>
-                        <td className="px-4 py-3">{getTranscriptionStatus(file.id)}</td>
+                        <td className="px-4 py-3 text-sm min-w-[120px]">{getTranscriptionStatus(file.id)}</td>
                       </tr>
                     ))}
                   </tbody>

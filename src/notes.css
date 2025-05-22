@@ -40,7 +40,8 @@
   resize: vertical;
 }
 
-button {
+/* Modifica: aggiungiamo una classe specifica per i pulsanti delle note */
+.notes-button {
   background-color: var(--color-primary);
   color: white;
   border: none;
@@ -51,7 +52,7 @@ button {
   transition: background-color 0.2s;
 }
 
-button:hover {
+.notes-button:hover {
   background-color: #0069d9;
 }
 

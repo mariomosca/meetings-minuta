@@ -319,15 +319,44 @@ const App: React.FC = () => {
         }}
       />
       
-      {/* Header */}
-      <header className="bg-[#7a5cf0] text-white py-5 px-6 shadow-md">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-center">Meetings Minuta</h1>
-          <p className="text-sm mt-1 opacity-80 text-center">
-            {electronAPI.appInfo?.name} v{electronAPI.appInfo?.version}
-          </p>
+      {/* Desktop App Menu Bar */}
+      <div className="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between">
+        {/* Left: App Icon/Logo */}
+        <div className="flex items-center">
+          <div className="flex items-center text-[#7a5cf0]">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+            </svg>
+            <span className="ml-2 font-semibold text-gray-800">Meetings Minuta</span>
+          </div>
         </div>
-      </header>
+        
+        {/* Center: Search (non-functional placeholder) */}
+        <div className="max-w-md w-full mx-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Cerca nelle riunioni..."
+              className="w-full bg-gray-50 border border-gray-200 rounded-md pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
+              disabled
+            />
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        
+        {/* Right: Profile Icon (placeholder) */}
+        <div>
+          <button className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
       
       {/* Main Content */}
       <main className="max-w-4xl mx-auto p-6 w-full flex-1">
@@ -557,11 +586,6 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
-      
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-4 px-6 text-center text-sm">
-        © 2024 - Meetings Minuta
-      </footer>
       
       {/* Modale di conferma eliminazione */}
       <Modal

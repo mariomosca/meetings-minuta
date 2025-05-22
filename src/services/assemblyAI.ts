@@ -179,6 +179,7 @@ export class AssemblyAIService {
   private async pollTranscriptionStatus(assemblyAiId: string, transcriptId: string): Promise<void> {
     try {
       let completed = false;
+      let transcriptionProcessed = false;
       
       while (!completed) {
         // Attendi 3 secondi tra ogni richiesta
@@ -217,7 +218,9 @@ export class AssemblyAIService {
           
           // Aggiorna la trascrizione nel database
           const transcript = await database.getTranscriptById(transcriptId);
-          if (transcript) {
+          if (transcript && !transcriptionProcessed) {
+            transcriptionProcessed = true; // Segna come elaborata per evitare duplicazioni
+            
             const updatedTranscript = await database.saveTranscript({
               ...transcript,
               status: 'completed',
@@ -283,6 +286,18 @@ export class AssemblyAIService {
       const audioFile = await database.getAudioFileById(transcript.audioFileId);
       if (!audioFile) {
         console.error(`File audio non trovato: ${transcript.audioFileId}`);
+        return;
+      }
+
+      // Verifica se esiste già una riunione con questo file audio o trascrizione
+      const allMeetings = await database.getAllMeetings();
+      const existingMeeting = allMeetings.find(m => 
+        m.audioFileId === audioFile.id || 
+        m.transcriptId === transcript.id
+      );
+      
+      if (existingMeeting) {
+        console.log(`Riunione già esistente per questo file/trascrizione: ${existingMeeting.id}`);
         return;
       }
       

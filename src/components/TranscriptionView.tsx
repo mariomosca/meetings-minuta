@@ -50,8 +50,17 @@ interface Transcript {
   audioFileId?: string;
   status: 'queued' | 'processing' | 'completed' | 'error';
   text?: string;
+  utterances?: Utterance[];
   createdAt: string;
   completedAt?: string;
+}
+
+// Interfaccia per una utterance (parte di una trascrizione)
+interface Utterance {
+  speaker: string;
+  text: string;
+  start: number;
+  end: number;
 }
 
 // Stile custom per i modali
@@ -76,6 +85,46 @@ const customModalStyles = {
   }
 };
 
+// Componente per visualizzare le utterances di una trascrizione
+const UtterancesList: React.FC<{ utterances: Utterance[] }> = ({ utterances }) => {
+  if (!utterances || utterances.length === 0) {
+    return <p className="text-gray-500 italic">Nessuna utterance disponibile</p>;
+  }
+
+  return (
+    <div className="space-y-4 mt-4">
+      {utterances.map((utterance, index) => {
+        // Calcola il tempo in formato mm:ss
+        const formatTime = (ms: number) => {
+          const totalSeconds = Math.floor(ms / 1000);
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = totalSeconds % 60;
+          return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        };
+
+        return (
+          <div 
+            key={index} 
+            className={`p-3 rounded-lg ${
+              utterance.speaker === 'Speaker 1' 
+                ? 'bg-blue-50 border-l-4 border-blue-300' 
+                : 'bg-green-50 border-l-4 border-green-300'
+            }`}
+          >
+            <div className="flex justify-between mb-1">
+              <span className="font-medium text-gray-800">{utterance.speaker}</span>
+              <span className="text-xs text-gray-500">
+                {formatTime(utterance.start)} - {formatTime(utterance.end)}
+              </span>
+            </div>
+            <p className="text-gray-700">{utterance.text}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 interface TranscriptionViewProps {
   meetingId: string;
   onBack: () => void;
@@ -91,6 +140,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   const [highlightedText, setHighlightedText] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFullTextModalOpen, setIsFullTextModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'utterances' | 'fulltext'>('utterances');
   
   const transcriptTextRef = useRef<HTMLDivElement>(null);
   
@@ -502,13 +552,37 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                       </div>
                     )}
                     
+                    <div className="mb-4">
+                      <div className="border-b border-gray-200">
+                        <div className="flex">
+                          <button
+                            className="px-4 py-2 border-b-2 border-[#7a5cf0] text-[#7a5cf0] font-medium"
+                          >
+                            Trascrizione con parlanti
+                          </button>
+                          <button
+                            onClick={() => setIsFullTextModalOpen(true)}
+                            className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                          >
+                            Testo completo
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div 
                       ref={transcriptTextRef}
-                      className="prose prose-sm max-w-none text-gray-800 overflow-y-auto max-h-[600px] p-1"
+                      className="overflow-y-auto max-h-[600px] p-1"
                     >
-                      {searchTerm && searchTerm.trim() 
-                        ? highlightSearchTerm(activeTranscript.text, searchTerm)
-                        : activeTranscript.text}
+                      {activeTranscript.utterances && activeTranscript.utterances.length > 0 ? (
+                        <UtterancesList utterances={activeTranscript.utterances} />
+                      ) : (
+                        <div className="prose prose-sm max-w-none text-gray-800">
+                          {searchTerm && searchTerm.trim() 
+                            ? highlightSearchTerm(activeTranscript.text, searchTerm)
+                            : activeTranscript.text}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -584,7 +658,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         contentLabel="Testo completo della trascrizione"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Testo completo della trascrizione</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Trascrizione completa</h2>
           <button 
             onClick={() => setIsFullTextModalOpen(false)}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -595,13 +669,34 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           </button>
         </div>
         
+        <div className="mb-4 border-b border-gray-200">
+          <div className="flex">
+            <button
+              onClick={() => setViewMode('utterances')}
+              className={`px-4 py-2 ${viewMode === 'utterances' ? 'border-b-2 border-[#7a5cf0] text-[#7a5cf0] font-medium' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Trascrizione con parlanti
+            </button>
+            <button
+              onClick={() => setViewMode('fulltext')}
+              className={`px-4 py-2 ${viewMode === 'fulltext' ? 'border-b-2 border-[#7a5cf0] text-[#7a5cf0] font-medium' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Testo completo
+            </button>
+          </div>
+        </div>
+        
         <div className="max-h-[70vh] overflow-y-auto bg-gray-50 p-4 rounded-md">
-          {activeTranscript?.text && (
+          {activeTranscript?.text && viewMode === 'fulltext' && (
             <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800">
               {searchTerm && searchTerm.trim() 
                 ? highlightSearchTerm(activeTranscript.text, searchTerm)
                 : activeTranscript.text}
             </pre>
+          )}
+          
+          {activeTranscript?.utterances && viewMode === 'utterances' && (
+            <UtterancesList utterances={activeTranscript.utterances} />
           )}
         </div>
         

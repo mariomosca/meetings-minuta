@@ -1,67 +1,110 @@
-# Specifiche per la Migrazione a Electron con PouchDB
+# Specifiche per la Migrazione a Electron con Database Locale
 
 ## Panoramica
 
-Questo documento descrive il processo di migrazione dell'applicazione di trascrizione da un'architettura web client-server a un'applicazione desktop completa basata su Electron con PouchDB come database.
+Questo documento descrive il processo di migrazione dell'applicazione di trascrizione da un'architettura web client-server a un'applicazione desktop completa basata su Electron con database locale per la persistenza dei dati.
+
+## Tecnologie Attuali
+
+La versione attuale del progetto utilizza:
+- **Frontend**: React con TypeScript
+- **UI Framework**: TailwindCSS 4.x con @tailwindcss/postcss
+- **Database**: electron-store per persistenza dati locale
+- **Framework Electron**: electron-forge con plugin vite
+- **Componenti UI**: @headlessui/react e @heroicons/react
 
 ## Tabella dei contenuti
 
 1. [Architettura attuale vs. nuova](#architettura-attuale-vs-nuova)
 2. [Roadmap di migrazione](#roadmap-di-migrazione)
-3. [Migrazione del database](#migrazione-del-database)
-4. [Migrazione del frontend](#migrazione-del-frontend)
-5. [Migrazione del backend](#migrazione-del-backend)
-6. [Sistema di monitoraggio file](#sistema-di-monitoraggio-file)
-7. [Integrazione con AssemblyAI](#integrazione-con-assemblyai)
-8. [Packaging e distribuzione](#packaging-e-distribuzione)
-9. [Testing e validazione](#testing-e-validazione)
+3. [Struttura attuale del progetto](#struttura-attuale-del-progetto)
+4. [Migrazione del database](#migrazione-del-database)
+5. [Migrazione del frontend](#migrazione-del-frontend)
+6. [Migrazione del backend](#migrazione-del-backend)
+7. [Sistema di monitoraggio file](#sistema-di-monitoraggio-file)
+8. [Integrazione con AssemblyAI](#integrazione-con-assemblyai)
+9. [Packaging e distribuzione](#packaging-e-distribuzione)
+10. [Testing e validazione](#testing-e-validazione)
 
 ## Architettura attuale vs. nuova
 
 ### Architettura attuale
-- **Frontend**: React (browser-based)
-- **Backend**: Node.js/Express
-- **Database**: MongoDB
-- **Deployment**: Servizi separati (frontend, backend, database)
-- **File System**: Monitoraggio directory su macchina locale
-
-### Nuova architettura (Electron)
-- **Container**: Applicazione Electron desktop
-- **Frontend**: React (integrato in Electron)
-- **Backend**: Node.js/Express (incorporato in Electron)
-- **Database**: PouchDB (integrato in Electron, con opzione di sincronizzazione futura)
+- **Frontend**: React con TypeScript integrato in Electron
+- **UI Framework**: TailwindCSS 4.x
+- **Database**: electron-store (semplice database JSON locale)
 - **Deployment**: Applicazione desktop standalone
+- **File System**: Accesso tramite API Electron
+
+### Nuova architettura (Evoluzione)
+- **Container**: Applicazione Electron desktop con TypeScript
+- **Frontend**: React (integrato in Electron)
+- **UI Framework**: TailwindCSS (esistente) con design migliorato
+- **Database**: PouchDB (sostituendo electron-store, con opzione di sincronizzazione futura)
+- **Deployment**: Applicazione desktop standalone ottimizzata
 - **File System**: Accesso diretto al file system locale tramite API Electron
+- **API Integration**: AssemblyAI per trascrizione automatica
+
+## Struttura attuale del progetto
+
+```
+meetings-minuta-electron-app/
+├── .vite/                      # Directory generata da Vite
+├── node_modules/               # Dipendenze
+├── migration/                  # Documentazione di migrazione
+├── src/
+│   ├── App.tsx                 # Componente principale React
+│   ├── renderer.tsx            # Entry point del renderer
+│   ├── main.ts                 # Processo principale Electron
+│   ├── preload.ts              # Script preload
+│   ├── services/
+│   │   └── db.ts               # Servizio database con electron-store
+│   ├── index.css               # Stili globali con TailwindCSS
+│   └── notes.css               # Stili specifici per note
+├── .eslintrc.json              # Configurazione ESLint
+├── .gitignore                  # Configurazione Git
+├── forge.config.ts             # Configurazione electron-forge
+├── forge.env.d.ts              # Tipi per electron-forge
+├── index.html                  # Entry point HTML
+├── package.json                # Dipendenze e script
+├── postcss.config.js           # Configurazione PostCSS
+├── tailwind.config.js          # Configurazione TailwindCSS
+├── tsconfig.json               # Configurazione TypeScript
+├── vite.main.config.ts         # Configurazione Vite per processo main
+├── vite.preload.config.ts      # Configurazione Vite per preload
+└── vite.renderer.config.ts     # Configurazione Vite per renderer
+```
 
 ## Roadmap di migrazione
 
-### Fase 1: Setup ambiente di sviluppo Electron
-1. Creare struttura base Electron
-2. Integrare Express come server interno
-3. Configurare PouchDB con adapter appropriati
+### Fase 1: Setup ambiente di sviluppo Electron (Completato)
+1. ✅ Creare struttura base Electron con TypeScript
+2. ✅ Configurare React con TailwindCSS
+3. ✅ Configurare elettron-store per persistenza dati
 
-### Fase 2: Migrazione database e modelli
-1. Definire schema PouchDB equivalente a MongoDB
-2. Creare script di migrazione dati
-3. Implementare layer di astrazione database
+### Fase 2: Migrazione database a PouchDB
+1. Definire schema PouchDB per sostituire electron-store
+2. Creare layer di astrazione database
+3. Implementare funzionalità di migrazione dati da electron-store a PouchDB
 
-### Fase 3: Migrazione backend
-1. Adattare controller esistenti per PouchDB
-2. Integrare API in ambiente Electron
-3. Migrare servizi di analisi AI
+### Fase 3: Implementazione UI completa
+1. Implementare design da UI_DESIGN_SPEC.md
+2. Sviluppare componenti React per tutte le viste
+3. Implementare tema scuro/chiaro
+4. Aggiungere animazioni e transizioni
 
-### Fase 4: Migrazione frontend
-1. Incorporare React in Electron
-2. Adattare chiamate API
-3. Aggiungere funzionalità desktop-specifiche
+### Fase 4: Sistema di monitoraggio file
+1. Implementare servizio di monitoraggio directory
+2. Creare interfaccia di configurazione directory
+3. Implementare rilevamento automatico file audio
 
-### Fase 5: Funzionalità Electron specifiche
-1. Implementare monitoraggio file system
-2. Aggiungere menu, tray icon e hotkeys
-3. Sviluppare sistema di notifiche desktop
+### Fase 5: Integrazione AssemblyAI
+1. Implementare client API per AssemblyAI
+2. Sviluppare UI per visualizzazione trascrizioni
+3. Aggiungere funzionalità per correzioni manuali
+4. Implementare gestione parlanti
 
 ### Fase 6: Packaging e distribuzione
-1. Configurare electron-builder
+1. Configurare electron-forge per packaging ottimizzato
 2. Implementare aggiornamenti automatici
 3. Creare installer per varie piattaforme
 
@@ -72,71 +115,68 @@ Questo documento descrive il processo di migrazione dell'applicazione di trascri
 Definizione dei modelli principali:
 
 #### Meeting
-```javascript
-{
-  _id: 'meeting_123456',  // Prefisso per identificare il tipo
-  title: 'Nome riunione',
-  description: 'Descrizione',
-  date: '2023-08-15T14:30:00.000Z',
-  participants: ['Nome 1', 'Nome 2'],
-  createdAt: '2023-08-15T14:30:00.000Z',
-  audioFileName: 'recording.mp3',
-  minutes: 'Contenuto verbale...',
-  type: 'meeting'  // Tipo documento per query
+```typescript
+interface Meeting {
+  _id: string;  // Prefisso 'meeting_' + ID unico
+  title: string;
+  description: string;
+  date: string; // ISO 8601
+  participants: string[];
+  createdAt: string; // ISO 8601
+  audioFileName?: string;
+  minutes?: string;
+  type: 'meeting';
 }
 ```
 
 #### Transcript
-```javascript
-{
-  _id: 'transcript_123456',
-  meetingId: 'meeting_123456',
-  assemblyAiId: 'assembly_id',
-  status: 'completed',
-  fullText: 'Testo completo...',
-  utterances: [
-    {
-      speaker: '1',
-      text: 'Testo parlato',
-      start: 120,
-      end: 145
-    }
-    // Altri utterances...
-  ],
-  createdAt: '2023-08-15T14:30:00.000Z',
-  completedAt: '2023-08-15T15:00:00.000Z',
-  type: 'transcript'
+```typescript
+interface Transcript {
+  _id: string; // Prefisso 'transcript_' + ID unico
+  meetingId: string;
+  assemblyAiId?: string;
+  status: 'queued' | 'processing' | 'completed' | 'error';
+  fullText?: string;
+  utterances: {
+    speaker: string;
+    text: string;
+    start: number; // in millisecondi
+    end: number; // in millisecondi
+  }[];
+  createdAt: string; // ISO 8601
+  completedAt?: string; // ISO 8601
+  type: 'transcript';
 }
 ```
 
 #### AudioFile
-```javascript
-{
-  _id: 'audiofile_123456',
-  filePath: '/percorso/completo/file.mp3',
-  fileName: 'file.mp3',
-  processed: true,
-  processedAt: '2023-08-15T15:00:00.000Z',
-  transcriptId: 'transcript_123456',
-  meetingId: 'meeting_123456',
-  fileSize: 1024000,
-  duration: 120.5,
-  type: 'audiofile'
+```typescript
+interface AudioFile {
+  _id: string; // Prefisso 'audiofile_' + ID unico
+  filePath: string;
+  fileName: string;
+  processed: boolean;
+  processedAt?: string; // ISO 8601
+  transcriptId?: string;
+  meetingId?: string;
+  fileSize: number; // in bytes
+  duration?: number; // in secondi
+  type: 'audiofile';
 }
 ```
 
-### Script di migrazione dati
+### Migrazione da electron-store
 
-Creare uno script che:
-1. Estrae i dati dal MongoDB attuale
-2. Converte al formato PouchDB (aggiunge prefissi e campi tipo)
-3. Inserisce in PouchDB
+Electron-store attualmente gestisce solo note semplici. La migrazione a PouchDB dovrà:
 
-```javascript
-// Esempio concettuale per script di migrazione
-const { MongoClient } = require('mongodb');
-const PouchDB = require('pouchdb');
-const fs = require('fs');
+1. Creare database PouchDB con struttura appropriata
+2. Convertire le note esistenti in oggetti Meeting
+3. Aggiungere supporto per le relazioni tra entità
+
+```typescript
+// Esempio di migrazione da electron-store a PouchDB
+import PouchDB from 'pouchdb';
+import { database as oldDb } from './old-db';
 
 // Inizializzazione PouchDB
 PouchDB.plugin(require('pouchdb-find'));
@@ -145,252 +185,128 @@ const transcriptsDb = new PouchDB('transcripts');
 const audioFilesDb = new PouchDB('audiofiles');
 
 async function migrateData() {
-  // Connessione a MongoDB
-  const mongo = await MongoClient.connect('mongodb://localhost:27017/trascrizioni');
-  const db = mongo.db();
+  // Ottieni tutte le note esistenti
+  const notes = await oldDb.getAllNotes();
   
-  // Migrazione meeting
-  const meetings = await db.collection('meetings').find({}).toArray();
-  for (const meeting of meetings) {
-    await meetingsDb.put({
-      _id: `meeting_${meeting._id}`,
-      title: meeting.title,
-      description: meeting.description,
-      date: meeting.date,
-      participants: meeting.participants || [],
-      createdAt: meeting.createdAt,
-      audioFileName: meeting.audioFileName,
-      minutes: meeting.minutes,
+  // Converte note in Meeting e salva in PouchDB
+  for (const note of notes) {
+    const meeting = {
+      _id: `meeting_${note.id}`,
+      title: note.title,
+      description: note.content,
+      date: note.createdAt,
+      participants: [],
+      createdAt: note.createdAt,
       type: 'meeting'
-    });
+    };
+    
+    await meetingsDb.put(meeting);
   }
-  
-  // Migrazione trascrizioni
-  const transcripts = await db.collection('transcripts').find({}).toArray();
-  for (const transcript of transcripts) {
-    await transcriptsDb.put({
-      _id: `transcript_${transcript._id}`,
-      meetingId: `meeting_${transcript.meetingId}`,
-      assemblyAiId: transcript.assemblyAiId,
-      status: transcript.status,
-      fullText: transcript.fullText,
-      utterances: transcript.utterances || [],
-      createdAt: transcript.createdAt,
-      completedAt: transcript.completedAt,
-      type: 'transcript'
-    });
-  }
-  
-  // Migrazione file audio
-  const audioFiles = await db.collection('audiofiles').find({}).toArray();
-  for (const audioFile of audioFiles) {
-    await audioFilesDb.put({
-      _id: `audiofile_${audioFile._id}`,
-      filePath: audioFile.filePath,
-      fileName: audioFile.fileName,
-      processed: audioFile.processed,
-      processedAt: audioFile.processedAt,
-      transcriptId: audioFile.transcriptId ? `transcript_${audioFile.transcriptId}` : null,
-      meetingId: audioFile.meetingId ? `meeting_${audioFile.meetingId}` : null,
-      fileSize: audioFile.fileSize,
-      duration: audioFile.duration,
-      type: 'audiofile'
-    });
-  }
-  
-  // Chiudi connessione MongoDB
-  await mongo.close();
   
   console.log('Migrazione completata con successo!');
 }
-
-migrateData().catch(console.error);
 ```
 
 ## Migrazione del frontend
 
-### Struttura directory
+### Struttura directory React/TypeScript
+
+La struttura attuale è già configurata con React e TypeScript, ma verrà estesa:
 
 ```
-electron-app/
-├── package.json
-├── main.js                   # Entry point Electron
-├── preload.js                # Script preload
-├── server/                   # Backend incorporato
-│   ├── api/                  # Controller API
-│   ├── services/             # Servizi
-│   └── db/                   # Layer DB
-├── renderer/                 # Frontend React
-│   ├── public/
-│   ├── src/
-│   │   ├── components/       # Componenti React (riciclati dall'app attuale)
-│   │   ├── pages/            # Pagine React (riciclate dall'app attuale)
-│   │   ├── services/         # Servizi frontend (adattati per Electron)
-│   │   └── App.tsx
-│   └── package.json
-└── resources/                # Risorse applicazione
+src/
+├── components/          # Componenti riutilizzabili
+│   ├── common/          # Componenti UI comuni
+│   ├── meetings/        # Componenti specifici per riunioni
+│   └── transcriptions/  # Componenti specifici per trascrizioni
+├── contexts/            # Context React
+│   ├── ThemeContext.tsx # Gestione tema chiaro/scuro
+│   └── AuthContext.tsx  # Gestione API keys
+├── hooks/               # Custom hooks
+├── pages/               # Componenti pagina
+│   ├── Dashboard.tsx
+│   ├── Meetings.tsx
+│   ├── Transcription.tsx
+│   └── Settings.tsx
+├── services/            # Servizi
+│   ├── db/              # Layer database (PouchDB)
+│   ├── api/             # Client API esterni
+│   └── utils/           # Utility
+├── App.tsx              # Componente principale
+└── renderer.tsx         # Entry point renderer
 ```
 
-### Adattamento chiamate API
+### Componenti necessari
 
-Modificare il servizio API nel frontend:
-
-```typescript
-// Prima
-// api.ts
-import axios from 'axios';
-
-const API_URL = 'http://localhost:5001/api';
-
-export const meetingApi = {
-  getAll: async (): Promise<MeetingB[]> => {
-    const response = await axios.get(`${API_URL}/meetings`);
-    return response.data;
-  },
-  // ...altri metodi...
-};
-
-// Dopo 
-// api.ts per Electron
-export const meetingApi = {
-  getAll: async (): Promise<MeetingB[]> => {
-    // Usa l'API context bridge esposta tramite preload
-    const response = await window.electronAPI.invoke('meetings:getAll');
-    return response;
-  },
-  // ...altri metodi adattati...
-};
-```
-
-### Modifiche a preload.js
-
-```javascript
-// preload.js
-const { contextBridge, ipcRenderer } = require('electron');
-
-contextBridge.exposeInMainWorld('electronAPI', {
-  // Meeting API
-  invoke: (channel, data) => {
-    const validChannels = [
-      'meetings:getAll', 'meetings:getById', 'meetings:create', 
-      'transcripts:getAll', 'transcripts:getByMeetingId',
-      // Altri canali...
-    ];
-    if (validChannels.includes(channel)) {
-      return ipcRenderer.invoke(channel, data);
-    }
-  },
-  
-  // Eventi
-  on: (channel, func) => {
-    const validChannels = [
-      'file:newAudioDetected',
-      'transcript:statusChanged',
-      // Altri eventi...
-    ];
-    if (validChannels.includes(channel)) {
-      ipcRenderer.on(channel, (event, ...args) => func(...args));
-    }
-  },
-  
-  // File system
-  selectDirectory: () => ipcRenderer.invoke('dialog:selectDirectory'),
-});
-```
-
-## Migrazione del backend
-
-### Gestione delle API in main.js
-
-```javascript
-// main.js (partial)
-const { app, BrowserWindow, ipcMain } = require('electron');
-const PouchDB = require('pouchdb');
-const { setupDatabases } = require('./server/db/setup');
-const { setupMeetingHandlers } = require('./server/api/meetings');
-const { setupTranscriptHandlers } = require('./server/api/transcripts');
-
-let mainWindow;
-let databases;
-
-async function createWindow() {
-  // Setup database
-  databases = await setupDatabases();
-  
-  // Setup IPC handlers
-  setupMeetingHandlers(ipcMain, databases);
-  setupTranscriptHandlers(ipcMain, databases);
-  
-  // Create the browser window
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false
-    }
-  });
-
-  // Load the app
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:3000');
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile('./renderer/build/index.html');
-  }
-}
-
-// Esempio di handler API
-// ./server/api/meetings.js
-exports.setupMeetingHandlers = (ipcMain, databases) => {
-  const { meetingsDb } = databases;
-  
-  // Get all meetings
-  ipcMain.handle('meetings:getAll', async () => {
-    const result = await meetingsDb.find({
-      selector: { type: 'meeting' },
-      sort: [{ date: 'desc' }]
-    });
-    return result.docs;
-  });
-  
-  // Get meeting by ID
-  ipcMain.handle('meetings:getById', async (event, id) => {
-    try {
-      return await meetingsDb.get(id);
-    } catch (error) {
-      if (error.name === 'not_found') {
-        throw new Error('Meeting not found');
-      }
-      throw error;
-    }
-  });
-  
-  // ... altri handler ...
-};
-```
+1. **Layout**: Componenti di base per il layout dell'applicazione
+2. **Meetings**: Componenti per la gestione delle riunioni
+3. **Transcriptions**: Componenti per la visualizzazione e modifica delle trascrizioni
+4. **AudioPlayer**: Player audio personalizzato con controlli
+5. **Settings**: Componenti per la configurazione dell'applicazione
 
 ## Sistema di monitoraggio file
 
-### Implementazione in Electron
+Il sistema di monitoraggio dei file audio utilizzerà l'API Node.js `fs.watch` o la libreria `chokidar` per monitorare le directory specificate dall'utente.
 
-```javascript
-// fileWatcher.js
-const chokidar = require('chokidar');
-const path = require('path');
-const fs = require('fs');
+```typescript
+import * as chokidar from 'chokidar';
+import * as path from 'path';
+import * as fs from 'fs';
+import { ipcMain, BrowserWindow } from 'electron';
+import { database } from './db';
 
-class FileWatcher {
-  constructor(databases, mainWindow) {
-    this.databases = databases;
+export class FileWatcher {
+  private watcher: chokidar.FSWatcher | null = null;
+  private watchPaths: string[] = [];
+  private mainWindow: BrowserWindow | null = null;
+  
+  constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
-    this.watchPaths = [];
-    this.watcher = null;
+    
+    // Carica i percorsi da monitorare dalle impostazioni
+    this.loadWatchPaths();
+    
+    // Avvia il monitoraggio
+    this.start();
+    
+    // Configurazione handlers IPC
+    this.setupIPCHandlers();
   }
   
-  setWatchPaths(paths) {
-    this.watchPaths = paths;
+  private loadWatchPaths() {
+    // Carica i percorsi da electron-store o PouchDB
+    // ...
+  }
+  
+  private setupIPCHandlers() {
+    ipcMain.handle('fileWatcher:addPath', async (event, path) => {
+      await this.addWatchPath(path);
+      return this.watchPaths;
+    });
+    
+    ipcMain.handle('fileWatcher:removePath', async (event, path) => {
+      await this.removeWatchPath(path);
+      return this.watchPaths;
+    });
+    
+    ipcMain.handle('fileWatcher:getPaths', () => {
+      return this.watchPaths;
+    });
+  }
+  
+  private async addWatchPath(dirPath: string) {
+    if (!this.watchPaths.includes(dirPath)) {
+      this.watchPaths.push(dirPath);
+      // Salva in electron-store o PouchDB
+      // ...
+      this.restart();
+    }
+  }
+  
+  private async removeWatchPath(dirPath: string) {
+    this.watchPaths = this.watchPaths.filter(p => p !== dirPath);
+    // Salva in electron-store o PouchDB
+    // ...
     this.restart();
   }
   
@@ -401,53 +317,16 @@ class FileWatcher {
       persistent: true,
       ignoreInitial: false,
       awaitWriteFinish: {
-        stabilityThreshold: 60000, // 60 secondi
-        pollInterval: 1000
+        stabilityThreshold: 2000,
+        pollInterval: 100
       }
     });
     
     this.watcher.on('add', async (filePath) => {
       const ext = path.extname(filePath).toLowerCase();
       if (['.mp3', '.wav', '.m4a', '.ogg'].includes(ext)) {
-        try {
-          const { audioFilesDb } = this.databases;
-          
-          // Verifica se il file esiste già nel database
-          const result = await audioFilesDb.find({
-            selector: {
-              filePath: filePath,
-              type: 'audiofile'
-            }
-          });
-          
-          if (result.docs.length === 0) {
-            // File nuovo trovato
-            const fileName = path.basename(filePath);
-            const stats = fs.statSync(filePath);
-            
-            const audioFile = {
-              _id: `audiofile_${new Date().getTime()}`,
-              filePath: filePath,
-              fileName: fileName,
-              processed: false,
-              fileSize: stats.size,
-              createdAt: new Date().toISOString(),
-              type: 'audiofile'
-            };
-            
-            await audioFilesDb.put(audioFile);
-            
-            // Notifica il frontend
-            if (this.mainWindow) {
-              this.mainWindow.webContents.send('file:newAudioDetected', audioFile);
-            }
-            
-            // Processa il file
-            this.processAudioFile(filePath, audioFile._id);
-          }
-        } catch (error) {
-          console.error('Errore processando nuovo file audio:', error);
-        }
+        // Nuovo file audio rilevato
+        // ...
       }
     });
   }
@@ -463,191 +342,194 @@ class FileWatcher {
     this.stop();
     this.start();
   }
-  
-  async processAudioFile(filePath, audioFileId) {
-    // Implementazione elaborazione file...
-  }
 }
-
-module.exports = FileWatcher;
 ```
 
 ## Integrazione con AssemblyAI
 
-L'integrazione con AssemblyAI rimarrà sostanzialmente invariata, ma verrà spostata all'interno del processo Electron principale.
+L'integrazione con AssemblyAI per la trascrizione automatica richiederà:
 
-```javascript
-// assemblyAiService.js
-const axios = require('axios');
-const fs = require('fs');
-const FormData = require('form-data');
+1. Un client API per comunicare con AssemblyAI
+2. Gestione dell'autenticazione e delle chiavi API
+3. Funzionalità per caricare file audio
+4. Polling dello stato della trascrizione
+5. Parsing e visualizzazione dei risultati
 
-class AssemblyAiService {
-  constructor(apiKey, databases, mainWindow) {
+```typescript
+import axios from 'axios';
+import * as fs from 'fs';
+import { ipcMain } from 'electron';
+import { database } from './db';
+
+export class AssemblyAIService {
+  private apiKey: string;
+  private baseURL: string = 'https://api.assemblyai.com/v2';
+  
+  constructor(apiKey: string) {
     this.apiKey = apiKey;
-    this.databases = databases;
-    this.mainWindow = mainWindow;
-    this.baseUrl = 'https://api.assemblyai.com/v2';
+    
+    // Configurazione handlers IPC
+    this.setupIPCHandlers();
   }
   
-  async transcribeAudioFile(filePath, audioFileId) {
-    try {
-      const { audioFilesDb, transcriptsDb, meetingsDb } = this.databases;
-      
-      // Recupera record del file audio
-      const audioFile = await audioFilesDb.get(audioFileId);
-      
-      // Crea meeting automatico se non associato
-      let meetingId = audioFile.meetingId;
-      if (!meetingId) {
-        const fileName = path.basename(filePath, path.extname(filePath));
-        const meeting = {
-          _id: `meeting_${new Date().getTime()}`,
-          title: `Auto: ${fileName}`,
-          description: 'Trascrizione automatica - in attesa di analisi AI',
-          date: new Date().toISOString(),
-          participants: [],
-          createdAt: new Date().toISOString(),
-          audioFileName: fileName,
-          type: 'meeting'
-        };
-        
-        const meetingResult = await meetingsDb.put(meeting);
-        meetingId = meeting._id;
-        
-        // Aggiorna audioFile con meetingId
-        audioFile.meetingId = meetingId;
-        await audioFilesDb.put(audioFile);
+  private setupIPCHandlers() {
+    ipcMain.handle('assemblyai:transcribe', async (event, audioFilePath, meetingId) => {
+      try {
+        return await this.transcribeAudio(audioFilePath, meetingId);
+      } catch (error) {
+        console.error('Errore durante la trascrizione:', error);
+        throw error;
       }
-      
-      // Crea record trascrizione
-      const transcript = {
-        _id: `transcript_${new Date().getTime()}`,
-        meetingId: meetingId,
-        assemblyAiId: '',
-        status: 'queued',
-        createdAt: new Date().toISOString(),
-        type: 'transcript'
-      };
-      
-      const transcriptResult = await transcriptsDb.put(transcript);
-      
-      // Aggiorna audioFile con transcriptId
-      audioFile.transcriptId = transcript._id;
-      await audioFilesDb.put(audioFile);
-      
-      // Upload file ad AssemblyAI
-      const uploadUrl = await this.uploadFile(filePath);
-      
-      // Avvia trascrizione
-      const assemblyAiId = await this.startTranscription(uploadUrl);
-      
-      // Aggiorna transcription con assemblyAiId
-      transcript.assemblyAiId = assemblyAiId;
-      transcript.status = 'processing';
-      await transcriptsDb.put(transcript);
-      
-      // Notifica il frontend
-      if (this.mainWindow) {
-        this.mainWindow.webContents.send('transcript:statusChanged', transcript);
+    });
+    
+    ipcMain.handle('assemblyai:getTranscription', async (event, transcriptId) => {
+      try {
+        return await this.getTranscription(transcriptId);
+      } catch (error) {
+        console.error('Errore durante il recupero della trascrizione:', error);
+        throw error;
       }
-      
-      // Avvia polling per stato trascrizione
-      this.pollTranscriptionStatus(assemblyAiId, transcript._id);
-      
-    } catch (error) {
-      console.error('Errore nella trascrizione:', error);
-    }
+    });
   }
   
-  async uploadFile(filePath) {
-    // Implementazione upload...
+  async uploadAudio(filePath: string) {
+    const fileContent = fs.readFileSync(filePath);
+    
+    const response = await axios.post(`${this.baseURL}/upload`, fileContent, {
+      headers: {
+        'authorization': this.apiKey,
+        'content-type': 'application/octet-stream'
+      }
+    });
+    
+    return response.data.upload_url;
   }
   
-  async startTranscription(audioUrl) {
-    // Implementazione inizio trascrizione...
+  async transcribeAudio(filePath: string, meetingId: string) {
+    // Upload audio file
+    const uploadUrl = await this.uploadAudio(filePath);
+    
+    // Submit for transcription
+    const response = await axios.post(`${this.baseURL}/transcript`, {
+      audio_url: uploadUrl,
+      speaker_labels: true
+    }, {
+      headers: {
+        'authorization': this.apiKey,
+        'content-type': 'application/json'
+      }
+    });
+    
+    const assemblyAiId = response.data.id;
+    
+    // Create transcript record in database
+    const transcript = {
+      _id: `transcript_${Date.now()}`,
+      meetingId,
+      assemblyAiId,
+      status: 'queued',
+      utterances: [],
+      createdAt: new Date().toISOString(),
+      type: 'transcript'
+    };
+    
+    // Save in PouchDB
+    // ...
+    
+    return transcript;
   }
   
-  async pollTranscriptionStatus(assemblyAiId, transcriptId) {
-    // Implementazione polling stato...
+  async getTranscription(assemblyAiId: string) {
+    const response = await axios.get(`${this.baseURL}/transcript/${assemblyAiId}`, {
+      headers: {
+        'authorization': this.apiKey
+      }
+    });
+    
+    return response.data;
   }
 }
-
-module.exports = AssemblyAiService;
 ```
 
 ## Packaging e distribuzione
 
-### Configurazione electron-builder
+Per il packaging e la distribuzione dell'applicazione utilizzeremo electron-forge che è già configurato nel progetto.
 
-Configurare `package.json` per il packaging:
+```typescript
+// forge.config.ts
+import type { ForgeConfig } from '@electron-forge/shared-types';
+import { MakerSquirrel } from '@electron-forge/maker-squirrel';
+import { MakerZIP } from '@electron-forge/maker-zip';
+import { MakerDeb } from '@electron-forge/maker-deb';
+import { MakerRpm } from '@electron-forge/maker-rpm';
+import { VitePlugin } from '@electron-forge/plugin-vite';
+import { FusesPlugin } from '@electron-forge/plugin-fuses';
+import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
-```json
-{
-  "name": "trascrizioni-app",
-  "version": "1.0.0",
-  "description": "App per trascrizioni audio",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron .",
-    "build": "electron-builder",
-    "build:mac": "electron-builder --mac",
-    "build:win": "electron-builder --win",
-    "build:linux": "electron-builder --linux"
+const config: ForgeConfig = {
+  packagerConfig: {
+    asar: true,
+    icon: './assets/icon',
+    name: 'Meetings Minuta',
+    executableName: 'meetings-minuta',
+    appBundleId: 'com.meetingsminuta.app',
+    appCategoryType: 'public.app-category.productivity',
   },
-  "build": {
-    "appId": "com.trascrizioni.app",
-    "productName": "Trascrizioni App",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "main.js",
-      "preload.js",
-      "server/**/*",
-      "renderer/build/**/*",
-      "resources/**/*",
-      "node_modules/**/*"
-    ],
-    "mac": {
-      "category": "public.app-category.productivity",
-      "icon": "resources/icon.icns",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
-    },
-    "win": {
-      "icon": "resources/icon.ico",
-      "target": [
-        "nsis"
-      ]
-    },
-    "linux": {
-      "icon": "resources/icon.png",
-      "target": [
-        "AppImage",
-        "deb"
-      ]
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "tuoUsername",
-      "repo": "trascrizioni-app"
+  rebuildConfig: {},
+  makers: [
+    new MakerSquirrel({
+      name: 'meetings-minuta',
+      setupIcon: './assets/icon.ico',
+      authors: 'Your Name',
+      description: 'Automatic audio transcription app'
+    }),
+    new MakerZIP({}, ['darwin']),
+    new MakerRpm({
+      options: {
+        productName: 'Meetings Minuta',
+        categories: ['Office', 'AudioVideo'],
+        description: 'Automatic audio transcription app'
+      }
+    }),
+    new MakerDeb({
+      options: {
+        productName: 'Meetings Minuta',
+        section: 'sound',
+        priority: 'optional',
+        icon: './assets/icon.png',
+        categories: ['Office', 'AudioVideo'],
+        description: 'Automatic audio transcription app'
+      }
+    })
+  ],
+  plugins: [
+    new VitePlugin({
+      // Configurazione Vite esistente
+    }),
+    new FusesPlugin({
+      version: FuseVersion.V1,
+      [FuseV1Options.RunAsNode]: false,
+      [FuseV1Options.EnableCookieEncryption]: true,
+      [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
+      [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
+      [FuseV1Options.OnlyLoadAppFromAsar]: true,
+    })
+  ],
+  publishers: [
+    {
+      name: '@electron-forge/publisher-github',
+      config: {
+        repository: {
+          owner: 'your-username',
+          name: 'meetings-minuta-electron-app'
+        },
+        prerelease: false
+      }
     }
-  },
-  "dependencies": {
-    "chokidar": "^3.5.3",
-    "electron-log": "^4.4.8",
-    "electron-updater": "^5.3.0",
-    "pouchdb": "^7.3.1",
-    "pouchdb-find": "^7.3.1"
-  },
-  "devDependencies": {
-    "electron": "^23.1.0",
-    "electron-builder": "^24.0.0"
-  }
-}
+  ]
+};
+
+export default config;
 ```
 
 ## Testing e validazione
@@ -669,11 +551,11 @@ Configurare `package.json` per il packaging:
 
 ## Conclusione
 
-La migrazione da un'architettura web client-server a un'applicazione Electron standalone con PouchDB è un processo complesso ma fattibile. Questo approccio permetterà di:
+La migrazione della nostra attuale applicazione Electron con electron-store a una versione più robusta con PouchDB è un processo incrementale che migliorerà significativamente le funzionalità e l'esperienza utente. Questo approccio permetterà di:
 
 1. Mantenere il sistema funzionante localmente senza dipendenza da server
 2. Migliorare l'integrazione con il file system locale
-3. Offrire un'esperienza utente più fluida e nativa
+3. Offrire un'esperienza utente più fluida e nativa grazie al design moderno
 4. Semplificare la distribuzione e l'aggiornamento
 5. Preservare la possibilità di estensioni future con sincronizzazione cloud
 

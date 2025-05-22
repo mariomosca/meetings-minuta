@@ -10,6 +10,13 @@ interface ElectronAPI {
     saveAssemblyAIApiKey: (apiKey: string) => Promise<{ success: boolean }>;
     getAssemblyAIApiKey: () => Promise<string>;
   };
+  config?: {
+    getWatchDirectories: () => Promise<string[]>;
+    addWatchDirectory: () => Promise<string[]>;
+    removeWatchDirectory: (dirPath: string) => Promise<string[]>;
+    getAssemblyAiKey: () => Promise<string>;
+    setAssemblyAiKey: (apiKey: string) => Promise<boolean>;
+  };
 }
 
 // Accesso alle API esposte dal preload
@@ -36,6 +43,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
     try {
       setIsLoading(true);
       
+      // DEBUG: Controlla se le API sono disponibili
+      console.log('electronAPI disponibile:', electronAPI);
+      console.log('settings API:', electronAPI.settings);
+      console.log('config API:', electronAPI.config);
+      
       // Carica le impostazioni della directory di monitoraggio
       const watchDirSettings = await electronAPI.settings?.getWatchDirectory() || { directory: '', isEnabled: false };
       setWatchDirectory(watchDirSettings.directory);
@@ -55,15 +67,38 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
   
   // Seleziona la directory da monitorare
   async function handleSelectDirectory() {
+    console.log('handleSelectDirectory chiamato');
     try {
       setIsSaving(true);
-      const result = await electronAPI.settings?.selectWatchDirectory() || { success: false };
+      console.log('API utilizzata:', electronAPI.settings ? 'settings' : 'config');
       
-      if (result.success && result.directory) {
-        setWatchDirectory(result.directory);
-        toast.success('Directory selezionata con successo');
-      } else if (result.error) {
-        toast.error(result.error);
+      // Prova prima con settings API
+      if (electronAPI.settings?.selectWatchDirectory) {
+        console.log('Chiamando settings.selectWatchDirectory()');
+        const result = await electronAPI.settings.selectWatchDirectory();
+        console.log('Risultato ottenuto:', result);
+        
+        if (result.success && result.directory) {
+          setWatchDirectory(result.directory);
+          toast.success('Directory selezionata con successo');
+        } else if (result.error) {
+          console.error('Errore:', result.error);
+          toast.error(result.error);
+        }
+      } 
+      // Prova con config API se settings non è disponibile
+      else if (electronAPI.config?.addWatchDirectory) {
+        console.log('Chiamando config.addWatchDirectory()');
+        const directories = await electronAPI.config.addWatchDirectory();
+        console.log('Directories ottenute:', directories);
+        
+        if (directories && directories.length > 0) {
+          setWatchDirectory(directories[directories.length - 1]);
+          toast.success('Directory selezionata con successo');
+        }
+      } else {
+        console.error('Nessuna API disponibile per selezionare la directory');
+        toast.error('Funzionalità non disponibile');
       }
     } catch (error) {
       console.error('Errore nella selezione della directory:', error);
@@ -110,10 +145,22 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
         return;
       }
       
-      const result = await electronAPI.settings?.saveAssemblyAIApiKey(apiKey.trim()) || { success: false };
+      let success = false;
       
-      if (result.success) {
+      // Prova prima con settings API
+      if (electronAPI.settings?.saveAssemblyAIApiKey) {
+        const result = await electronAPI.settings.saveAssemblyAIApiKey(apiKey.trim());
+        success = result.success;
+      } 
+      // Prova con config API se settings non è disponibile
+      else if (electronAPI.config?.setAssemblyAiKey) {
+        success = await electronAPI.config.setAssemblyAiKey(apiKey.trim());
+      }
+      
+      if (success) {
         toast.success('Chiave API salvata con successo');
+      } else {
+        toast.error('Impossibile salvare la chiave API');
       }
     } catch (error) {
       console.error('Errore nel salvataggio della chiave API:', error);

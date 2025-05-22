@@ -101,6 +101,79 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setAssemblyAiKey: (apiKey: string) => ipcRenderer.invoke('config:setAssemblyAiKey', apiKey),
   },
   
+  // API per le impostazioni (wrapper per config)
+  settings: {
+    // Ottenere la directory monitorata
+    getWatchDirectory: async () => {
+      console.log('preload: chiamata a getWatchDirectory');
+      try {
+        const directories = await ipcRenderer.invoke('config:getWatchDirectories');
+        console.log('preload: directories ottenute:', directories);
+        return { 
+          directory: directories && directories.length > 0 ? directories[0] : '',
+          isEnabled: directories && directories.length > 0 // Considera attivo se c'è almeno una directory
+        };
+      } catch (error) {
+        console.error('preload: errore in getWatchDirectory:', error);
+        return { directory: '', isEnabled: false };
+      }
+    },
+    
+    // Selezionare la directory da monitorare
+    selectWatchDirectory: async () => {
+      console.log('preload: chiamata a selectWatchDirectory');
+      try {
+        const directories = await ipcRenderer.invoke('config:addWatchDirectory');
+        console.log('preload: risultato da addWatchDirectory:', directories);
+        if (directories && directories.length > 0) {
+          return { 
+            success: true, 
+            directory: directories[directories.length - 1] 
+          };
+        } else {
+          return { success: false, error: 'Nessuna directory selezionata' };
+        }
+      } catch (error) {
+        console.error('preload: errore in selectWatchDirectory:', error);
+        return { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Errore sconosciuto' 
+        };
+      }
+    },
+    
+    // Attivare/disattivare il monitoraggio
+    toggleWatching: async (isEnabled: boolean) => {
+      console.log('preload: chiamata a toggleWatching:', isEnabled);
+      // Questa è una simulazione perché non c'è un endpoint specifico
+      // In una vera implementazione, dovremmo gestire l'attivazione/disattivazione del watcher
+      return { success: true };
+    },
+    
+    // Ottenere la chiave API AssemblyAI
+    getAssemblyAIApiKey: async () => {
+      console.log('preload: chiamata a getAssemblyAIApiKey');
+      try {
+        return await ipcRenderer.invoke('config:getAssemblyAiKey');
+      } catch (error) {
+        console.error('preload: errore in getAssemblyAIApiKey:', error);
+        return '';
+      }
+    },
+    
+    // Salvare la chiave API AssemblyAI
+    saveAssemblyAIApiKey: async (apiKey: string) => {
+      console.log('preload: chiamata a saveAssemblyAIApiKey');
+      try {
+        const result = await ipcRenderer.invoke('config:setAssemblyAiKey', apiKey);
+        return { success: !!result };
+      } catch (error) {
+        console.error('preload: errore in saveAssemblyAIApiKey:', error);
+        return { success: false };
+      }
+    }
+  },
+  
   // API per eventi
   events: {
     // Registrare una callback per un evento

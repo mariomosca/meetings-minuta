@@ -1,0 +1,76 @@
+:root {
+  --color-primary: #007bff;
+  --color-secondary: #6c757d;
+  --color-background: #f8f9fa;
+  --color-text: #333;
+  --padding: 1.5rem;
+  --border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background-color: var(--color-primary);
+  color: white;
+  padding: var(--padding);
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+main {
+  flex: 1;
+  padding: var(--padding);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.welcome {
+  background-color: white;
+  border-radius: var(--border-radius);
+  padding: var(--padding);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: var(--padding);
+}
+
+h2 {
+  color: var(--color-primary);
+  margin-top: 0;
+}
+
+p {
+  line-height: 1.6;
+}
+
+.app-info {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: var(--color-secondary);
+}
+
+footer {
+  background-color: var(--color-secondary);
+  color: white;
+  text-align: center;
+  padding: 1rem;
+}

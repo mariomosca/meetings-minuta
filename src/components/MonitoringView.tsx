@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-// Interfaccia per le API di Electron
+// Interface for Electron APIs
 interface ElectronAPI {
   audioFiles?: {
     getAll: () => Promise<AudioFile[]>;
@@ -25,7 +25,7 @@ interface ElectronAPI {
   };
 }
 
-// Interfaccia per il file audio
+// Interface for audio file
 interface AudioFile {
   id: string;
   fileName: string;
@@ -37,7 +37,7 @@ interface AudioFile {
   createdAt: string;
 }
 
-// Interfaccia per la trascrizione
+// Interface for transcript
 interface Transcript {
   id: string;
   meetingId: string;
@@ -48,7 +48,7 @@ interface Transcript {
   completedAt?: string;
 }
 
-// Accesso alle API esposte dal preload
+// Access to APIs exposed by preload
 const electronAPI = (window as any).electronAPI as ElectronAPI;
 
 interface MonitoringViewProps {
@@ -64,20 +64,20 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [logs, setLogs] = useState<{ message: string; timestamp: string }[]>([]);
 
-  // Carica i dati all'avvio
+  // Load data on startup
   useEffect(() => {
     loadData();
     
-    // Registra listener per gli eventi
+    // Register event listeners
     setupEventListeners();
     
     return () => {
-      // Rimuovi listener quando il componente viene smontato
+      // Remove listeners when component is unmounted
       removeEventListeners();
     };
   }, []);
   
-  // Configura i listener per gli eventi
+  // Set up event listeners
   const setupEventListeners = () => {
     if (electronAPI.events) {
       electronAPI.events.on('directory:filesChanged', handleFileChanged);
@@ -85,7 +85,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
     }
   };
   
-  // Rimuovi i listener per gli eventi
+  // Remove event listeners
   const removeEventListeners = () => {
     if (electronAPI.events) {
       electronAPI.events.off('directory:filesChanged', handleFileChanged);
@@ -93,21 +93,21 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
     }
   };
   
-  // Gestisce l'evento di cambio file
+  // Handle file change event
   const handleFileChanged = (data: any) => {
-    addLog(`File ${data.type === 'add' ? 'rilevato' : 'errore'}: ${data.file?.fileName || data.error || ''}`);
+    addLog(`File ${data.type === 'add' ? 'detected' : 'error'}: ${data.file?.fileName || data.error || ''}`);
     
-    // Ricarica i file audio se è stato aggiunto un nuovo file
+    // Reload audio files if a new file was added
     if (data.type === 'add') {
       loadAudioFiles();
     }
   };
   
-  // Gestisce l'evento di cambio stato della trascrizione
+  // Handle transcript status change event
   const handleTranscriptStatusChanged = (transcript: Transcript) => {
-    addLog(`Trascrizione ${transcript.id} aggiornata: ${transcript.status}`);
+    addLog(`Transcript ${transcript.id} updated: ${transcript.status}`);
     
-    // Aggiorna la lista delle trascrizioni
+    // Update transcripts list
     setTranscripts(prev => {
       const index = prev.findIndex(t => t.id === transcript.id);
       if (index >= 0) {
@@ -120,15 +120,15 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
     });
   };
   
-  // Aggiunge un messaggio ai log
+  // Add a message to logs
   const addLog = (message: string) => {
     setLogs(prev => [
       { message, timestamp: new Date().toISOString() },
-      ...prev.slice(0, 99) // Mantieni solo gli ultimi 100 log
+      ...prev.slice(0, 99) // Keep only the last 100 logs
     ]);
   };
 
-  // Carica tutti i dati
+  // Load all data
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -138,14 +138,14 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
         loadWatchingStatus()
       ]);
     } catch (error) {
-      console.error('Errore nel caricamento dei dati:', error);
-      toast.error('Impossibile caricare i dati');
+      console.error('Error loading data:', error);
+      toast.error('Unable to load data');
     } finally {
       setIsLoading(false);
     }
   };
   
-  // Carica i file audio
+  // Load audio files
   const loadAudioFiles = async () => {
     try {
       if (electronAPI.audioFiles) {
@@ -153,11 +153,11 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
         setAudioFiles(files);
       }
     } catch (error) {
-      console.error('Errore nel caricamento dei file audio:', error);
+      console.error('Error loading audio files:', error);
     }
   };
   
-  // Carica le trascrizioni
+  // Load transcripts
   const loadTranscripts = async () => {
     try {
       if (electronAPI.transcripts) {
@@ -165,11 +165,11 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
         setTranscripts(transcripts);
       }
     } catch (error) {
-      console.error('Errore nel caricamento delle trascrizioni:', error);
+      console.error('Error loading transcripts:', error);
     }
   };
   
-  // Carica lo stato del monitoraggio
+  // Load monitoring status
   const loadWatchingStatus = async () => {
     try {
       if (electronAPI.fileWatcher && electronAPI.config) {
@@ -182,72 +182,72 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
         }
       }
     } catch (error) {
-      console.error('Errore nel caricamento dello stato del monitoraggio:', error);
+      console.error('Error loading monitoring status:', error);
     }
   };
   
-  // Avvia/ferma il monitoraggio
+  // Start/stop monitoring
   const toggleWatching = async () => {
     try {
       if (!electronAPI.fileWatcher) {
-        toast.error('API FileWatcher non disponibile');
+        toast.error('FileWatcher API not available');
         return;
       }
       
       if (isWatching) {
-        // Ferma il monitoraggio
+        // Stop monitoring
         const result = await electronAPI.fileWatcher.stopWatching();
         
         if (result.success) {
           setIsWatching(false);
-          addLog('Monitoraggio fermato');
-          toast.success('Monitoraggio fermato');
+          addLog('Monitoring stopped');
+          toast.success('Monitoring stopped');
         } else if (result.error) {
           toast.error(result.error);
         }
       } else {
-        // Verifica che ci sia una directory da monitorare
+        // Check if there's a directory to monitor
         if (!watchDirectory) {
-          toast.error('Seleziona una directory prima di attivare il monitoraggio');
+          toast.error('Select a directory before enabling monitoring');
           return;
         }
         
-        // Avvia il monitoraggio
+        // Start monitoring
         const result = await electronAPI.fileWatcher.startWatching(watchDirectory);
         
         if (result.success) {
           setIsWatching(true);
-          addLog(`Monitoraggio avviato: ${result.directory}`);
-          toast.success('Monitoraggio avviato');
+          addLog(`Monitoring started: ${result.directory}`);
+          toast.success('Monitoring started');
         } else if (result.error) {
           toast.error(result.error);
         }
       }
     } catch (error) {
-      console.error('Errore nel toggle del monitoraggio:', error);
-      toast.error('Errore nel cambiare lo stato del monitoraggio');
+      console.error('Error toggling monitoring:', error);
+      toast.error('Error changing monitoring status');
     }
   };
   
-  // Avvia la trascrizione di un file audio
+  // Start transcription of an audio file
   const startTranscription = async (audioFileId: string) => {
     try {
       if (!electronAPI.transcripts) {
-        toast.error('API Transcripts non disponibile');
+        toast.error('Transcripts API not available');
         return;
       }
       
-      // Verifica se la trascrizione esiste già
+      // Check if transcription already exists
       const existingTranscript = transcripts.find(t => t.audioFileId === audioFileId);
       if (existingTranscript && existingTranscript.status !== 'error') {
-        toast.error('Trascrizione già in corso o completata');
+        toast.error('Transcription already in progress or completed');
         return;
       }
       
-      // Avvia la trascrizione
+      // Start transcription
       const transcript = await electronAPI.transcripts.startTranscription(audioFileId);
       
-      // Aggiorna la lista delle trascrizioni
+      // Update transcripts list
       setTranscripts(prev => {
         const index = prev.findIndex(t => t.id === transcript.id);
         if (index >= 0) {
@@ -259,15 +259,15 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
         }
       });
       
-      addLog(`Trascrizione avviata per il file ${audioFileId}`);
-      toast.success('Trascrizione avviata');
+      addLog(`Transcription started for file ${audioFileId}`);
+      toast.success('Transcription started');
     } catch (error) {
-      console.error('Errore nell\'avvio della trascrizione:', error);
-      toast.error('Impossibile avviare la trascrizione');
+      console.error('Error starting transcription:', error);
+      toast.error('Unable to start transcription');
     }
   };
   
-  // Formatta la dimensione del file in modo leggibile
+  // Format file size in readable format
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -275,13 +275,13 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
     return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
   };
   
-  // Formatta la data in modo leggibile
+  // Format date in readable format
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
   
-  // Ottieni lo stato della trascrizione per un file audio
+  // Get transcription status for an audio file
   const getTranscriptionStatus = (audioFileId: string): JSX.Element => {
     const transcript = transcripts.find(t => t.audioFileId === audioFileId);
     

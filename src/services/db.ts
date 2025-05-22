@@ -141,7 +141,7 @@ export class Database {
       console.log('Nota salvata:', completeNote);
       return completeNote;
     } catch (error) {
-      console.error('Errore durante il salvataggio della nota:', error);
+      console.error('Error while saving note:', error);
       throw error;
     }
   }
@@ -164,7 +164,7 @@ export class Database {
       console.log('Note recuperate:', noteArray);
       return noteArray;
     } catch (error) {
-      console.error('Errore durante il recupero delle note:', error);
+      console.error('Error while retrieving notes:', error);
       throw error;
     }
   }
@@ -175,7 +175,7 @@ export class Database {
       const notes = this.store.get('notes', {});
       return notes[id] || null;
     } catch (error) {
-      console.error(`Errore durante il recupero della nota ${id}:`, error);
+      console.error(`Error while retrieving note ${id}:`, error);
       throw error;
     }
   }
@@ -197,7 +197,7 @@ export class Database {
       
       console.log(`Nota ${id} eliminata`);
     } catch (error) {
-      console.error(`Errore durante l'eliminazione della nota ${id}:`, error);
+      console.error(`Error while deleting note ${id}:`, error);
       throw error;
     }
   }
@@ -241,7 +241,7 @@ export class Database {
       console.log('Riunione salvata:', completeMeeting);
       return completeMeeting;
     } catch (error) {
-      console.error('Errore durante il salvataggio della riunione:', error);
+      console.error('Error while saving meeting:', error);
       throw error;
     }
   }
@@ -264,7 +264,7 @@ export class Database {
       console.log('Riunioni recuperate:', meetingArray);
       return meetingArray;
     } catch (error) {
-      console.error('Errore durante il recupero delle riunioni:', error);
+      console.error('Error while retrieving meetings:', error);
       throw error;
     }
   }
@@ -275,7 +275,7 @@ export class Database {
       const meetings = this.store.get('meetings', {});
       return meetings[id] || null;
     } catch (error) {
-      console.error(`Errore durante il recupero della riunione ${id}:`, error);
+      console.error(`Error while retrieving meeting ${id}:`, error);
       throw error;
     }
   }
@@ -297,7 +297,7 @@ export class Database {
       
       console.log(`Riunione ${id} eliminata`);
     } catch (error) {
-      console.error(`Errore durante l'eliminazione della riunione ${id}:`, error);
+      console.error(`Error while deleting meeting ${id}:`, error);
       throw error;
     }
   }
@@ -352,7 +352,7 @@ export class Database {
       console.log('Trascrizione salvata:', completeTranscript);
       return completeTranscript;
     } catch (error) {
-      console.error('Errore durante il salvataggio della trascrizione:', error);
+      console.error('Error while saving transcript:', error);
       throw error;
     }
   }
@@ -375,7 +375,7 @@ export class Database {
       console.log('Trascrizioni recuperate:', transcriptArray);
       return transcriptArray;
     } catch (error) {
-      console.error('Errore durante il recupero delle trascrizioni:', error);
+      console.error('Error while retrieving transcripts:', error);
       throw error;
     }
   }
@@ -386,7 +386,7 @@ export class Database {
       const transcripts = this.store.get('transcripts', {});
       return transcripts[id] || null;
     } catch (error) {
-      console.error(`Errore durante il recupero della trascrizione ${id}:`, error);
+      console.error(`Error while retrieving transcript ${id}:`, error);
       throw error;
     }
   }
@@ -408,7 +408,7 @@ export class Database {
       
       return filteredTranscripts;
     } catch (error) {
-      console.error(`Errore durante il recupero delle trascrizioni per la riunione ${meetingId}:`, error);
+      console.error(`Error while retrieving transcripts for meeting ${meetingId}:`, error);
       throw error;
     }
   }
@@ -443,7 +443,7 @@ export class Database {
       
       console.log(`Trascrizione ${id} eliminata`);
     } catch (error) {
-      console.error(`Errore durante l'eliminazione della trascrizione ${id}:`, error);
+      console.error(`Error while deleting transcript ${id}:`, error);
       throw error;
     }
   }
@@ -497,7 +497,7 @@ export class Database {
       console.log('File audio salvato:', completeAudioFile);
       return completeAudioFile;
     } catch (error) {
-      console.error('Errore durante il salvataggio del file audio:', error);
+      console.error('Error while saving audio file:', error);
       throw error;
     }
   }
@@ -520,7 +520,7 @@ export class Database {
       console.log('File audio recuperati:', audioFileArray);
       return audioFileArray;
     } catch (error) {
-      console.error('Errore durante il recupero dei file audio:', error);
+      console.error('Error while retrieving audio files:', error);
       throw error;
     }
   }
@@ -531,7 +531,7 @@ export class Database {
       const audioFiles = this.store.get('audioFiles', {});
       return audioFiles[id] || null;
     } catch (error) {
-      console.error(`Errore durante il recupero del file audio ${id}:`, error);
+      console.error(`Error while retrieving audio file ${id}:`, error);
       throw error;
     }
   }
@@ -551,7 +551,7 @@ export class Database {
       
       return null;
     } catch (error) {
-      console.error(`Errore durante il recupero del file audio per la riunione ${meetingId}:`, error);
+      console.error(`Error while retrieving audio file for meeting ${meetingId}:`, error);
       throw error;
     }
   }
@@ -586,7 +586,7 @@ export class Database {
       
       console.log(`File audio ${id} eliminato`);
     } catch (error) {
-      console.error(`Errore durante l'eliminazione del file audio ${id}:`, error);
+      console.error(`Error while deleting audio file ${id}:`, error);
       throw error;
     }
   }

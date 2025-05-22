@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import Modal from 'react-modal';
 
-// Interfaccia per le API di Electron
+// Interface for Electron APIs
 interface ElectronAPI {
   meetings?: {
     getById: (id: string) => Promise<Meeting>;
@@ -16,10 +16,10 @@ interface ElectronAPI {
   };
 }
 
-// Accesso alle API esposte dal preload
+// Access to APIs exposed by preload
 const electronAPI = (window as any).electronAPI as ElectronAPI;
 
-// Interfaccia per una riunione
+// Interface for a meeting
 interface Meeting {
   id?: string;
   title: string;
@@ -31,7 +31,7 @@ interface Meeting {
   transcriptId?: string;
 }
 
-// Interfaccia per un file audio
+// Interface for an audio file
 interface AudioFile {
   id: string;
   fileName: string;
@@ -43,7 +43,7 @@ interface AudioFile {
   createdAt: string;
 }
 
-// Interfaccia per una trascrizione
+// Interface for a transcript
 interface Transcript {
   id: string;
   meetingId: string;
@@ -55,7 +55,7 @@ interface Transcript {
   completedAt?: string;
 }
 
-// Interfaccia per una utterance (parte di una trascrizione)
+// Interface for an utterance (part of a transcript)
 interface Utterance {
   speaker: string;
   text: string;
@@ -63,7 +63,7 @@ interface Utterance {
   end: number;
 }
 
-// Stile custom per i modali
+// Custom style for modals
 const customModalStyles = {
   content: {
     top: '50%',
@@ -85,16 +85,16 @@ const customModalStyles = {
   }
 };
 
-// Componente per visualizzare le utterances di una trascrizione
+// Component to display utterances of a transcript
 const UtterancesList: React.FC<{ utterances: Utterance[] }> = ({ utterances }) => {
   if (!utterances || utterances.length === 0) {
-    return <p className="text-gray-500 italic">Nessuna utterance disponibile</p>;
+    return <p className="text-gray-500 italic">No utterances available</p>;
   }
 
   return (
     <div className="space-y-4 mt-4">
       {utterances.map((utterance, index) => {
-        // Calcola il tempo in formato mm:ss
+        // Calculate time in mm:ss format
         const formatTime = (ms: number) => {
           const totalSeconds = Math.floor(ms / 1000);
           const minutes = Math.floor(totalSeconds / 60);
@@ -144,14 +144,25 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   
   const transcriptTextRef = useRef<HTMLDivElement>(null);
   
-  // Carica i dati all'avvio
+  // Reference to track polling interval
+  const transcriptPollingInterval = useRef<NodeJS.Timeout | null>(null);
+  
+  // Format file size in readable format
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+  }
+  
+  // Load data on startup
   useEffect(() => {
     loadData();
     
-    // Funzione di cleanup
+    // Cleanup function
     return () => {
-      // Assicurati che eventuali interval attivi vengano cancellati
-      // quando il componente viene smontato
+      // Make sure any active intervals are cleared
+      // when the component is unmounted
       if (transcriptPollingInterval.current) {
         clearInterval(transcriptPollingInterval.current);
         transcriptPollingInterval.current = null;
@@ -159,32 +170,29 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
     };
   }, [meetingId]);
   
-  // Riferimento per tenere traccia dell'intervallo di polling
-  const transcriptPollingInterval = useRef<NodeJS.Timeout | null>(null);
-  
-  // Carica i dati necessari
+  // Load necessary data
   async function loadData() {
     try {
       setIsLoading(true);
       
-      // Carica la riunione
+      // Load meeting
       const meetingData = await electronAPI.meetings?.getById(meetingId);
       if (meetingData) {
         setMeeting(meetingData);
       }
       
-      // Carica il file audio
+      // Load audio file
       const audioFileData = await electronAPI.audioFiles?.getByMeetingId(meetingId);
       if (audioFileData) {
         setAudioFile(audioFileData);
       }
       
-      // Carica le trascrizioni
+      // Load transcripts
       const transcriptData = await electronAPI.transcripts?.getByMeetingId(meetingId);
       if (transcriptData && transcriptData.length > 0) {
         setTranscripts(transcriptData);
         
-        // Seleziona la trascrizione più recente completata
+        // Select the most recent completed transcript
         const completedTranscripts = transcriptData.filter(t => t.status === 'completed');
         if (completedTranscripts.length > 0) {
           setActiveTranscript(completedTranscripts[0]);
@@ -193,17 +201,17 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         }
       }
     } catch (error) {
-      console.error('Errore nel caricamento dei dati:', error);
-      toast.error('Impossibile caricare i dati della trascrizione');
+      console.error('Error loading data:', error);
+      toast.error('Unable to load transcription data');
     } finally {
       setIsLoading(false);
     }
   }
   
-  // Avvia la trascrizione
+  // Start transcription
   async function startTranscription() {
     if (!audioFile || !audioFile.id) {
-      toast.error('Nessun file audio disponibile per la trascrizione');
+      toast.error('No audio file available for transcription');
       return;
     }
     
@@ -212,29 +220,29 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       const transcript = await electronAPI.transcripts?.startTranscription(audioFile.id);
       
       if (transcript) {
-        toast.success('Trascrizione avviata con successo');
+        toast.success('Transcription started successfully');
         
-        // Aggiorna la lista delle trascrizioni
+        // Update transcript list
         setTranscripts(prev => [transcript, ...prev]);
         setActiveTranscript(transcript);
         
-        // Cancella qualsiasi intervallo precedente
+        // Clear any previous intervals
         if (transcriptPollingInterval.current) {
           clearInterval(transcriptPollingInterval.current);
         }
         
-        // Controlla lo stato ogni 5 secondi
+        // Check status every 5 seconds
         transcriptPollingInterval.current = setInterval(async () => {
           const updatedTranscripts = await electronAPI.transcripts?.getByMeetingId(meetingId);
           if (updatedTranscripts) {
             setTranscripts(updatedTranscripts);
             
-            // Aggiorna la trascrizione attiva
+            // Update active transcript
             const updatedTranscript = updatedTranscripts.find(t => t.id === transcript.id);
             if (updatedTranscript) {
               setActiveTranscript(updatedTranscript);
               
-              // Se la trascrizione è completata o in errore, ferma il polling
+              // If transcript is completed or in error, stop polling
               if (updatedTranscript.status === 'completed' || updatedTranscript.status === 'error') {
                 if (transcriptPollingInterval.current) {
                   clearInterval(transcriptPollingInterval.current);
@@ -243,9 +251,9 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                 setIsTranscribing(false);
                 
                 if (updatedTranscript.status === 'completed') {
-                  toast.success('Trascrizione completata con successo');
+                  toast.success('Transcription completed successfully');
                 } else if (updatedTranscript.status === 'error') {
-                  toast.error('Errore durante la trascrizione');
+                  toast.error('Error during transcription');
                 }
               }
             }
@@ -253,20 +261,20 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         }, 5000);
       }
     } catch (error) {
-      console.error('Errore nell\'avvio della trascrizione:', error);
-      toast.error('Impossibile avviare la trascrizione');
+      console.error('Error starting transcription:', error);
+      toast.error('Unable to start transcription');
     } finally {
       setIsTranscribing(false);
     }
   }
   
-  // Formatta la data
+  // Format date
   function formatDate(dateString: string): string {
     const date = new Date(dateString);
-    return date.toLocaleString('it-IT');
+    return date.toLocaleString('en-US');
   }
   
-  // Evidenzia il testo cercato
+  // Highlight searched text
   function highlightSearchTerm(text: string, term: string): JSX.Element {
     if (!term.trim()) return <>{text}</>;
     
@@ -283,7 +291,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
     );
   }
   
-  // Cerca nel testo
+  // Search in text
   function searchInTranscript() {
     if (!searchTerm.trim() || !activeTranscript?.text) return;
     
@@ -292,17 +300,17 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
     const lowerText = text.toLowerCase();
     
     if (lowerText.includes(lowerSearchTerm)) {
-      // Trova l'indice della prima occorrenza
+      // Find index of first occurrence
       const index = lowerText.indexOf(lowerSearchTerm);
       
-      // Estrai il contesto (50 caratteri prima e dopo)
+      // Extract context (50 characters before and after)
       const start = Math.max(0, index - 50);
       const end = Math.min(text.length, index + searchTerm.length + 50);
       const context = text.substring(start, end);
       
       setHighlightedText(context);
       
-      // Scorri alla posizione
+      // Scroll to position
       if (transcriptTextRef.current) {
         const textContent = transcriptTextRef.current.textContent || '';
         const textIndex = textContent.toLowerCase().indexOf(lowerSearchTerm);
@@ -327,7 +335,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               selection.removeAllRanges();
               selection.addRange(range);
               
-              // Scorri alla selezione
+              // Scroll to selection
               const mark = document.querySelector('mark');
               if (mark) {
                 mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -338,18 +346,18 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       }
     } else {
       setHighlightedText(null);
-      toast.error('Testo non trovato');
+      toast.error('Text not found');
     }
   }
   
-  // Gestisce il tasto invio nella ricerca
+  // Handle enter key in search
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       searchInTranscript();
     }
   }
   
-  // Ottieni lo stato della trascrizione
+  // Get transcription status
   function getTranscriptionStatus(status: string): JSX.Element {
     switch (status) {
       case 'queued':
@@ -358,7 +366,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            In coda
+            In queue
           </span>
         );
       case 'processing':
@@ -367,7 +375,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            In elaborazione
+            In processing
           </span>
         );
       case 'completed':
@@ -376,7 +384,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Completata
+            Completed
           </span>
         );
       case 'error':
@@ -385,22 +393,22 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-            Errore
+            Error
           </span>
         );
       default:
-        return <span className="text-gray-500 text-xs">Sconosciuto</span>;
+        return <span className="text-gray-500 text-xs">Unknown</span>;
     }
   }
   
   return (
     <div className="h-full flex flex-col">
-      {/* Intestazione */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-6 pt-2 pb-4 border-b border-gray-200">
         <div className="flex items-center">
-          <button
+          <button 
             onClick={onBack}
-            className="mr-4 text-gray-600 hover:text-gray-800 transition-colors p-1"
+            className="mr-4 text-gray-400 hover:text-gray-600 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -408,7 +416,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           </button>
           <div>
             <h2 className="text-xl font-semibold text-gray-800">
-              {meeting ? meeting.title : 'Caricamento...'}
+              {meeting ? meeting.title : 'Loading...'}
             </h2>
             {meeting && (
               <p className="text-gray-500 text-sm">{meeting.date}</p>
@@ -416,87 +424,85 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           </div>
         </div>
         
-        <div className="flex space-x-3">
-          {audioFile && (
+        {audioFile && (
+          <div>
             <button
               onClick={startTranscription}
-              disabled={isTranscribing || isLoading}
-              className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 shadow-sm flex items-center text-sm"
+              disabled={isTranscribing || transcripts.some(t => t.status === 'processing' || t.status === 'queued')}
+              className={`px-4 py-2 text-white rounded-md shadow-sm text-sm font-medium ${
+                isTranscribing ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#7a5cf0] hover:bg-[#6146d9] transition-colors'
+              }`}
             >
-              {isTranscribing ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              {isTranscribing && (
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               )}
-              {isTranscribing ? 'Trascrivendo...' : 'Trascrivi Audio'}
+              {isTranscribing ? 'Transcribing...' : 'Transcribe Audio'}
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0]"></div>
-          <p className="text-gray-500 ml-3">Caricamento in corso...</p>
+          <p className="text-gray-500 ml-3">Loading...</p>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col lg:flex-row gap-6">
-          {/* Sidebar */}
+        <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-auto">
           <div className="lg:w-1/4">
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-              <h3 className="text-md font-medium text-gray-800 mb-4">Informazioni</h3>
+              <h3 className="text-md font-medium text-gray-800 mb-4">Information</h3>
               
               {audioFile && (
                 <div className="mb-4 pb-4 border-b border-gray-100">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">File Audio</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Audio File</h4>
                   <div className="flex items-center space-x-2 bg-[#f0eafb] p-3 rounded-md">
                     <div className="rounded-full bg-[#e0d8f5] p-2 flex-shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#7a5cf0]" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                       </svg>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{audioFile.fileName}</p>
-                      <p className="text-xs text-gray-500">
-                        {Math.round(audioFile.fileSize / 1024 / 1024 * 100) / 100} MB
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate" title={audioFile.fileName}>
+                        {audioFile.fileName}
                       </p>
+                      <p className="text-xs text-gray-500">{formatFileSize(audioFile.fileSize)}</p>
                     </div>
                   </div>
                 </div>
               )}
               
               <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Trascrizioni disponibili</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Available transcripts</h4>
                 {transcripts.length === 0 ? (
-                  <p className="text-sm text-gray-500">Nessuna trascrizione disponibile</p>
+                  <p className="text-sm text-gray-500">No transcripts available</p>
                 ) : (
                   <div className="space-y-3">
-                    {transcripts.map((transcript) => (
+                    {transcripts.map(transcript => (
                       <div 
                         key={transcript.id}
                         onClick={() => setActiveTranscript(transcript)}
-                        className={`cursor-pointer p-3 rounded-md border transition-colors ${
+                        className={`p-3 rounded-md cursor-pointer transition-colors ${
                           activeTranscript?.id === transcript.id 
-                            ? 'border-[#7a5cf0] bg-[#f5f2ff]' 
-                            : 'border-gray-200 hover:bg-gray-50'
+                            ? 'bg-[#f0eafb] border-l-4 border-[#7a5cf0]' 
+                            : 'bg-gray-50 hover:bg-gray-100'
                         }`}
                       >
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-sm font-medium text-gray-800">
-                            Trascrizione #{transcripts.length - transcripts.indexOf(transcript)}
+                            Transcript #{transcripts.length - transcripts.indexOf(transcript)}
                           </span>
                           {getTranscriptionStatus(transcript.status)}
                         </div>
                         <p className="text-xs text-gray-500">
-                          Creata il {formatDate(transcript.createdAt)}
+                          Created at {formatDate(transcript.createdAt)}
                         </p>
                         {transcript.completedAt && (
                           <p className="text-xs text-gray-500">
-                            Completata il {formatDate(transcript.completedAt)}
+                            Completed at {formatDate(transcript.completedAt)}
                           </p>
                         )}
                       </div>
@@ -507,54 +513,45 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
             </div>
           </div>
           
-          {/* Contenuto principale */}
+          {/* Main content */}
           <div className="flex-1">
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 h-full">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-800">
-                  {activeTranscript ? 'Trascrizione' : 'Nessuna trascrizione selezionata'}
+                  {activeTranscript ? 'Transcript' : 'No transcript selected'}
                 </h3>
                 
-                {activeTranscript?.status === 'completed' && activeTranscript.text && (
-                  <div className="flex space-x-2">
-                    <div className="relative">
+                {activeTranscript?.status === 'completed' && (
+                  <div className="relative">
+                    <div className="flex space-x-2">
                       <input
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyDown={handleSearchKeyDown}
-                        placeholder="Cerca nel testo..."
+                        placeholder="Search in text..."
                         className="px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0] text-sm"
                       />
                       <button
                         onClick={searchInTranscript}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#7a5cf0]"
+                        className="px-3 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                       </button>
                     </div>
-                    
-                    <button 
-                      onClick={() => setIsFullTextModalOpen(true)}
-                      className="text-[#7a5cf0] hover:text-[#6146d9] transition-colors flex items-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                      </svg>
-                    </button>
                   </div>
                 )}
               </div>
               
-              {activeTranscript ? (
-                activeTranscript.status === 'completed' && activeTranscript.text ? (
-                  <div>
+              <div className="h-full overflow-y-auto pb-8" ref={transcriptTextRef}>
+                {activeTranscript ? (
+                  <>
                     {highlightedText && (
                       <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-yellow-800">Risultato della ricerca:</span>
+                          <span className="text-sm font-medium text-yellow-800">Search result:</span>
                           <button 
                             onClick={() => setHighlightedText(null)}
                             className="text-gray-400 hover:text-gray-600"
@@ -564,119 +561,109 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                             </svg>
                           </button>
                         </div>
-                        <p className="text-sm text-gray-800">
-                          {highlightSearchTerm(highlightedText, searchTerm)}
-                        </p>
+                        {highlightSearchTerm(highlightedText, searchTerm)}
                       </div>
                     )}
                     
-                    <div className="mb-4">
-                      <div className="border-b border-gray-200">
-                        <div className="flex">
+                    {activeTranscript.status === 'completed' ? (
+                      <>
+                        <div className="mb-4 border-b border-gray-200 pb-2">
                           <button
+                            onClick={() => setViewMode('utterances')}
                             className="px-4 py-2 border-b-2 border-[#7a5cf0] text-[#7a5cf0] font-medium"
                           >
-                            Trascrizione con parlanti
+                            Transcript with speakers
                           </button>
                           <button
                             onClick={() => setIsFullTextModalOpen(true)}
                             className="px-4 py-2 text-gray-500 hover:text-gray-700"
                           >
-                            Testo completo
+                            Full text
                           </button>
                         </div>
-                      </div>
-                    </div>
-                    
-                    <div 
-                      ref={transcriptTextRef}
-                      className="overflow-y-auto max-h-[600px] p-1"
-                    >
-                      {activeTranscript.utterances && activeTranscript.utterances.length > 0 ? (
-                        <UtterancesList utterances={activeTranscript.utterances} />
-                      ) : (
-                        <div className="prose prose-sm max-w-none text-gray-800">
-                          {searchTerm && searchTerm.trim() 
-                            ? highlightSearchTerm(activeTranscript.text, searchTerm)
-                            : activeTranscript.text}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-64">
-                    {activeTranscript.status === 'processing' ? (
+                        
+                        {activeTranscript.utterances && activeTranscript.utterances.length > 0 ? (
+                          <UtterancesList utterances={activeTranscript.utterances} />
+                        ) : (
+                          <div className="prose prose-sm max-w-none text-gray-700">
+                            {activeTranscript.text?.split('\n').map((paragraph, idx) => (
+                              <p key={idx}>{paragraph}</p>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : activeTranscript.status === 'processing' ? (
                       <>
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0] mb-4"></div>
-                        <p className="text-gray-500 text-center">Trascrizione in corso...</p>
-                        <p className="text-gray-400 text-sm text-center mt-2">Questo processo potrebbe richiedere qualche minuto</p>
+                        <p className="text-gray-500 text-center">Transcription in progress...</p>
+                        <p className="text-gray-400 text-sm text-center mt-2">This process may take a few minutes</p>
                       </>
                     ) : activeTranscript.status === 'queued' ? (
                       <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <p className="text-gray-500 text-center">Trascrizione in coda</p>
-                        <p className="text-gray-400 text-sm text-center mt-2">La trascrizione verrà elaborata a breve</p>
+                        <p className="text-gray-500 text-center">Transcription in queue</p>
+                        <p className="text-gray-400 text-sm text-center mt-2">The transcription will be processed soon</p>
                       </>
                     ) : (
                       <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-red-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <p className="text-gray-500 text-center">Si è verificato un errore durante la trascrizione</p>
-                        <p className="text-gray-400 text-sm text-center mt-2">Riprova più tardi o contatta l'assistenza</p>
+                        <p className="text-gray-500 text-center">An error occurred during transcription</p>
+                        <p className="text-gray-400 text-sm text-center mt-2">Try again later or contact support</p>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    
+                    {audioFile ? (
+                      <>
+                        <p className="text-gray-500 text-center">No transcription available</p>
+                        <button
+                          onClick={startTranscription}
+                          disabled={isTranscribing}
+                          className={`mt-4 px-4 py-2 text-white rounded-md shadow-sm text-sm font-medium ${
+                            isTranscribing ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#7a5cf0] hover:bg-[#6146d9] transition-colors'
+                          }`}
+                        >
+                          {isTranscribing && (
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          )}
+                          {isTranscribing ? 'Transcribing...' : 'Transcribe Audio'}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-gray-500 text-center">No audio file available</p>
+                        <p className="text-gray-400 text-sm text-center mt-2">Import an audio file to perform transcription</p>
                       </>
                     )}
                   </div>
-                )
-              ) : (
-                <div className="flex flex-col items-center justify-center h-64">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                  </svg>
-                  {audioFile ? (
-                    <>
-                      <p className="text-gray-500 text-center">Nessuna trascrizione disponibile</p>
-                      <button
-                        onClick={startTranscription}
-                        disabled={isTranscribing}
-                        className="mt-4 px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 shadow-sm flex items-center text-sm"
-                      >
-                        {isTranscribing ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                        ) : (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                          </svg>
-                        )}
-                        {isTranscribing ? 'Trascrivendo...' : 'Trascrivi Audio'}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-gray-500 text-center">Nessun file audio disponibile</p>
-                      <p className="text-gray-400 text-sm text-center mt-2">Importa un file audio per poter eseguire la trascrizione</p>
-                    </>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
       
-      {/* Modale per visualizzare il testo completo */}
+      {/* Modal to display full text */}
       <Modal
         isOpen={isFullTextModalOpen}
         onRequestClose={() => setIsFullTextModalOpen(false)}
         style={customModalStyles}
-        contentLabel="Testo completo della trascrizione"
+        contentLabel="Full transcription text"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Trascrizione completa</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Full transcription</h2>
           <button 
             onClick={() => setIsFullTextModalOpen(false)}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -687,45 +674,41 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           </button>
         </div>
         
-        <div className="mb-4 border-b border-gray-200">
-          <div className="flex">
+        <div className="mb-4 border-b border-gray-200 pb-2">
+          <div className="flex space-x-4">
             <button
               onClick={() => setViewMode('utterances')}
               className={`px-4 py-2 ${viewMode === 'utterances' ? 'border-b-2 border-[#7a5cf0] text-[#7a5cf0] font-medium' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              Trascrizione con parlanti
+              Transcript with speakers
             </button>
             <button
               onClick={() => setViewMode('fulltext')}
               className={`px-4 py-2 ${viewMode === 'fulltext' ? 'border-b-2 border-[#7a5cf0] text-[#7a5cf0] font-medium' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              Testo completo
+              Full text
             </button>
           </div>
         </div>
         
-        <div className="max-h-[70vh] overflow-y-auto bg-gray-50 p-4 rounded-md">
-          {activeTranscript?.text && viewMode === 'fulltext' && (
-            <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800">
-              {searchTerm && searchTerm.trim() 
-                ? highlightSearchTerm(activeTranscript.text, searchTerm)
-                : activeTranscript.text}
-            </pre>
-          )}
-          
-          {activeTranscript?.utterances && viewMode === 'utterances' && (
+        <div className="max-h-[500px] overflow-y-auto mb-4">
+          {viewMode === 'utterances' && activeTranscript?.utterances ? (
             <UtterancesList utterances={activeTranscript.utterances} />
+          ) : (
+            <div className="prose prose-sm max-w-none text-gray-700">
+              {activeTranscript?.text?.split('\n').map((paragraph, idx) => (
+                <p key={idx}>{paragraph}</p>
+              ))}
+            </div>
           )}
         </div>
         
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={() => setIsFullTextModalOpen(false)}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors shadow-sm"
-          >
-            Chiudi
-          </button>
-        </div>
+        <button 
+          onClick={() => setIsFullTextModalOpen(false)}
+          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors shadow-sm"
+        >
+          Close
+        </button>
       </Modal>
     </div>
   );

@@ -57,8 +57,8 @@ export class AssemblyAIService {
       
       return response.data.upload_url;
     } catch (error) {
-      console.error('Errore nel caricamento del file audio:', error);
-      throw new Error(`Errore nel caricamento del file: ${error.message}`);
+      console.error('Error uploading audio file:', error);
+      throw new Error(`Error uploading file: ${error.message}`);
     }
   }
 
@@ -70,13 +70,13 @@ export class AssemblyAIService {
   public async startTranscription(audioFileId: string): Promise<Transcript> {
     try {
       if (!this.hasValidApiKey()) {
-        throw new Error('Chiave API di AssemblyAI non impostata');
+        throw new Error('AssemblyAI API key not set');
       }
       
       // Ottieni il file audio dal database
       const audioFile = await database.getAudioFileById(audioFileId);
       if (!audioFile) {
-        throw new Error(`File audio non trovato: ${audioFileId}`);
+        throw new Error(`Audio file not found: ${audioFileId}`);
       }
       
       // Crea una trascrizione in stato "queued"
@@ -93,11 +93,11 @@ export class AssemblyAIService {
       
       // Esegui la trascrizione in background
       this.processTranscription(audioFile.filePath, initialTranscript.id)
-        .catch(error => console.error('Errore nel processo di trascrizione:', error));
+        .catch(error => console.error('Error in transcription process:', error));
       
       return initialTranscript;
     } catch (error) {
-      console.error('Errore nell\'avvio della trascrizione:', error);
+      console.error('Error starting transcription:', error);
       throw error;
     }
   }
@@ -112,7 +112,7 @@ export class AssemblyAIService {
       // Aggiorna lo stato della trascrizione a "processing"
       let transcript = await database.getTranscriptById(transcriptId);
       if (!transcript) {
-        throw new Error(`Trascrizione non trovata: ${transcriptId}`);
+        throw new Error(`Transcript not found: ${transcriptId}`);
       }
       
       transcript = await database.saveTranscript({
@@ -125,7 +125,7 @@ export class AssemblyAIService {
       
       // Carica il file audio su AssemblyAI
       const uploadUrl = await this.uploadAudio(filePath);
-      console.log(`File caricato con successo: ${uploadUrl}`);
+      console.log(`File uploaded successfully: ${uploadUrl}`);
       
       // Avvia la trascrizione
       const transcriptionResponse = await axios.post(
@@ -144,7 +144,7 @@ export class AssemblyAIService {
       );
       
       const assemblyAiId = transcriptionResponse.data.id;
-      console.log(`Trascrizione avviata con ID: ${assemblyAiId}`);
+      console.log(`Transcription started with ID: ${assemblyAiId}`);
       
       // Aggiorna la trascrizione con l'ID di AssemblyAI
       transcript = await database.saveTranscript({
@@ -155,7 +155,7 @@ export class AssemblyAIService {
       // Polling per verificare lo stato della trascrizione
       await this.pollTranscriptionStatus(assemblyAiId, transcriptId);
     } catch (error) {
-      console.error('Errore nel processo di trascrizione:', error);
+      console.error('Error in transcription process:', error);
       
       // Aggiorna lo stato della trascrizione a "error"
       const transcript = await database.getTranscriptById(transcriptId);
@@ -196,7 +196,7 @@ export class AssemblyAIService {
         );
         
         const status = response.data.status;
-        console.log(`Stato trascrizione ${assemblyAiId}: ${status}`);
+        console.log(`Transcription status ${assemblyAiId}: ${status}`);
         
         if (status === 'completed') {
           completed = true;
@@ -252,93 +252,85 @@ export class AssemblyAIService {
             this.notifyTranscriptionUpdate(updatedTranscript);
           }
         }
-        // Continua il polling per gli stati 'queued' o 'processing'
+        // Per stati "queued" o "processing", continua il polling
       }
     } catch (error) {
-      console.error('Errore nel polling della trascrizione:', error);
+      console.error('Error in transcription polling:', error);
       
-      // Aggiorna la trascrizione nel database
-      const transcript = await database.getTranscriptById(transcriptId);
-      if (transcript) {
-        const updatedTranscript = await database.saveTranscript({
-          ...transcript,
-          status: 'error'
-        });
-        
-        // Notifica l'UI che la trascrizione è in errore
-        this.notifyTranscriptionUpdate(updatedTranscript);
+      // In caso di errore, aggiorna lo stato della trascrizione
+      try {
+        const transcript = await database.getTranscriptById(transcriptId);
+        if (transcript) {
+          const updatedTranscript = await database.saveTranscript({
+            ...transcript,
+            status: 'error'
+          });
+          
+          this.notifyTranscriptionUpdate(updatedTranscript);
+        }
+      } catch (innerError) {
+        console.error('Error updating transcript status after polling failure:', innerError);
       }
     }
   }
 
   /**
-   * Crea una nuova riunione a partire da una trascrizione completata
-   * @param transcript Trascrizione completata
+   * Crea una nuova riunione a partire da una trascrizione
+   * @param transcript La trascrizione completata
    */
   private async createMeetingFromTranscription(transcript: Transcript): Promise<void> {
     try {
+      // Ottieni il file audio associato
       if (!transcript.audioFileId) {
-        console.error('Impossibile creare riunione: audioFileId mancante nella trascrizione');
+        console.log('No audio file ID found in transcript, skipping meeting creation');
         return;
       }
       
-      // Ottieni il file audio
       const audioFile = await database.getAudioFileById(transcript.audioFileId);
       if (!audioFile) {
-        console.error(`File audio non trovato: ${transcript.audioFileId}`);
-        return;
-      }
-
-      // Verifica se esiste già una riunione con questo file audio o trascrizione
-      const allMeetings = await database.getAllMeetings();
-      const existingMeeting = allMeetings.find(m => 
-        m.audioFileId === audioFile.id || 
-        m.transcriptId === transcript.id
-      );
-      
-      if (existingMeeting) {
-        console.log(`Riunione già esistente per questo file/trascrizione: ${existingMeeting.id}`);
+        console.log(`Audio file not found for transcript ${transcript.id}, skipping meeting creation`);
         return;
       }
       
-      // Estrai il nome del file senza estensione
-      const fileName = path.basename(audioFile.fileName, path.extname(audioFile.fileName));
+      // Estrai un titolo dal nome del file
+      let title = 'Meeting from transcription';
+      if (audioFile.fileName) {
+        // Rimuovi l'estensione dal nome del file e usa come titolo
+        title = `Meeting from ${audioFile.fileName.replace(/\.[^/.]+$/, '')}`;
+      }
       
-      // Crea una nuova riunione
-      const meeting: Omit<Meeting, 'id' | 'type'> = {
-        title: `Riunione da ${fileName}`,
-        description: `Riunione creata automaticamente dalla trascrizione del file ${audioFile.fileName}`,
-        date: new Date().toISOString().split('T')[0],
+      // Crea la riunione
+      const meeting = await database.saveMeeting({
+        title,
+        description: `Meeting automatically created from audio file ${audioFile.fileName}`,
+        date: new Date().toISOString().split('T')[0], // Data corrente
         participants: [],
         createdAt: new Date().toISOString(),
         audioFileId: audioFile.id,
         transcriptId: transcript.id
-      };
-      
-      // Salva la riunione nel database
-      const savedMeeting = await database.saveMeeting(meeting);
-      console.log(`Riunione creata automaticamente: ${savedMeeting.id}`);
+      });
       
       // Aggiorna la trascrizione con l'ID della riunione
       await database.saveTranscript({
         ...transcript,
-        meetingId: savedMeeting.id
+        meetingId: meeting.id
       });
       
       // Aggiorna il file audio con l'ID della riunione
       await database.saveAudioFile({
         ...audioFile,
-        meetingId: savedMeeting.id,
+        meetingId: meeting.id,
         transcriptId: transcript.id
       });
       
-      // Notifica l'UI che è stata creata una nuova riunione
+      // Notifica la creazione della riunione
       if (this.mainWindow) {
-        this.mainWindow.webContents.send('meeting:created', savedMeeting);
+        this.mainWindow.webContents.send('meeting:created', meeting);
       }
       
+      console.log(`Meeting created from transcript: ${meeting.id}`);
     } catch (error) {
-      console.error('Errore nella creazione automatica della riunione:', error);
+      console.error('Error creating meeting from transcription:', error);
     }
   }
 

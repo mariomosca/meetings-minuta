@@ -9,20 +9,20 @@ import SettingsView from './components/SettingsView';
 import MonitoringView from './components/MonitoringView';
 import './notes.css';
 
-// Inizializza react-modal
+// Initialize react-modal
 try {
   Modal.setAppElement('#root');
 } catch (error) {
-  console.error('Errore nell\'inizializzazione di Modal:', error);
-  // Fallback se #root non è disponibile
+  console.error('Error initializing Modal:', error);
+  // Fallback if #root is not available
   try {
     Modal.setAppElement('body');
   } catch (error) {
-    console.error('Fallback fallito:', error);
+    console.error('Fallback failed:', error);
   }
 }
 
-// Interfaccia per le API di Electron
+// Interface for Electron APIs
 interface ElectronAPI {
   appInfo?: {
     name: string;
@@ -47,10 +47,10 @@ interface ElectronAPI {
   onTranscriptionStatusUpdate?: (handler: (transcript: Transcript) => void) => void;
 }
 
-// Accesso alle API esposte dal preload
+// Access to APIs exposed by preload
 const electronAPI = (window as any).electronAPI as ElectronAPI;
 
-// Interfaccia per una riunione
+// Interface for a meeting
 interface Meeting {
   id?: string;
   title: string;
@@ -62,7 +62,7 @@ interface Meeting {
   transcriptId?: string;
 }
 
-// Interfaccia per un file audio
+// Interface for an audio file
 interface AudioFile {
   id: string;
   fileName: string;
@@ -74,7 +74,7 @@ interface AudioFile {
   createdAt: string;
 }
 
-// Interfaccia per una trascrizione
+// Interface for a transcript
 interface Transcript {
   id: string;
   meetingId: string;
@@ -85,7 +85,7 @@ interface Transcript {
   completedAt?: string;
 }
 
-// Stile custom per i modali
+// Custom style for modals
 const customModalStyles = {
   content: {
     top: '50%',
@@ -126,11 +126,11 @@ const App: React.FC = () => {
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'transcription' | 'settings' | 'monitoring'>('list');
   
-  // Carica le riunioni all'avvio
+  // Load meetings on startup
   useEffect(() => {
     loadMeetings();
     
-    // Registra gli handler per gli eventi dal main process
+    // Register handlers for events from main process
     const unsubscribeNewMeeting = electronAPI.onNewMeetingCreated?.(handleNewMeetingCreated);
     const unsubscribeTranscriptionUpdate = electronAPI.onTranscriptionStatusUpdate?.(handleTranscriptionStatusUpdate);
     
@@ -141,24 +141,24 @@ const App: React.FC = () => {
     };
   }, []);
   
-  // Carica le riunioni dal database
+  // Load meetings from database
   async function loadMeetings() {
     try {
       setIsLoading(true);
       const fetchedMeetings = await electronAPI.meetings?.getAll() || [];
       setMeetings(fetchedMeetings);
     } catch (error) {
-      console.error('Errore nel caricamento delle riunioni:', error);
-      toast.error('Impossibile caricare le riunioni');
+      console.error('Error loading meetings:', error);
+      toast.error('Unable to load meetings');
     } finally {
       setIsLoading(false);
     }
   }
   
-  // Gestisce la creazione di una nuova riunione
+  // Handle creating a new meeting
   async function handleCreateMeeting() {
     if (!newMeeting.title || !newMeeting.date) {
-      toast.error('Titolo e data sono obbligatori');
+      toast.error('Title and date are required');
       return;
     }
     
@@ -172,7 +172,7 @@ const App: React.FC = () => {
       
       await electronAPI.meetings?.save(meeting);
       
-      // Resetta il form
+      // Reset form
       setNewMeeting({
         title: '',
         description: '',
@@ -182,20 +182,20 @@ const App: React.FC = () => {
       setNewParticipant('');
       setIsCreating(false);
       
-      // Ricarica le riunioni
+      // Reload meetings
       await loadMeetings();
       
-      // Notifica successo
-      toast.success('Riunione creata con successo');
+      // Success notification
+      toast.success('Meeting created successfully');
     } catch (error) {
-      console.error('Errore nella creazione della riunione:', error);
-      toast.error('Impossibile creare la riunione');
+      console.error('Error creating meeting:', error);
+      toast.error('Unable to create meeting');
     } finally {
       setIsLoading(false);
     }
   }
   
-  // Apre il modale di conferma eliminazione
+  // Open delete confirmation modal
   function confirmDeleteMeeting(id: string) {
     setDeleteModal({
       isOpen: true,
@@ -203,7 +203,7 @@ const App: React.FC = () => {
     });
   }
   
-  // Gestisce l'eliminazione di una riunione
+  // Handle meeting deletion
   async function handleDeleteMeeting() {
     if (!deleteModal.meetingId) return;
     
@@ -211,23 +211,23 @@ const App: React.FC = () => {
       setIsLoading(true);
       await electronAPI.meetings?.delete(deleteModal.meetingId);
       
-      // Chiudi il modale
+      // Close modal
       setDeleteModal({ isOpen: false, meetingId: undefined });
       
-      // Ricarica le riunioni
+      // Reload meetings
       await loadMeetings();
       
-      // Notifica successo
-      toast.success('Riunione eliminata con successo');
+      // Success notification
+      toast.success('Meeting deleted successfully');
     } catch (error) {
-      console.error('Errore nell\'eliminazione della riunione:', error);
-      toast.error('Impossibile eliminare la riunione');
+      console.error('Error deleting meeting:', error);
+      toast.error('Unable to delete meeting');
     } finally {
       setIsLoading(false);
     }
   }
   
-  // Gestisce l'aggiunta di un partecipante
+  // Handle adding a participant
   function handleAddParticipant() {
     if (!newParticipant.trim()) return;
     
@@ -238,7 +238,7 @@ const App: React.FC = () => {
     setNewParticipant('');
   }
   
-  // Gestisce la rimozione di un partecipante
+  // Handle removing a participant
   function handleRemoveParticipant(index: number) {
     const updatedParticipants = [...(newMeeting.participants || [])];
     updatedParticipants.splice(index, 1);
@@ -248,36 +248,36 @@ const App: React.FC = () => {
     });
   }
   
-  // Gestisce l'importazione di un file audio e la creazione di una riunione
+  // Handle audio file import and meeting creation
   async function handleImportAudio() {
     try {
       setIsLoading(true);
       
-      // Importa il file audio
+      // Import audio file
       const audioFile = await electronAPI.audioFiles?.import();
       
       if (!audioFile) {
-        toast.error('Nessun file audio selezionato');
+        toast.error('No audio file selected');
         setIsLoading(false);
         return;
       }
       
-      // Crea una nuova riunione con il file audio
-      const fileName = audioFile.fileName.replace(/\.[^/.]+$/, ''); // Rimuovi estensione
+      // Create a new meeting with the audio file
+      const fileName = audioFile.fileName.replace(/\.[^/.]+$/, ''); // Remove extension
       
       const meeting = {
-        title: `Riunione da ${fileName}`,
-        description: `Riunione creata automaticamente da file audio ${audioFile.fileName}`,
+        title: `Meeting from ${fileName}`,
+        description: `Meeting automatically created from audio file ${audioFile.fileName}`,
         date: new Date().toISOString().split('T')[0],
         participants: [],
         createdAt: new Date().toISOString(),
         audioFileId: audioFile.id
       };
       
-      // Salva la riunione
+      // Save the meeting
       const savedMeeting = await electronAPI.meetings?.save(meeting);
       
-      // Aggiorna il file audio con l'ID della riunione
+      // Update the audio file with the meeting ID
       if (savedMeeting && audioFile) {
         await electronAPI.audioFiles?.save({
           ...audioFile,
@@ -285,58 +285,58 @@ const App: React.FC = () => {
         });
       }
       
-      // Ricarica le riunioni
+      // Reload meetings
       await loadMeetings();
       
-      // Notifica successo
-      toast.success('File audio importato con successo');
+      // Success notification
+      toast.success('Audio file imported successfully');
     } catch (error) {
-      console.error('Errore nell\'importazione del file audio:', error);
-      toast.error('Impossibile importare il file audio');
+      console.error('Error importing audio file:', error);
+      toast.error('Unable to import audio file');
     } finally {
       setIsLoading(false);
     }
   }
   
-  // Formatta una data in formato italiano
+  // Format a date in Italian format
   function formatDate(dateString: string): string {
     const date = new Date(dateString);
     return format(date, 'dd MMMM yyyy', { locale: it });
   }
   
-  // Handler per nuove riunioni create dal main process
+  // Handler for new meetings created by main process
   function handleNewMeetingCreated(meeting: Meeting) {
-    // Aggiorna la lista delle riunioni senza ricaricare tutto
+    // Update meetings list without reloading everything
     setMeetings(prevMeetings => [meeting, ...prevMeetings]);
     
-    // Notifica l'utente
-    toast.success('Nuova riunione creata da file audio monitorato', {
+    // Notify user
+    toast.success('New meeting created from monitored audio file', {
       duration: 5000,
       icon: '🎙️'
     });
   }
   
-  // Handler per aggiornamenti dello stato della trascrizione
+  // Handler for transcript status updates
   function handleTranscriptionStatusUpdate(transcript: Transcript) {
-    // Se la trascrizione è stata completata, notifica l'utente
+    // If the transcript is completed, notify the user
     if (transcript.status === 'completed') {
-      // Trova la riunione associata
+      // Find associated meeting
       const meeting = meetings.find(m => m.id === transcript.meetingId);
       
-      // Notifica l'utente
-      toast.success(`Trascrizione completata: ${meeting?.title || 'Riunione'}`, {
+      // Notify user
+      toast.success(`Transcription completed: ${meeting?.title || 'Meeting'}`, {
         duration: 5000,
         icon: '📝'
       });
       
-      // Aggiorna le riunioni se necessario
+      // Update meetings if needed
       if (meeting && !meeting.transcriptId) {
         const updatedMeeting = { ...meeting, transcriptId: transcript.id };
         
-        // Aggiorna la riunione nel database
+        // Update meeting in database
         electronAPI.meetings?.save(updatedMeeting);
         
-        // Aggiorna lo stato locale
+        // Update local state
         setMeetings(prevMeetings => 
           prevMeetings.map(m => m.id === meeting.id ? updatedMeeting : m)
         );
@@ -344,24 +344,24 @@ const App: React.FC = () => {
     }
   }
   
-  // Gestisce il clic su una riunione per vedere le trascrizioni
+  // Handle click on a meeting to view transcriptions
   function handleViewTranscription(meetingId: string) {
     setSelectedMeetingId(meetingId);
     setView('transcription');
   }
   
-  // Torna alla lista delle riunioni
+  // Go back to meetings list
   function handleBackToList() {
     setSelectedMeetingId(null);
     setView('list');
   }
   
-  // Vai alle impostazioni
+  // Go to settings
   function handleGoToSettings() {
     setView('settings');
   }
   
-  // Aggiungi un gestore per la vista di monitoraggio
+  // Add handler for monitoring view
   function handleViewMonitoring() {
     setView('monitoring');
   }

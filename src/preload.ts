@@ -3,242 +3,242 @@
 
 import { contextBridge, ipcRenderer } from 'electron';
 
-// Aumentare il limite dei listener per evitare l'avviso di memory leak
+// Increase the listeners limit to avoid memory leak warning
 ipcRenderer.setMaxListeners(20);
 
-// Espone API sicure da utilizzare nel processo renderer
+// Expose safe APIs to use in the renderer process
 contextBridge.exposeInMainWorld('electronAPI', {
-  // Informazioni sull'applicazione
+  // Application information
   appInfo: {
     name: 'Meetings Minuta',
     version: '1.0.0',
   },
   
-  // API per le note
+  // APIs for notes
   notes: {
-    // Ottenere tutte le note
+    // Get all notes
     getAll: () => ipcRenderer.invoke('notes:getAll'),
     
-    // Ottenere una nota specifica
+    // Get a specific note
     getById: (id: string) => ipcRenderer.invoke('notes:getById', id),
     
-    // Salvare una nota
+    // Save a note
     save: (note: any) => ipcRenderer.invoke('notes:save', note),
     
-    // Eliminare una nota
+    // Delete a note
     delete: (id: string) => ipcRenderer.invoke('notes:delete', id),
   },
   
-  // API per le riunioni
+  // APIs for meetings
   meetings: {
-    // Ottenere tutte le riunioni
+    // Get all meetings
     getAll: () => ipcRenderer.invoke('meetings:getAll'),
     
-    // Ottenere una riunione specifica
+    // Get a specific meeting
     getById: (id: string) => ipcRenderer.invoke('meetings:getById', id),
     
-    // Salvare una riunione
+    // Save a meeting
     save: (meeting: any) => ipcRenderer.invoke('meetings:save', meeting),
     
-    // Eliminare una riunione
+    // Delete a meeting
     delete: (id: string) => ipcRenderer.invoke('meetings:delete', id),
   },
   
-  // API per le trascrizioni
+  // APIs for transcripts
   transcripts: {
-    // Ottenere tutte le trascrizioni
+    // Get all transcripts
     getAll: () => ipcRenderer.invoke('transcripts:getAll'),
     
-    // Ottenere una trascrizione specifica
+    // Get a specific transcript
     getById: (id: string) => ipcRenderer.invoke('transcripts:getById', id),
     
-    // Ottenere trascrizioni per una riunione specifica
+    // Get transcripts for a specific meeting
     getByMeetingId: (meetingId: string) => ipcRenderer.invoke('transcripts:getByMeetingId', meetingId),
     
-    // Salvare una trascrizione
+    // Save a transcript
     save: (transcript: any) => ipcRenderer.invoke('transcripts:save', transcript),
     
-    // Eliminare una trascrizione
+    // Delete a transcript
     delete: (id: string) => ipcRenderer.invoke('transcripts:delete', id),
     
-    // Avviare una trascrizione con AssemblyAI
+    // Start a transcription with AssemblyAI
     startTranscription: (audioFileId: string) => ipcRenderer.invoke('transcripts:startTranscription', audioFileId),
   },
   
-  // API per i file audio
+  // APIs for audio files
   audioFiles: {
-    // Ottenere tutti i file audio
+    // Get all audio files
     getAll: () => ipcRenderer.invoke('audioFiles:getAll'),
     
-    // Ottenere un file audio specifico
+    // Get a specific audio file
     getById: (id: string) => ipcRenderer.invoke('audioFiles:getById', id),
     
-    // Ottenere file audio per una riunione specifica
+    // Get audio files for a specific meeting
     getByMeetingId: (meetingId: string) => ipcRenderer.invoke('audioFiles:getByMeetingId', meetingId),
     
-    // Salvare un file audio
+    // Save an audio file
     save: (audioFile: any) => ipcRenderer.invoke('audioFiles:save', audioFile),
     
-    // Eliminare un file audio
+    // Delete an audio file
     delete: (id: string) => ipcRenderer.invoke('audioFiles:delete', id),
     
-    // Importare un file audio dal filesystem
+    // Import an audio file from the filesystem
     import: () => ipcRenderer.invoke('audioFiles:import'),
   },
   
-  // API per la configurazione
+  // APIs for configuration
   config: {
-    // Ottenere le directory monitorate
+    // Get monitored directories
     getWatchDirectories: () => ipcRenderer.invoke('config:getWatchDirectories'),
     
-    // Aggiungere una directory monitorata
+    // Add a monitored directory
     addWatchDirectory: () => ipcRenderer.invoke('config:addWatchDirectory'),
     
-    // Rimuovere una directory monitorata
+    // Remove a monitored directory
     removeWatchDirectory: (dirPath: string) => ipcRenderer.invoke('config:removeWatchDirectory', dirPath),
     
-    // Ottenere la chiave API AssemblyAI
+    // Get AssemblyAI API key
     getAssemblyAiKey: () => ipcRenderer.invoke('config:getAssemblyAiKey'),
     
-    // Impostare la chiave API AssemblyAI
+    // Set AssemblyAI API key
     setAssemblyAiKey: (apiKey: string) => ipcRenderer.invoke('config:setAssemblyAiKey', apiKey),
     
-    // Ottenere la lingua dell'interfaccia
+    // Get interface language
     getLanguage: () => ipcRenderer.invoke('config:getLanguage'),
     
-    // Impostare la lingua dell'interfaccia
+    // Set interface language
     setLanguage: (language: string) => ipcRenderer.invoke('config:setLanguage', language),
   },
   
-  // API per il monitoraggio dei file
+  // APIs for file monitoring
   fileWatcher: {
-    // Avviare il monitoraggio di una directory
+    // Start monitoring a directory
     startWatching: (directoryPath?: string) => ipcRenderer.invoke('fileWatcher:startWatching', directoryPath),
     
-    // Fermare il monitoraggio
+    // Stop monitoring
     stopWatching: () => ipcRenderer.invoke('fileWatcher:stopWatching'),
     
-    // Verificare se il monitoraggio è attivo
+    // Check if monitoring is active
     isActive: () => ipcRenderer.invoke('fileWatcher:isActive'),
   },
   
-  // API per le impostazioni (wrapper per config)
+  // APIs for settings (wrapper for config)
   settings: {
-    // Ottenere la directory monitorata
+    // Get the monitored directory
     getWatchDirectory: async () => {
-      console.log('preload: chiamata a getWatchDirectory');
+      console.log('preload: call to getWatchDirectory');
       try {
         const directories = await ipcRenderer.invoke('config:getWatchDirectories');
         const isActive = await ipcRenderer.invoke('fileWatcher:isActive');
         
-        console.log('preload: directories ottenute:', directories);
+        console.log('preload: directories obtained:', directories);
         return { 
           directory: directories && directories.length > 0 ? directories[0] : '',
           isEnabled: isActive
         };
       } catch (error) {
-        console.error('preload: errore in getWatchDirectory:', error);
+        console.error('preload: error in getWatchDirectory:', error);
         return { directory: '', isEnabled: false };
       }
     },
     
-    // Selezionare la directory da monitorare
+    // Select directory to monitor
     selectWatchDirectory: async () => {
-      console.log('preload: chiamata a selectWatchDirectory');
+      console.log('preload: call to selectWatchDirectory');
       try {
         const directories = await ipcRenderer.invoke('config:addWatchDirectory');
-        console.log('preload: risultato da addWatchDirectory:', directories);
+        console.log('preload: result from addWatchDirectory:', directories);
         if (directories && directories.length > 0) {
           return { 
             success: true, 
             directory: directories[directories.length - 1] 
           };
         } else {
-          return { success: false, error: 'Nessuna directory selezionata' };
+          return { success: false, error: 'No directory selected' };
         }
       } catch (error) {
-        console.error('preload: errore in selectWatchDirectory:', error);
+        console.error('preload: error in selectWatchDirectory:', error);
         return { 
           success: false, 
-          error: error instanceof Error ? error.message : 'Errore sconosciuto' 
+          error: error instanceof Error ? error.message : 'Unknown error' 
         };
       }
     },
     
-    // Attivare/disattivare il monitoraggio
+    // Enable/disable monitoring
     toggleWatching: async (isEnabled: boolean) => {
-      console.log('preload: chiamata a toggleWatching:', isEnabled);
+      console.log('preload: call to toggleWatching:', isEnabled);
       try {
         if (isEnabled) {
-          // Avvia il monitoraggio
+          // Start monitoring
           const result = await ipcRenderer.invoke('fileWatcher:startWatching');
           return { success: result.success, error: result.error };
         } else {
-          // Ferma il monitoraggio
+          // Stop monitoring
           const result = await ipcRenderer.invoke('fileWatcher:stopWatching');
           return { success: result.success, error: result.error };
         }
       } catch (error) {
-        console.error('preload: errore in toggleWatching:', error);
+        console.error('preload: error in toggleWatching:', error);
         return { 
           success: false, 
-          error: error instanceof Error ? error.message : 'Errore sconosciuto' 
+          error: error instanceof Error ? error.message : 'Unknown error' 
         };
       }
     },
     
-    // Ottenere la chiave API AssemblyAI
+    // Get AssemblyAI API key
     getAssemblyAIApiKey: async () => {
-      console.log('preload: chiamata a getAssemblyAIApiKey');
+      console.log('preload: call to getAssemblyAIApiKey');
       try {
         return await ipcRenderer.invoke('config:getAssemblyAiKey');
       } catch (error) {
-        console.error('preload: errore in getAssemblyAIApiKey:', error);
+        console.error('preload: error in getAssemblyAIApiKey:', error);
         return '';
       }
     },
     
-    // Salvare la chiave API AssemblyAI
+    // Save AssemblyAI API key
     saveAssemblyAIApiKey: async (apiKey: string) => {
-      console.log('preload: chiamata a saveAssemblyAIApiKey');
+      console.log('preload: call to saveAssemblyAIApiKey');
       try {
         const result = await ipcRenderer.invoke('config:setAssemblyAiKey', apiKey);
         return { success: !!result };
       } catch (error) {
-        console.error('preload: errore in saveAssemblyAIApiKey:', error);
+        console.error('preload: error in saveAssemblyAIApiKey:', error);
         return { success: false };
       }
     },
     
-    // Ottenere la lingua dell'interfaccia
+    // Get interface language
     getLanguage: async () => {
-      console.log('preload: chiamata a getLanguage');
+      console.log('preload: call to getLanguage');
       try {
         return await ipcRenderer.invoke('config:getLanguage');
       } catch (error) {
-        console.error('preload: errore in getLanguage:', error);
-        return 'it'; // Default: italiano
+        console.error('preload: error in getLanguage:', error);
+        return 'it'; // Default: Italian
       }
     },
     
-    // Salvare la lingua dell'interfaccia
+    // Save interface language
     saveLanguage: async (language: string) => {
-      console.log('preload: chiamata a saveLanguage');
+      console.log('preload: call to saveLanguage');
       try {
         const result = await ipcRenderer.invoke('config:setLanguage', language);
         return { success: !!result };
       } catch (error) {
-        console.error('preload: errore in saveLanguage:', error);
+        console.error('preload: error in saveLanguage:', error);
         return { success: false };
       }
     }
   },
   
-  // API per eventi
+  // APIs for events
   events: {
-    // Registrare una callback per un evento
+    // Register a callback for an event
     on: (channel: string, callback: (...args: any[]) => void) => {
-      // Canali consentiti
+      // Allowed channels
       const validChannels = [
         'transcript:statusChanged',
         'audioFile:imported',
@@ -251,9 +251,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       }
     },
     
-    // Rimuovere una callback per un evento
+    // Remove a callback for an event
     off: (channel: string, callback: (...args: any[]) => void) => {
-      // Canali consentiti
+      // Allowed channels
       const validChannels = [
         'transcript:statusChanged',
         'audioFile:imported',
@@ -267,21 +267,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
   
-  // Helper per registrare un listener per gli aggiornamenti delle trascrizioni
+  // Helper to register a listener for transcript updates
   onTranscriptionStatusUpdate: (handler: (transcript: any) => void) => {
     ipcRenderer.on('transcript:statusChanged', (_, transcript) => handler(transcript));
     
-    // Restituisce una funzione per rimuovere il listener
+    // Returns a function to remove the listener
     return () => {
       ipcRenderer.removeListener('transcript:statusChanged', handler);
     };
   },
   
-  // Helper per registrare un listener per la creazione di nuove riunioni
+  // Helper to register a listener for new meeting creation
   onNewMeetingCreated: (handler: (meeting: any) => void) => {
     ipcRenderer.on('meeting:created', (_, meeting) => handler(meeting));
     
-    // Restituisce una funzione per rimuovere il listener
+    // Returns a function to remove the listener
     return () => {
       ipcRenderer.removeListener('meeting:created', handler);
     };

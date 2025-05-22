@@ -22,10 +22,11 @@ function setupIPCHandlers() {
   // Ottenere tutte le note
   ipcMain.handle('notes:getAll', async () => {
     try {
-      return await database.getAllNotes();
+      const notes = await database.getAllNotes();
+      return notes;
     } catch (error) {
-      console.error('Errore nell\'handler notes:getAll:', error);
-      throw error;
+      console.error('Error in handler notes:getAll:', error);
+      return [];
     }
   });
 
@@ -34,7 +35,7 @@ function setupIPCHandlers() {
     try {
       return await database.getNoteById(id);
     } catch (error) {
-      console.error(`Errore nell'handler notes:getById (${id}):`, error);
+      console.error(`Error in handler notes:getById (${id}):`, error);
       throw error;
     }
   });
@@ -42,10 +43,11 @@ function setupIPCHandlers() {
   // Salvare una nota
   ipcMain.handle('notes:save', async (_event, note) => {
     try {
-      return await database.saveNote(note);
+      const savedNote = await database.saveNote(note);
+      return savedNote;
     } catch (error) {
-      console.error('Errore nell\'handler notes:save:', error);
-      throw error;
+      console.error('Error in handler notes:save:', error);
+      return null;
     }
   });
 
@@ -55,7 +57,7 @@ function setupIPCHandlers() {
       await database.deleteNote(id);
       return { success: true, id };
     } catch (error) {
-      console.error(`Errore nell'handler notes:delete (${id}):`, error);
+      console.error(`Error in handler notes:delete (${id}):`, error);
       throw error;
     }
   });
@@ -65,10 +67,11 @@ function setupIPCHandlers() {
   // Ottenere tutte le riunioni
   ipcMain.handle('meetings:getAll', async () => {
     try {
-      return await database.getAllMeetings();
+      const meetings = await database.getAllMeetings();
+      return meetings;
     } catch (error) {
-      console.error('Errore nell\'handler meetings:getAll:', error);
-      throw error;
+      console.error('Error in handler meetings:getAll:', error);
+      return [];
     }
   });
   
@@ -77,7 +80,7 @@ function setupIPCHandlers() {
     try {
       return await database.getMeetingById(id);
     } catch (error) {
-      console.error(`Errore nell'handler meetings:getById (${id}):`, error);
+      console.error(`Error in handler meetings:getById (${id}):`, error);
       throw error;
     }
   });
@@ -85,10 +88,11 @@ function setupIPCHandlers() {
   // Salvare una riunione
   ipcMain.handle('meetings:save', async (_event, meeting) => {
     try {
-      return await database.saveMeeting(meeting);
+      const savedMeeting = await database.saveMeeting(meeting);
+      return savedMeeting;
     } catch (error) {
-      console.error('Errore nell\'handler meetings:save:', error);
-      throw error;
+      console.error('Error in handler meetings:save:', error);
+      return null;
     }
   });
   
@@ -98,7 +102,7 @@ function setupIPCHandlers() {
       await database.deleteMeeting(id);
       return { success: true, id };
     } catch (error) {
-      console.error(`Errore nell'handler meetings:delete (${id}):`, error);
+      console.error(`Error in handler meetings:delete (${id}):`, error);
       throw error;
     }
   });
@@ -108,10 +112,11 @@ function setupIPCHandlers() {
   // Ottenere tutte le trascrizioni
   ipcMain.handle('transcripts:getAll', async () => {
     try {
-      return await database.getAllTranscripts();
+      const transcripts = await database.getAllTranscripts();
+      return transcripts;
     } catch (error) {
-      console.error('Errore nell\'handler transcripts:getAll:', error);
-      throw error;
+      console.error('Error in handler transcripts:getAll:', error);
+      return [];
     }
   });
   
@@ -120,7 +125,7 @@ function setupIPCHandlers() {
     try {
       return await database.getTranscriptById(id);
     } catch (error) {
-      console.error(`Errore nell'handler transcripts:getById (${id}):`, error);
+      console.error(`Error in handler transcripts:getById (${id}):`, error);
       throw error;
     }
   });
@@ -130,7 +135,7 @@ function setupIPCHandlers() {
     try {
       return await database.getTranscriptsByMeetingId(meetingId);
     } catch (error) {
-      console.error(`Errore nell'handler transcripts:getByMeetingId (${meetingId}):`, error);
+      console.error(`Error in handler transcripts:getByMeetingId (${meetingId}):`, error);
       throw error;
     }
   });
@@ -138,10 +143,11 @@ function setupIPCHandlers() {
   // Salvare una trascrizione
   ipcMain.handle('transcripts:save', async (_event, transcript) => {
     try {
-      return await database.saveTranscript(transcript);
+      const savedTranscript = await database.saveTranscript(transcript);
+      return savedTranscript;
     } catch (error) {
-      console.error('Errore nell\'handler transcripts:save:', error);
-      throw error;
+      console.error('Error in handler transcripts:save:', error);
+      return null;
     }
   });
   
@@ -151,7 +157,7 @@ function setupIPCHandlers() {
       await database.deleteTranscript(id);
       return { success: true, id };
     } catch (error) {
-      console.error(`Errore nell'handler transcripts:delete (${id}):`, error);
+      console.error(`Error in handler transcripts:delete (${id}):`, error);
       throw error;
     }
   });
@@ -161,10 +167,11 @@ function setupIPCHandlers() {
   // Ottenere tutti i file audio
   ipcMain.handle('audioFiles:getAll', async () => {
     try {
-      return await database.getAllAudioFiles();
+      const audioFiles = await database.getAllAudioFiles();
+      return audioFiles;
     } catch (error) {
-      console.error('Errore nell\'handler audioFiles:getAll:', error);
-      throw error;
+      console.error('Error in handler audioFiles:getAll:', error);
+      return [];
     }
   });
   
@@ -173,7 +180,7 @@ function setupIPCHandlers() {
     try {
       return await database.getAudioFileById(id);
     } catch (error) {
-      console.error(`Errore nell'handler audioFiles:getById (${id}):`, error);
+      console.error(`Error in handler audioFiles:getById (${id}):`, error);
       throw error;
     }
   });
@@ -183,7 +190,7 @@ function setupIPCHandlers() {
     try {
       return await database.getAudioFileByMeetingId(meetingId);
     } catch (error) {
-      console.error(`Errore nell'handler audioFiles:getByMeetingId (${meetingId}):`, error);
+      console.error(`Error in handler audioFiles:getByMeetingId (${meetingId}):`, error);
       throw error;
     }
   });
@@ -191,10 +198,11 @@ function setupIPCHandlers() {
   // Salvare un file audio
   ipcMain.handle('audioFiles:save', async (_event, audioFile) => {
     try {
-      return await database.saveAudioFile(audioFile);
+      const savedAudioFile = await database.saveAudioFile(audioFile);
+      return savedAudioFile;
     } catch (error) {
-      console.error('Errore nell\'handler audioFiles:save:', error);
-      throw error;
+      console.error('Error in handler audioFiles:save:', error);
+      return null;
     }
   });
   
@@ -204,7 +212,7 @@ function setupIPCHandlers() {
       await database.deleteAudioFile(id);
       return { success: true, id };
     } catch (error) {
-      console.error(`Errore nell'handler audioFiles:delete (${id}):`, error);
+      console.error(`Error in handler audioFiles:delete (${id}):`, error);
       throw error;
     }
   });
@@ -237,8 +245,8 @@ function setupIPCHandlers() {
       
       return audioFile;
     } catch (error) {
-      console.error('Errore nell\'handler audioFiles:import:', error);
-      throw error;
+      console.error('Error in handler audioFiles:import:', error);
+      return null;
     }
   });
   
@@ -247,10 +255,11 @@ function setupIPCHandlers() {
   // Ottenere le directory monitorate
   ipcMain.handle('config:getWatchDirectories', () => {
     try {
-      return database.getWatchDirectories();
+      const watchDirectories = database.getWatchDirectories();
+      return watchDirectories;
     } catch (error) {
-      console.error('Errore nell\'handler config:getWatchDirectories:', error);
-      throw error;
+      console.error('Error in handler config:getWatchDirectories:', error);
+      return [];
     }
   });
   
@@ -268,8 +277,8 @@ function setupIPCHandlers() {
       const dirPath = result.filePaths[0];
       return database.addWatchDirectory(dirPath);
     } catch (error) {
-      console.error('Errore nell\'handler config:addWatchDirectory:', error);
-      throw error;
+      console.error('Error in handler config:addWatchDirectory:', error);
+      return [];
     }
   });
   
@@ -278,7 +287,7 @@ function setupIPCHandlers() {
     try {
       return database.removeWatchDirectory(dirPath);
     } catch (error) {
-      console.error(`Errore nell'handler config:removeWatchDirectory (${dirPath}):`, error);
+      console.error(`Error in handler config:removeWatchDirectory (${dirPath}):`, error);
       throw error;
     }
   });
@@ -286,10 +295,11 @@ function setupIPCHandlers() {
   // Ottenere la chiave API AssemblyAI
   ipcMain.handle('config:getAssemblyAiKey', () => {
     try {
-      return database.getAssemblyAiKey();
+      const apiKey = database.getAssemblyAiKey();
+      return apiKey;
     } catch (error) {
-      console.error('Errore nell\'handler config:getAssemblyAiKey:', error);
-      throw error;
+      console.error('Error in handler config:getAssemblyAiKey:', error);
+      return '';
     }
   });
   
@@ -299,18 +309,19 @@ function setupIPCHandlers() {
       database.setAssemblyAiKey(apiKey);
       return true;
     } catch (error) {
-      console.error('Errore nell\'handler config:setAssemblyAiKey:', error);
-      throw error;
+      console.error('Error in handler config:setAssemblyAiKey:', error);
+      return false;
     }
   });
 
   // Ottenere la lingua dell'interfaccia
   ipcMain.handle('config:getLanguage', () => {
     try {
-      return database.getLanguage();
+      const language = database.getLanguage();
+      return language;
     } catch (error) {
-      console.error('Errore nell\'handler config:getLanguage:', error);
-      throw error;
+      console.error('Error in handler config:getLanguage:', error);
+      return 'it';
     }
   });
   
@@ -320,8 +331,8 @@ function setupIPCHandlers() {
       database.setLanguage(language);
       return true;
     } catch (error) {
-      console.error('Errore nell\'handler config:setLanguage:', error);
-      throw error;
+      console.error('Error in handler config:setLanguage:', error);
+      return false;
     }
   });
 
@@ -331,8 +342,8 @@ function setupIPCHandlers() {
   ipcMain.handle('fileWatcher:startWatching', (_event, directoryPath) => {
     try {
       if (!fileWatcher) {
-        console.error('FileWatcher non inizializzato');
-        return { success: false, error: 'FileWatcher non inizializzato' };
+        console.error('FileWatcher not initialized');
+        return { success: false, error: 'FileWatcher not initialized' };
       }
       
       // Se directoryPath non è specificato, usa la prima directory dai watchDirectories
@@ -340,15 +351,15 @@ function setupIPCHandlers() {
       if (!dirToWatch) {
         const watchDirs = database.getWatchDirectories();
         if (watchDirs.length === 0) {
-          return { success: false, error: 'Nessuna directory da monitorare' };
+          return { success: false, error: 'No directories to monitor' };
         }
         dirToWatch = watchDirs[0];
       }
       
-      const success = fileWatcher.startWatching(dirToWatch);
-      return { success, directory: dirToWatch };
+      const result = fileWatcher.startWatching(dirToWatch);
+      return result;
     } catch (error) {
-      console.error('Errore nell\'handler fileWatcher:startWatching:', error);
+      console.error('Error in handler fileWatcher:startWatching:', error);
       return { success: false, error: error.message };
     }
   });
@@ -357,14 +368,14 @@ function setupIPCHandlers() {
   ipcMain.handle('fileWatcher:stopWatching', () => {
     try {
       if (!fileWatcher) {
-        console.error('FileWatcher non inizializzato');
-        return { success: false, error: 'FileWatcher non inizializzato' };
+        console.error('FileWatcher not initialized');
+        return { success: false, error: 'FileWatcher not initialized' };
       }
       
       fileWatcher.stopWatching();
       return { success: true };
     } catch (error) {
-      console.error('Errore nell\'handler fileWatcher:stopWatching:', error);
+      console.error('Error in handler fileWatcher:stopWatching:', error);
       return { success: false, error: error.message };
     }
   });
@@ -376,9 +387,10 @@ function setupIPCHandlers() {
         return false;
       }
       
-      return fileWatcher.isActive();
+      const isActive = fileWatcher.isActive();
+      return isActive;
     } catch (error) {
-      console.error('Errore nell\'handler fileWatcher:isActive:', error);
+      console.error('Error in handler fileWatcher:isActive:', error);
       return false;
     }
   });
@@ -389,12 +401,12 @@ function setupIPCHandlers() {
   ipcMain.handle('transcripts:startTranscription', async (_event, audioFileId) => {
     try {
       if (!assemblyAIService) {
-        throw new Error('AssemblyAIService non inizializzato');
+        throw new Error('AssemblyAIService not initialized');
       }
       
       return await assemblyAIService.startTranscription(audioFileId);
     } catch (error) {
-      console.error(`Errore nell'handler transcripts:startTranscription (${audioFileId}):`, error);
+      console.error(`Error in handler transcripts:startTranscription (${audioFileId}):`, error);
       throw error;
     }
   });
@@ -434,7 +446,7 @@ const createWindow = (): void => {
 // Inizializza i servizi dell'applicazione
 function initializeServices() {
   if (!mainWindow) {
-    console.error('MainWindow non inizializzata');
+    console.error('MainWindow not initialized');
     return;
   }
   

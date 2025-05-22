@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 
-// Interfaccia per le API di Electron
+// Interface for Electron APIs
 interface ElectronAPI {
   settings?: {
     getWatchDirectory: () => Promise<{ directory: string; isEnabled: boolean }>;
@@ -25,7 +25,7 @@ interface ElectronAPI {
   };
 }
 
-// Accesso alle API esposte dal preload
+// Access to APIs exposed by preload
 const electronAPI = (window as any).electronAPI as ElectronAPI;
 
 interface SettingsViewProps {
@@ -41,165 +41,169 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [language, setLanguage] = useState<string>('it');
   
-  // Carica le impostazioni all'avvio
+  // Load settings on startup
   useEffect(() => {
     loadSettings();
   }, []);
   
-  // Carica le impostazioni
+  // Load settings
   async function loadSettings() {
     try {
       setIsLoading(true);
       
-      // DEBUG: Controlla se le API sono disponibili
-      console.log('electronAPI disponibile:', electronAPI);
+      // DEBUG: Check if APIs are available
+      console.log('electronAPI available:', electronAPI);
       console.log('settings API:', electronAPI.settings);
       console.log('config API:', electronAPI.config);
       
-      // Carica le impostazioni della directory di monitoraggio
+      // Load monitoring directory settings
       const watchDirSettings = await electronAPI.settings?.getWatchDirectory() || { directory: '', isEnabled: false };
       setWatchDirectory(watchDirSettings.directory);
       setIsWatchingEnabled(watchDirSettings.isEnabled);
       
-      // Carica la chiave API di AssemblyAI
+      // Load AssemblyAI API key
       const savedApiKey = await electronAPI.settings?.getAssemblyAIApiKey() || '';
       setApiKey(savedApiKey);
       
-      // Carica la lingua corrente
+      // Load current language
       const savedLanguage = await electronAPI.settings?.getLanguage() || 'it';
       setLanguage(savedLanguage);
       
-      // Applica la lingua caricata
+      // Apply loaded language
       i18n.changeLanguage(savedLanguage);
       
     } catch (error) {
-      console.error('Errore nel caricamento delle impostazioni:', error);
+      console.error('Error loading settings:', error);
       toast.error(t('errors.loadingSettings'));
     } finally {
       setIsLoading(false);
     }
   }
   
-  // Seleziona la directory da monitorare
+  // Select directory to monitor
   async function handleSelectDirectory() {
-    console.log('handleSelectDirectory chiamato');
+    console.log('handleSelectDirectory called');
     try {
       const result = await electronAPI.settings?.selectWatchDirectory();
-      console.log('Risultato ottenuto:', result);
+      console.log('Result obtained:', result);
       
       if (result?.success) {
         setWatchDirectory(result.directory || '');
         toast.success(t('settings.monitoring.directorySelected'));
       } else if (result?.error) {
-        console.error('Errore:', result.error);
+        console.error('Error:', result.error);
         toast.error(result.error);
       }
     } catch (error) {
-      console.error('Errore nella selezione della directory:', error);
+      console.error('Error selecting directory:', error);
       toast.error(t('settings.monitoring.directoryError'));
     }
   }
   
-  // Attiva/disattiva il monitoraggio
+  // Enable/disable monitoring
   async function handleToggleWatching() {
-    console.log('handleToggleWatching chiamato');
+    console.log('handleToggleWatching called');
     try {
       setIsSaving(true);
       const newState = !isWatchingEnabled;
       
-      // Se stiamo attivando il monitoraggio ma non abbiamo una directory, mostra un errore
+      // If we're enabling monitoring but don't have a directory, show an error
       if (newState && !watchDirectory) {
         toast.error(t('settings.monitoring.noDirectoryError'));
         return;
       }
       
-      console.log('Chiamando toggleWatching()');
+      console.log('Calling toggleWatching()');
       const result = await electronAPI.settings?.toggleWatching(newState);
-      console.log('Risultato ottenuto:', result);
+      console.log('Result obtained:', result);
       
       if (result?.success) {
         setIsWatchingEnabled(newState);
         toast.success(newState ? t('settings.monitoring.enabled') : t('settings.monitoring.disabled'));
       } else if (result?.error) {
-        console.error('Errore:', result.error);
+        console.error('Error:', result.error);
         toast.error(result.error);
       }
     } catch (error) {
-      console.error('Errore nell\'attivazione/disattivazione del monitoraggio:', error);
+      console.error('Error enabling/disabling monitoring:', error);
       toast.error(t('settings.monitoring.toggleError'));
     } finally {
       setIsSaving(false);
     }
   }
   
-  // Salva la chiave API di AssemblyAI
+  // Save AssemblyAI API key
   async function handleSaveApiKey() {
-    console.log('handleSaveApiKey chiamato');
+    console.log('handleSaveApiKey called');
     try {
       setIsSaving(true);
-      console.log('API utilizzata:', electronAPI.settings ? 'settings' : 'config');
+      console.log('API used:', electronAPI.settings ? 'settings' : 'config');
       
-      // Prova prima con settings API
+      // Try first with settings API
       if (electronAPI.settings?.saveAssemblyAIApiKey) {
-        console.log('Chiamando settings.saveAssemblyAIApiKey()');
+        console.log('Calling settings.saveAssemblyAIApiKey()');
         const result = await electronAPI.settings.saveAssemblyAIApiKey(apiKey);
-        console.log('Risultato ottenuto:', result);
+        console.log('Result obtained:', result);
         
         if (result.success) {
           toast.success(t('settings.api.keySaved'));
         } else {
-          console.error('Errore:', result.error);
-          toast.error(result.error);
+          // Handle potential error message, even if not defined in the type
+          const errorMessage = (result as any).error;
+          if (errorMessage) {
+            console.error('Error:', errorMessage);
+            toast.error(errorMessage);
+          }
         }
       } 
-      // Prova con config API se settings non è disponibile
+      // Try with config API if settings is not available
       else if (electronAPI.config?.setAssemblyAiKey) {
-        console.log('Chiamando config.setAssemblyAiKey()');
+        console.log('Calling config.setAssemblyAiKey()');
         const result = await electronAPI.config.setAssemblyAiKey(apiKey);
-        console.log('Risultato ottenuto:', result);
+        console.log('Result obtained:', result);
         
         if (result) {
           toast.success(t('settings.api.keySaved'));
         }
       } else {
-        console.error('Nessuna API disponibile per salvare la chiave API');
+        console.error('No API available to save API key');
         toast.error(t('settings.api.keyError'));
       }
     } catch (error) {
-      console.error('Errore nel salvataggio della chiave API:', error);
+      console.error('Error saving API key:', error);
       toast.error(t('settings.api.keySaveError'));
     } finally {
       setIsSaving(false);
     }
   }
   
-  // Seleziona la lingua
+  // Select language
   async function handleSelectLanguage() {
     try {
       setIsSaving(true);
       
-      // Aggiorna la lingua nel database
+      // Update language in database
       if (electronAPI.settings?.saveLanguage) {
         const result = await electronAPI.settings.saveLanguage(language);
         
         if (result.success) {
-          // Cambia la lingua dell'interfaccia
+          // Change interface language
           i18n.changeLanguage(language);
           toast.success(t('settings.language.changed'));
         }
       } 
-      // Fallback al config API
+      // Fallback to config API
       else if (electronAPI.config?.setLanguage) {
         await electronAPI.config.setLanguage(language);
         
-        // Cambia la lingua dell'interfaccia
+        // Change interface language
         i18n.changeLanguage(language);
         toast.success(t('settings.language.changed'));
       } else {
         toast.error(t('settings.language.error'));
       }
     } catch (error) {
-      console.error('Errore nella selezione della lingua:', error);
+      console.error('Error selecting language:', error);
       toast.error(t('settings.language.error'));
     } finally {
       setIsSaving(false);
@@ -208,7 +212,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
   
   return (
     <div className="h-full flex flex-col p-6 overflow-auto">
-      {/* Intestazione */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
         <div className="flex items-center">
           <div>

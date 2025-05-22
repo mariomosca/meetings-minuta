@@ -12,13 +12,13 @@ export class FileWatcher {
 
   constructor(mainWindow: BrowserWindow | null = null) {
     this.mainWindow = mainWindow;
-    console.log('FileWatcher inizializzato');
+    console.log('FileWatcher initialized');
   }
 
   /**
-   * Avvia il monitoraggio di una directory
-   * @param directoryPath Directory da monitorare
-   * @returns true se il monitoraggio è stato avviato con successo
+   * Start monitoring a directory
+   * @param directoryPath Directory to monitor
+   * @returns true if monitoring started successfully
    */
   public startWatching(directoryPath: string): boolean {
     try {
@@ -26,37 +26,37 @@ export class FileWatcher {
         this.stopWatching();
       }
 
-      // Verifica che la directory esista
+      // Verify that the directory exists
       if (!fs.existsSync(directoryPath)) {
-        console.error(`La directory ${directoryPath} non esiste`);
+        console.error(`Directory ${directoryPath} does not exist`);
         return false;
       }
 
-      console.log(`Avvio monitoraggio directory: ${directoryPath}`);
+      console.log(`Starting directory monitoring: ${directoryPath}`);
       
       this.watcher = chokidar.watch(directoryPath, {
-        ignored: /(^|[\/\\])\../, // ignora file nascosti
+        ignored: /(^|[\/\\])\../, // ignore hidden files
         persistent: true,
-        ignoreInitial: false, // processa i file esistenti
+        ignoreInitial: false, // process existing files
         awaitWriteFinish: {
-          stabilityThreshold: 5000,  // attendi 5 secondi di stabilità
-          pollInterval: 1000         // controlla ogni secondo
+          stabilityThreshold: 5000,  // wait 5 seconds of stability
+          pollInterval: 1000         // check every second
         }
       });
 
-      // Gestione dell'evento 'add' (nuovo file)
+      // Handle 'add' event (new file)
       this.watcher.on('add', async (filePath: string) => {
         const ext = path.extname(filePath).toLowerCase();
         
-        // Verifica se è un file audio supportato
+        // Check if it's a supported audio file
         if (this.supportedExtensions.includes(ext)) {
-          console.log(`Nuovo file audio rilevato: ${filePath}`);
+          console.log(`New audio file detected: ${filePath}`);
           
           try {
-            // Processa il file audio
+            // Process the audio file
             const audioFile = await this.processAudioFile(filePath);
             
-            // Notifica l'interfaccia utente
+            // Notify the user interface
             if (this.mainWindow) {
               this.mainWindow.webContents.send('directory:filesChanged', { 
                 type: 'add', 
@@ -64,14 +64,14 @@ export class FileWatcher {
               });
             }
           } catch (error) {
-            console.error(`Errore nel processare il file ${filePath}:`, error);
+            console.error(`Error processing file ${filePath}:`, error);
           }
         }
       });
 
-      // Gestione degli errori
+      // Error handling
       this.watcher.on('error', (error: Error) => {
-        console.error(`Errore nel monitoraggio:`, error);
+        console.error(`Monitoring error:`, error);
         if (this.mainWindow) {
           this.mainWindow.webContents.send('directory:filesChanged', { 
             type: 'error', 
@@ -83,17 +83,17 @@ export class FileWatcher {
       this.isWatching = true;
       return true;
     } catch (error) {
-      console.error('Errore nell\'avvio del monitoraggio:', error);
+      console.error('Error starting monitoring:', error);
       return false;
     }
   }
 
   /**
-   * Ferma il monitoraggio
+   * Stop monitoring
    */
   public stopWatching(): void {
     if (this.watcher) {
-      console.log('Arresto monitoraggio directory');
+      console.log('Stopping directory monitoring');
       this.watcher.close();
       this.watcher = null;
       this.isWatching = false;
@@ -101,39 +101,39 @@ export class FileWatcher {
   }
 
   /**
-   * Verifica se il monitoraggio è attivo
+   * Check if monitoring is active
    */
   public isActive(): boolean {
     return this.isWatching;
   }
 
   /**
-   * Processa un file audio e lo aggiunge al database
-   * @param filePath Percorso del file audio
-   * @returns Oggetto AudioFile
+   * Process an audio file and add it to the database
+   * @param filePath Path to the audio file
+   * @returns AudioFile object
    */
   private async processAudioFile(filePath: string): Promise<AudioFile> {
     try {
-      // Controlla ulteriormente che il file sia stabile prima di elaborarlo
+      // Further check that the file is stable before processing
       const isStable = await this.checkFileStability(filePath);
       if (!isStable) {
-        console.log(`File in fase di modifica, non verrà elaborato: ${filePath}`);
-        throw new Error("File non stabile");
+        console.log(`File being modified, will not be processed: ${filePath}`);
+        throw new Error("File not stable");
       }
       
       const fileName = path.basename(filePath);
       const stats = fs.statSync(filePath);
       
-      // Verifica se il file esiste già nel database (per evitare duplicati)
+      // Check if the file already exists in the database (to avoid duplicates)
       const allFiles = await database.getAllAudioFiles();
       const existingFile = allFiles.find(file => file.filePath === filePath);
       
       if (existingFile) {
-        console.log(`File già presente nel database: ${filePath}`);
+        console.log(`File already exists in database: ${filePath}`);
         return existingFile;
       }
       
-      // Salva il file audio nel database
+      // Save the audio file in the database
       const audioFile = await database.saveAudioFile({
         fileName,
         filePath,
@@ -141,43 +141,43 @@ export class FileWatcher {
         createdAt: new Date().toISOString()
       });
       
-      console.log(`File audio aggiunto al database: ${fileName}`);
+      console.log(`Audio file added to database: ${fileName}`);
       return audioFile;
     } catch (error) {
-      console.error(`Errore nel processare il file audio ${filePath}:`, error);
+      console.error(`Error processing audio file ${filePath}:`, error);
       throw error;
     }
   }
 
   /**
-   * Verifica che la dimensione del file rimanga stabile nel tempo
-   * @param filePath Percorso del file da controllare
-   * @returns true se il file è stabile
+   * Verify that the file size remains stable over time
+   * @param filePath Path to the file to check
+   * @returns true if the file is stable
    */
   private async checkFileStability(filePath: string): Promise<boolean> {
-    // Prima dimensione del file
+    // First file size
     let size1 = 0;
     try {
       const stats = fs.statSync(filePath);
       size1 = stats.size;
     } catch (error) {
-      return false; // File non accessibile
+      return false; // File not accessible
     }
 
-    // Attendi 10 secondi
+    // Wait 10 seconds
     await new Promise(resolve => setTimeout(resolve, 10000));
     
-    // Seconda dimensione del file
+    // Second file size
     let size2 = 0;
     try {
       const stats = fs.statSync(filePath);
       size2 = stats.size;
     } catch (error) {
-      return false; // File non accessibile
+      return false; // File not accessible
     }
     
-    // Se le dimensioni sono uguali, il file è stabile
-    console.log(`Controllo stabilità file ${filePath}: dimensione iniziale ${size1}, dimensione finale ${size2}`);
+    // If sizes are equal, the file is stable
+    console.log(`File stability check ${filePath}: initial size ${size1}, final size ${size2}`);
     return size1 === size2 && size1 > 0;
   }
 } 

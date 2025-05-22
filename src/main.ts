@@ -2,11 +2,18 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import * as path from 'path';
 import fs from 'fs';
 import { database } from './services/db';
+import { FileWatcher } from './services/fileWatcher';
+import { AssemblyAIService } from './services/assemblyAI';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
+
+// Variabili globali per i servizi
+let mainWindow: BrowserWindow | null = null;
+let fileWatcher: FileWatcher | null = null;
+let assemblyAIService: AssemblyAIService | null = null;
 
 // Configurazione degli handler IPC per il database
 function setupIPCHandlers() {
@@ -145,32 +152,6 @@ function setupIPCHandlers() {
       return { success: true, id };
     } catch (error) {
       console.error(`Errore nell'handler transcripts:delete (${id}):`, error);
-      throw error;
-    }
-  });
-  
-  // Avviare una trascrizione con AssemblyAI
-  ipcMain.handle('transcripts:startTranscription', async (_event, audioFileId) => {
-    try {
-      // TODO: Implementare l'integrazione con AssemblyAI
-      // Per ora, creare solo una trascrizione fittizzia in stato "queued"
-      const audioFile = await database.getAudioFileById(audioFileId);
-      if (!audioFile) {
-        throw new Error(`File audio non trovato: ${audioFileId}`);
-      }
-      
-      // Crea la trascrizione
-      const transcript = await database.saveTranscript({
-        meetingId: audioFile.meetingId || '',
-        audioFileId: audioFileId,
-        status: 'queued',
-        text: '',
-        createdAt: new Date().toISOString()
-      });
-      
-      return transcript;
-    } catch (error) {
-      console.error(`Errore nell'handler transcripts:startTranscription (${audioFileId}):`, error);
       throw error;
     }
   });
@@ -316,9 +297,87 @@ function setupIPCHandlers() {
   ipcMain.handle('config:setAssemblyAiKey', (_event, apiKey) => {
     try {
       database.setAssemblyAiKey(apiKey);
+      // Aggiorna la chiave nell'istanza di AssemblyAIService
+      if (assemblyAIService) {
+        assemblyAIService.setApiKey(apiKey);
+      }
       return true;
     } catch (error) {
       console.error('Errore nell\'handler config:setAssemblyAiKey:', error);
+      throw error;
+    }
+  });
+
+  // ==================== FILE WATCHER HANDLERS ====================
+
+  // Avviare il monitoraggio di una directory
+  ipcMain.handle('fileWatcher:startWatching', (_event, directoryPath) => {
+    try {
+      if (!fileWatcher) {
+        console.error('FileWatcher non inizializzato');
+        return { success: false, error: 'FileWatcher non inizializzato' };
+      }
+      
+      // Se directoryPath non è specificato, usa la prima directory dai watchDirectories
+      let dirToWatch = directoryPath;
+      if (!dirToWatch) {
+        const watchDirs = database.getWatchDirectories();
+        if (watchDirs.length === 0) {
+          return { success: false, error: 'Nessuna directory da monitorare' };
+        }
+        dirToWatch = watchDirs[0];
+      }
+      
+      const success = fileWatcher.startWatching(dirToWatch);
+      return { success, directory: dirToWatch };
+    } catch (error) {
+      console.error('Errore nell\'handler fileWatcher:startWatching:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Fermare il monitoraggio
+  ipcMain.handle('fileWatcher:stopWatching', () => {
+    try {
+      if (!fileWatcher) {
+        console.error('FileWatcher non inizializzato');
+        return { success: false, error: 'FileWatcher non inizializzato' };
+      }
+      
+      fileWatcher.stopWatching();
+      return { success: true };
+    } catch (error) {
+      console.error('Errore nell\'handler fileWatcher:stopWatching:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Verificare se il monitoraggio è attivo
+  ipcMain.handle('fileWatcher:isActive', () => {
+    try {
+      if (!fileWatcher) {
+        return false;
+      }
+      
+      return fileWatcher.isActive();
+    } catch (error) {
+      console.error('Errore nell\'handler fileWatcher:isActive:', error);
+      return false;
+    }
+  });
+
+  // ==================== ASSEMBLY AI HANDLERS ====================
+
+  // Avviare una trascrizione con AssemblyAI
+  ipcMain.handle('transcripts:startTranscription', async (_event, audioFileId) => {
+    try {
+      if (!assemblyAIService) {
+        throw new Error('AssemblyAIService non inizializzato');
+      }
+      
+      return await assemblyAIService.startTranscription(audioFileId);
+    } catch (error) {
+      console.error(`Errore nell'handler transcripts:startTranscription (${audioFileId}):`, error);
       throw error;
     }
   });
@@ -326,7 +385,7 @@ function setupIPCHandlers() {
 
 const createWindow = (): void => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1000,
     height: 800,
     webPreferences: {
@@ -350,7 +409,31 @@ const createWindow = (): void => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+  
+  // Inizializza i servizi
+  initializeServices();
 };
+
+// Inizializza i servizi dell'applicazione
+function initializeServices() {
+  if (!mainWindow) {
+    console.error('MainWindow non inizializzata');
+    return;
+  }
+  
+  // Inizializza FileWatcher
+  fileWatcher = new FileWatcher(mainWindow);
+  
+  // Inizializza AssemblyAIService
+  const apiKey = database.getAssemblyAiKey();
+  assemblyAIService = new AssemblyAIService(apiKey, mainWindow);
+  
+  // Avvia il monitoraggio se ci sono directory configurate
+  const watchDirs = database.getWatchDirectories();
+  if (watchDirs.length > 0) {
+    fileWatcher.startWatching(watchDirs[0]);
+  }
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

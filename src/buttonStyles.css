@@ -1,0 +1,22 @@
+/* Stile personalizzato per i pulsanti */
+
+/* Rende il testo dei pulsanti disabilitati scuro invece di bianco */
+button:disabled,
+button[disabled] {
+  color: #333 !important;
+  opacity: 0.5;
+}
+
+/* Stile per i pulsanti grigi quando sono disabilitati */
+.btn-gray:disabled,
+.btn-gray[disabled] {
+  background-color: #f3f4f6;
+  color: #6b7280 !important;
+  border: 1px solid #e5e7eb;
+}
+
+/* Stile per forzare il colore del testo nei pulsanti disabilitati */
+.disabled-dark-text:disabled,
+.disabled-dark-text[disabled] {
+  color: #333 !important;
+} 

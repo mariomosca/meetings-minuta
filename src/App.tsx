@@ -3,6 +3,8 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import toast, { Toaster } from 'react-hot-toast';
 import Modal from 'react-modal';
+import TranscriptionView from './components/TranscriptionView';
+import SettingsView from './components/SettingsView';
 
 // Inizializza react-modal
 try {
@@ -38,6 +40,8 @@ interface ElectronAPI {
     getByMeetingId: (meetingId: string) => Promise<Transcript[]>;
     startTranscription: (audioFileId: string) => Promise<Transcript>;
   };
+  onNewMeetingCreated?: (handler: (meeting: Meeting) => void) => void;
+  onTranscriptionStatusUpdate?: (handler: (transcript: Transcript) => void) => void;
 }
 
 // Accesso alle API esposte dal preload
@@ -115,10 +119,22 @@ const App: React.FC = () => {
     isOpen: false,
     meetingId: undefined
   });
+  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+  const [view, setView] = useState<'list' | 'transcription' | 'settings'>('list');
   
   // Carica le riunioni all'avvio
   useEffect(() => {
     loadMeetings();
+    
+    // Registra gli handler per gli eventi dal main process
+    const unsubscribeNewMeeting = electronAPI.onNewMeetingCreated?.(handleNewMeetingCreated);
+    const unsubscribeTranscriptionUpdate = electronAPI.onTranscriptionStatusUpdate?.(handleTranscriptionStatusUpdate);
+    
+    // Cleanup
+    return () => {
+      unsubscribeNewMeeting?.();
+      unsubscribeTranscriptionUpdate?.();
+    };
   }, []);
   
   // Carica le riunioni dal database
@@ -284,6 +300,63 @@ const App: React.FC = () => {
     return format(date, 'dd MMMM yyyy', { locale: it });
   }
   
+  // Handler per nuove riunioni create dal main process
+  function handleNewMeetingCreated(meeting: Meeting) {
+    // Aggiorna la lista delle riunioni senza ricaricare tutto
+    setMeetings(prevMeetings => [meeting, ...prevMeetings]);
+    
+    // Notifica l'utente
+    toast.success('Nuova riunione creata da file audio monitorato', {
+      duration: 5000,
+      icon: '🎙️'
+    });
+  }
+  
+  // Handler per aggiornamenti dello stato della trascrizione
+  function handleTranscriptionStatusUpdate(transcript: Transcript) {
+    // Se la trascrizione è stata completata, notifica l'utente
+    if (transcript.status === 'completed') {
+      // Trova la riunione associata
+      const meeting = meetings.find(m => m.id === transcript.meetingId);
+      
+      // Notifica l'utente
+      toast.success(`Trascrizione completata: ${meeting?.title || 'Riunione'}`, {
+        duration: 5000,
+        icon: '📝'
+      });
+      
+      // Aggiorna le riunioni se necessario
+      if (meeting && !meeting.transcriptId) {
+        const updatedMeeting = { ...meeting, transcriptId: transcript.id };
+        
+        // Aggiorna la riunione nel database
+        electronAPI.meetings?.save(updatedMeeting);
+        
+        // Aggiorna lo stato locale
+        setMeetings(prevMeetings => 
+          prevMeetings.map(m => m.id === meeting.id ? updatedMeeting : m)
+        );
+      }
+    }
+  }
+  
+  // Gestisce il clic su una riunione per vedere le trascrizioni
+  function handleViewTranscription(meetingId: string) {
+    setSelectedMeetingId(meetingId);
+    setView('transcription');
+  }
+  
+  // Torna alla lista delle riunioni
+  function handleBackToList() {
+    setSelectedMeetingId(null);
+    setView('list');
+  }
+  
+  // Vai alle impostazioni
+  function handleGoToSettings() {
+    setView('settings');
+  }
+  
   return (
     <div className="flex flex-col min-h-screen bg-[#f8f9fa]">
       {/* Toast container */}
@@ -348,8 +421,18 @@ const App: React.FC = () => {
           </div>
         </div>
         
-        {/* Right: Profile Icon (placeholder) */}
-        <div>
+        {/* Right: Settings and Profile */}
+        <div className="flex items-center space-x-3">
+          <button 
+            onClick={handleGoToSettings}
+            className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 transition-colors"
+            title="Impostazioni"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+            </svg>
+          </button>
+          
           <button className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -358,234 +441,253 @@ const App: React.FC = () => {
         </div>
       </div>
       
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto p-6 w-full flex-1">
-        {/* Azioni */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">Le mie riunioni</h2>
-          <div className="space-x-3">
-            <button
-              onClick={() => setIsCreating(true)}
-              disabled={isLoading || isCreating}
-              className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 text-sm font-medium shadow-sm"
-            >
-              Nuova riunione
-            </button>
-            <button
-              onClick={handleImportAudio}
-              disabled={isLoading}
-              className="px-4 py-2 bg-[#38b2ac] text-white rounded-md hover:bg-[#319795] transition-colors disabled:opacity-50 text-sm font-medium shadow-sm"
-            >
-              Importa Audio
-            </button>
-          </div>
-        </div>
-        
-        {/* Form per creare una nuova riunione */}
-        {isCreating && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#7a5cf0] mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              Crea una nuova riunione
-            </h3>
-            
-            <div className="space-y-5">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                  Titolo
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  value={newMeeting.title}
-                  onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
-                  placeholder="Titolo della riunione"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Descrizione
-                </label>
-                <textarea
-                  id="description"
-                  value={newMeeting.description}
-                  onChange={(e) => setNewMeeting({ ...newMeeting, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
-                  rows={3}
-                  placeholder="Descrizione della riunione"
-                ></textarea>
-              </div>
-              
-              <div>
-                <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
-                  Data
-                </label>
-                <input
-                  type="date"
-                  id="date"
-                  value={newMeeting.date}
-                  onChange={(e) => setNewMeeting({ ...newMeeting, date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Partecipanti
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newParticipant}
-                    onChange={(e) => setNewParticipant(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
-                    placeholder="Nome del partecipante"
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddParticipant()}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddParticipant}
-                    className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors shadow-sm flex items-center"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                    Aggiungi
-                  </button>
-                </div>
-                
-                {/* Lista partecipanti */}
-                {newMeeting.participants && newMeeting.participants.length > 0 && (
-                  <div className="mt-3">
-                    <ul className="space-y-2">
-                      {newMeeting.participants.map((participant, index) => (
-                        <li key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
-                          <span className="text-gray-700">{participant}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveParticipant(index)}
-                            className="text-gray-400 hover:text-red-600 transition-colors"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex justify-end space-x-3 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setIsCreating(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors shadow-sm"
-                >
-                  Annulla
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCreateMeeting}
-                  disabled={isLoading}
-                  className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 shadow-sm"
-                >
-                  Salva
-                </button>
-              </div>
+      {/* Contenuto principale in base alla vista */}
+      {view === 'list' && (
+        <main className="max-w-4xl mx-auto p-6 w-full flex-1">
+          {/* Azioni */}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-800">Le mie riunioni</h2>
+            <div className="space-x-3">
+              <button
+                onClick={() => setIsCreating(true)}
+                disabled={isLoading || isCreating}
+                className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 text-sm font-medium shadow-sm"
+              >
+                Nuova riunione
+              </button>
+              <button
+                onClick={handleImportAudio}
+                disabled={isLoading}
+                className="px-4 py-2 bg-[#38b2ac] text-white rounded-md hover:bg-[#319795] transition-colors disabled:opacity-50 text-sm font-medium shadow-sm"
+              >
+                Importa Audio
+              </button>
             </div>
           </div>
-        )}
-        
-        {/* Elenco riunioni */}
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0]"></div>
-            <p className="text-gray-500 mt-3">Caricamento in corso...</p>
-          </div>
-        ) : meetings.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <p className="text-gray-500 text-lg">Nessuna riunione trovata</p>
-            <p className="text-gray-500 text-sm mt-2 mb-6">
-              Crea una nuova riunione o importa un file audio per iniziare
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-700 mb-3">Prossime riunioni</h3>
-            {meetings.map((meeting) => (
-              <div key={meeting.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-5 hover:shadow transition-shadow">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-start space-x-4">
-                    <div className="rounded-full bg-[#f0eafb] p-3 mt-1 flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#7a5cf0]" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-medium text-gray-900">{meeting.title}</h3>
-                      <p className="text-gray-500 text-sm">{formatDate(meeting.date)}</p>
-                      
-                      {meeting.description && (
-                        <p className="text-gray-700 mt-2 text-sm line-clamp-2">{meeting.description}</p>
-                      )}
-                      
-                      {meeting.participants && meeting.participants.length > 0 && (
-                        <div className="mt-3">
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {meeting.participants.map((participant, index) => (
-                              <span key={index} className="inline-block bg-[#eeedfd] text-[#7a5cf0] px-2 py-1 rounded-full text-xs">
-                                {participant}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="flex mt-3 space-x-2">
-                        {meeting.audioFileId && (
-                          <span className="inline-flex items-center bg-[#e6f7f5] text-[#38b2ac] px-2 py-1 rounded-full text-xs">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                            </svg>
-                            File audio presente
-                          </span>
-                        )}
-                        
-                        {meeting.transcriptId && (
-                          <span className="inline-flex items-center bg-[#f0eafb] text-[#7a5cf0] px-2 py-1 rounded-full text-xs">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                            </svg>
-                            Trascrizione disponibile
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
+          
+          {/* Form per creare una nuova riunione */}
+          {isCreating && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#7a5cf0] mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                Crea una nuova riunione
+              </h3>
+              
+              <div className="space-y-5">
+                <div>
+                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                    Titolo
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    value={newMeeting.title}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
+                    placeholder="Titolo della riunione"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                    Descrizione
+                  </label>
+                  <textarea
+                    id="description"
+                    value={newMeeting.description}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, description: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
+                    rows={3}
+                    placeholder="Descrizione della riunione"
+                  ></textarea>
+                </div>
+                
+                <div>
+                  <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+                    Data
+                  </label>
+                  <input
+                    type="date"
+                    id="date"
+                    value={newMeeting.date}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Partecipanti
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newParticipant}
+                      onChange={(e) => setNewParticipant(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
+                      placeholder="Nome del partecipante"
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddParticipant()}
+                    />
                     <button
-                      onClick={() => confirmDeleteMeeting(meeting.id!)}
-                      className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                      type="button"
+                      onClick={handleAddParticipant}
+                      className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors shadow-sm flex items-center"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
                       </svg>
+                      Aggiungi
                     </button>
                   </div>
+                  
+                  {/* Lista partecipanti */}
+                  {newMeeting.participants && newMeeting.participants.length > 0 && (
+                    <div className="mt-3">
+                      <ul className="space-y-2">
+                        {newMeeting.participants.map((participant, index) => (
+                          <li key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
+                            <span className="text-gray-700">{participant}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveParticipant(index)}
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-end space-x-3 pt-3 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreating(false)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors shadow-sm"
+                  >
+                    Annulla
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateMeeting}
+                    disabled={isLoading}
+                    className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 shadow-sm"
+                  >
+                    Salva
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </main>
+            </div>
+          )}
+          
+          {/* Elenco riunioni */}
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0]"></div>
+              <p className="text-gray-500 mt-3">Caricamento in corso...</p>
+            </div>
+          ) : meetings.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+              <p className="text-gray-500 text-lg">Nessuna riunione trovata</p>
+              <p className="text-gray-500 text-sm mt-2 mb-6">
+                Crea una nuova riunione o importa un file audio per iniziare
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-700 mb-3">Prossime riunioni</h3>
+              {meetings.map((meeting) => (
+                <div 
+                  key={meeting.id} 
+                  className="bg-white rounded-lg shadow-sm border border-gray-100 p-5 hover:shadow transition-shadow cursor-pointer"
+                  onClick={() => handleViewTranscription(meeting.id!)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-start space-x-4">
+                      <div className="rounded-full bg-[#f0eafb] p-3 mt-1 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#7a5cf0]" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-medium text-gray-900">{meeting.title}</h3>
+                        <p className="text-gray-500 text-sm">{formatDate(meeting.date)}</p>
+                        
+                        {meeting.description && (
+                          <p className="text-gray-700 mt-2 text-sm line-clamp-2">{meeting.description}</p>
+                        )}
+                        
+                        {meeting.participants && meeting.participants.length > 0 && (
+                          <div className="mt-3">
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {meeting.participants.map((participant, index) => (
+                                <span key={index} className="inline-block bg-[#eeedfd] text-[#7a5cf0] px-2 py-1 rounded-full text-xs">
+                                  {participant}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="flex mt-3 space-x-2">
+                          {meeting.audioFileId && (
+                            <span className="inline-flex items-center bg-[#e6f7f5] text-[#38b2ac] px-2 py-1 rounded-full text-xs">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                              </svg>
+                              File audio presente
+                            </span>
+                          )}
+                          
+                          {meeting.transcriptId && (
+                            <span className="inline-flex items-center bg-[#f0eafb] text-[#7a5cf0] px-2 py-1 rounded-full text-xs">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                              </svg>
+                              Trascrizione disponibile
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          confirmDeleteMeeting(meeting.id!);
+                        }}
+                        className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      )}
+      
+      {/* Vista Trascrizione */}
+      {view === 'transcription' && selectedMeetingId && (
+        <TranscriptionView meetingId={selectedMeetingId} onBack={handleBackToList} />
+      )}
+      
+      {/* Vista Impostazioni */}
+      {view === 'settings' && (
+        <SettingsView onBack={handleBackToList} />
+      )}
       
       {/* Modale di conferma eliminazione */}
       <Modal

@@ -55,27 +55,24 @@ L'applicazione attualmente implementa:
 
 ## Cosa Implementare e Dove
 
-### 1. Estensione del Database
+### 1. Estensione del Database electron-store
 
 #### File da Creare/Modificare:
 - `src/services/db/index.ts` - Indice dei servizi DB
-- `src/services/db/pouchdb.ts` - Configurazione PouchDB
 - `src/services/db/models/meeting.ts` - Modello per riunioni
 - `src/services/db/models/transcript.ts` - Modello per trascrizioni
 - `src/services/db/models/audioFile.ts` - Modello per file audio
-- `src/services/db/migrator.ts` - Script per migrare da electron-store a PouchDB
 
 #### Azioni da Eseguire:
-1. Installare le dipendenze: `pouchdb`, `pouchdb-find` e i tipi corrispondenti
-2. Implementare la configurazione PouchDB base
+1. Mantenere electron-store come soluzione di database
+2. Estendere lo schema di electron-store per supportare più collezioni
 3. Definire gli schemi dei modelli
-4. Creare funzioni di migrazione dai dati attuali
-5. Implementare metodi CRUD per ciascun modello
+4. Implementare metodi CRUD per ciascun modello
 
 ```typescript
 // Esempio schema Meeting in src/services/db/models/meeting.ts
 export interface Meeting {
-  _id: string;
+  id: string;
   title: string;
   description: string;
   date: string;
@@ -87,12 +84,14 @@ export interface Meeting {
 }
 
 export const meetingMethods = {
-  async getAll(db: PouchDB.Database): Promise<Meeting[]> {
-    const result = await db.find({
-      selector: { type: 'meeting' },
-      sort: [{ createdAt: 'desc' }]
-    });
-    return result.docs as Meeting[];
+  async getAll(store: Store<any>): Promise<Meeting[]> {
+    const meetings = store.get('meetings', {});
+    const meetingIds = store.get('meetingIds', []);
+    
+    return meetingIds
+      .filter(id => meetings[id])
+      .map(id => meetings[id])
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
   // Altri metodi...
 };
@@ -168,7 +167,7 @@ export default Sidebar;
 2. Implementare servizio di monitoraggio in processo main
 3. Creare API IPC per comunicazione con il renderer
 4. Costruire UI per configurare directory da monitorare
-5. Salvare configurazioni in database
+5. Salvare configurazioni in electron-store
 
 ```typescript
 // Esempio di handler IPC in src/main.ts
@@ -198,211 +197,57 @@ ipcMain.handle('fileWatcher:addDirectory', async (event, dirPath) => {
    - Invio richiesta trascrizione
    - Polling stato trascrizione
    - Parsing e formattazione risultati
-3. Creare UI per configurare API key
-4. Implementare processo di trascrizione automatica per nuovi file
+3. Salvare trascrizioni in electron-store
 
 ```typescript
-// Esempio di metodo per avviare trascrizione in src/services/assemblyai.ts
-async transcribeAudio(filePath: string, meetingId: string) {
-  // Caricare file su AssemblyAI
-  const uploadUrl = await this.uploadAudio(filePath);
+// Esempio di client AssemblyAI in src/services/assemblyai.ts
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { BrowserWindow } from 'electron';
+import { v4 as uuidv4 } from 'uuid'; 
+
+export class AssemblyAiService {
+  private apiKey: string;
+  private store: Store<any>;
+  private mainWindow: BrowserWindow | null;
+  private baseUrl: string = 'https://api.assemblyai.com/v2';
   
-  // Avviare trascrizione
-  const response = await axios.post(`${this.baseURL}/transcript`, {
-    audio_url: uploadUrl,
-    speaker_labels: true
-  }, {
-    headers: {
-      'authorization': this.apiKey,
-      'content-type': 'application/json'
-    }
-  });
+  constructor(apiKey: string, store: Store<any>, mainWindow: BrowserWindow | null) {
+    this.apiKey = apiKey;
+    this.store = store;
+    this.mainWindow = mainWindow;
+  }
   
-  // Salva informazioni trascrizione
-  // ...
-  
-  return response.data;
+  // Metodi implementazione...
 }
 ```
 
-### 5. Audio Player Personalizzato
+### 5. Modello Dati per Meetings Minuta
 
-#### File da Creare/Modificare:
-- `src/components/audio/AudioPlayer.tsx` - Componente player audio
-- `src/hooks/useAudioPlayer.ts` - Hook per gestire player audio
-- `src/components/transcriptions/TranscriptionEditor.tsx` - Editor con sincronizzazione
+Sarà implementato in electron-store con le seguenti collezioni:
 
-#### Azioni da Eseguire:
-1. Implementare player audio personalizzato con controlli
-2. Creare funzionalità per sincronizzare la riproduzione con la trascrizione
-3. Implementare evidenziazione del testo in base al timestamp corrente
-4. Aggiungere controlli per velocità di riproduzione, salto, ecc.
+1. **Meetings** (riunioni)
+   - Attributi: id, title, description, date, participants, createdAt, audioFileId, transcriptId
+   
+2. **Trascrizioni**
+   - Attributi: id, meetingId, audioFileId, status, text, createdAt, completedAt, assemblyAiId, utterances
+   
+3. **File Audio**
+   - Attributi: id, fileName, filePath, fileSize, duration, meetingId, transcriptId, createdAt
 
-```typescript
-// Esempio di hook per player audio in src/hooks/useAudioPlayer.ts
-export function useAudioPlayer(audioUrl: string) {
-  const [audio] = useState(new Audio(audioUrl));
-  const [playing, setPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  
-  // Gestione eventi...
-  
-  return {
-    audio,
-    playing,
-    currentTime,
-    duration,
-    play: () => {
-      audio.play();
-      setPlaying(true);
-    },
-    pause: () => {
-      audio.pause();
-      setPlaying(false);
-    },
-    seek: (time: number) => {
-      audio.currentTime = time;
-      setCurrentTime(time);
-    }
-  };
-}
-```
-
-### 6. Sistema di Routing
-
-#### File da Creare/Modificare:
-- `src/App.tsx` - Aggiornare per configurare il routing
-- `src/routes.tsx` - Definire le rotte dell'applicazione
-
-#### Azioni da Eseguire:
-1. Installare `react-router-dom`
-2. Definire struttura delle rotte:
-   - `/` - Dashboard
-   - `/meetings` - Elenco riunioni
-   - `/meetings/:id` - Dettaglio riunione
-   - `/transcriptions/:id` - Editor trascrizione
-   - `/settings` - Impostazioni
-3. Implementare componente layout con sidebar
-
-```typescript
-// Esempio di configurazione rotte in src/App.tsx
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Layout from './components/layout/Layout';
-import Dashboard from './pages/Dashboard';
-import MeetingsList from './pages/MeetingsList';
-import MeetingDetail from './pages/MeetingDetail';
-import TranscriptionEditor from './pages/TranscriptionEditor';
-import Settings from './pages/Settings';
-
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="meetings" element={<MeetingsList />} />
-          <Route path="meetings/:id" element={<MeetingDetail />} />
-          <Route path="transcriptions/:id" element={<TranscriptionEditor />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );
-}
-```
-
-### 7. Aggiornamento Tailwind e UI
-
-#### File da Creare/Modificare:
-- `tailwind.config.js` - Aggiornare con nuova palette colori
-- `src/index.css` - Aggiornare stili globali
-- `src/themes.css` - Creare per gestire tema chiaro/scuro
-
-#### Azioni da Eseguire:
-1. Aggiornare configurazione Tailwind con palette colori da UI_DESIGN_SPEC.md
-2. Implementare supporto per tema chiaro/scuro
-3. Creare componenti UI base riutilizzabili:
-   - Button
-   - Card
-   - Input
-   - Select
-   - Modal
-   - Toast
-
-```typescript
-// Esempio di componente Button in src/components/common/Button.tsx
-import React from 'react';
-
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
-type ButtonSize = 'sm' | 'md' | 'lg';
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  isLoading?: boolean;
-}
-
-const Button: React.FC<ButtonProps> = ({
-  children,
-  variant = 'primary',
-  size = 'md',
-  isLoading = false,
-  className = '',
-  disabled,
-  ...props
-}) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2';
-  
-  const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
-  };
-  
-  const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-  };
-  
-  return (
-    <button
-      className={`
-        ${baseClasses} 
-        ${variantClasses[variant]} 
-        ${sizeClasses[size]}
-        ${isLoading ? 'opacity-75 cursor-wait' : ''}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-        ${className}
-      `}
-      disabled={disabled || isLoading}
-      {...props}
-    >
-      {isLoading && (
-        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-      )}
-      {children}
-    </button>
-  );
-};
-
-export default Button;
-```
+4. **Configurazione**
+   - watchDirectories: array di percorsi monitorati
+   - assemblyAiKey: chiave API per AssemblyAI
 
 ## Piano di Implementazione
 
 ### Fase 1: Migrazione Database e Ristrutturazione
 
-1. Installare e configurare PouchDB
-2. Convertire modello note in nuovi modelli (Meeting, Transcript, AudioFile)
-3. Implementare migrazione dati
-4. Aggiornare preload.ts per esporre nuove API
-5. Creare componenti base e layout
+1. Mantenere electron-store come soluzione di database
+2. Estendere lo schema di electron-store per supportare più collezioni
+3. Definire gli schemi dei modelli
+4. Implementare metodi CRUD per ciascun modello
 
 ### Fase 2: UI e Routing
 

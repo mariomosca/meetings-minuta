@@ -1,8 +1,8 @@
-# Piano di Migrazione a Electron con Force
+# Piano di Migrazione a Electron con Forge
 
 ## Panoramica
 
-Questo documento delinea il piano specifico per migrare l'applicazione AudioTranscriber da un'architettura web client-server a un'applicazione desktop completa basata su Electron con PouchDB come database. Utilizzeremo electron-forge come framework di scaffolding per semplificare la configurazione e il deployment.
+Questo documento delinea il piano specifico per migrare l'applicazione AudioTranscriber da un'architettura web client-server a un'applicazione desktop completa basata su Electron con electron-store come database. Utilizzeremo electron-forge come framework di scaffolding per semplificare la configurazione e il deployment.
 
 ## File e Directory Necessari
 
@@ -22,9 +22,8 @@ electron-app/
 │   │   │   ├── transcriptHandlers.ts
 │   │   │   └── audioFileHandlers.ts
 │   │   ├── db/                 # Layer database
-│   │   │   ├── pouchdb.ts      # Configurazione PouchDB
-│   │   │   ├── migrator.ts     # Script di migrazione dati
-│   │   │   └── models/         # Modelli per PouchDB
+│   │   │   ├── store.ts        # Configurazione electron-store
+│   │   │   └── models/         # Modelli per electron-store
 │   │   │       ├── meeting.ts
 │   │   │       ├── transcript.ts
 │   │   │       └── audioFile.ts
@@ -100,8 +99,6 @@ electron-app/
     "electron-squirrel-startup": "^1.0.0",
     "electron-store": "^8.1.0",
     "openai": "^4.100.0",
-    "pouchdb": "^8.0.1",
-    "pouchdb-find": "^8.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
@@ -177,7 +174,7 @@ module.exports = {
 ```typescript
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
-import { setupDatabase } from './db/pouchdb';
+import { setupDatabase } from './db/store';
 import { setupMeetingHandlers } from './ipc/meetingHandlers';
 import { setupTranscriptHandlers } from './ipc/transcriptHandlers';
 import { setupAudioFileHandlers } from './ipc/audioFileHandlers';
@@ -202,97 +199,103 @@ const store = new Store({
 // Variabili globali
 let mainWindow: BrowserWindow | null = null;
 let fileWatcher: FileWatcher | null = null;
-let assemblyAiService: AssemblyAiService | null = null;
-let databases: any = null;
+let assemblyAi: AssemblyAiService | null = null;
 
-// Crea finestra principale
-const createWindow = async (): Promise<void> => {
-  // Inizializza database
-  databases = await setupDatabase();
-
-  // Crea finestra browser
+const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
-      preload: path.join(__dirname, 'preload/index.js'),
+      preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
     }
   });
 
-  // Configura IPC handlers
-  setupMeetingHandlers(ipcMain, databases, mainWindow);
-  setupTranscriptHandlers(ipcMain, databases, mainWindow);
-  setupAudioFileHandlers(ipcMain, databases, mainWindow);
-
-  // Configurazione FileWatcher
-  fileWatcher = new FileWatcher(databases, mainWindow);
-  const watchDirs = store.get('watchDirectories') as string[];
-  if (watchDirs.length > 0) {
-    fileWatcher.setWatchPaths(watchDirs);
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.loadURL('http://localhost:3000');
+    mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
-  // Configurazione AssemblyAI
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+};
+
+// Inizializza l'app
+app.whenReady().then(() => {
+  // Inizializza database
+  const { meetingsDb, transcriptsDb, audioFilesDb } = setupDatabase(store);
+  
+  // Inizializza servizi
+  fileWatcher = new FileWatcher(store, (filePath) => {
+    if (assemblyAi) {
+      // Logica per processare nuovi file audio
+    }
+  });
+  
+  // Inizializza AssemblyAI se la chiave è presente
   const assemblyAiKey = store.get('assemblyAiKey') as string;
   if (assemblyAiKey) {
-    assemblyAiService = new AssemblyAiService(assemblyAiKey, databases, mainWindow);
+    assemblyAi = new AssemblyAiService(
+      assemblyAiKey,
+      { store, meetingsDb, transcriptsDb, audioFilesDb },
+      mainWindow
+    );
   }
-
-  // Handler per selezionare directory da monitorare
-  ipcMain.handle('dialog:selectDirectory', async () => {
-    const result = await dialog.showOpenDialog(mainWindow!, {
+  
+  // Configura handler IPC
+  setupMeetingHandlers(ipcMain, meetingsDb);
+  setupTranscriptHandlers(ipcMain, transcriptsDb, assemblyAi);
+  setupAudioFileHandlers(ipcMain, audioFilesDb);
+  
+  // Registra handler IPC per fileWatcher
+  ipcMain.handle('fileWatcher:getDirectories', () => {
+    return store.get('watchDirectories');
+  });
+  
+  ipcMain.handle('fileWatcher:addDirectory', async () => {
+    const result = await dialog.showOpenDialog({
       properties: ['openDirectory']
     });
     
     if (!result.canceled && result.filePaths.length > 0) {
-      const watchDirs = store.get('watchDirectories') as string[];
-      const newDirs = [...new Set([...watchDirs, ...result.filePaths])];
-      store.set('watchDirectories', newDirs);
-      
-      if (fileWatcher) {
-        fileWatcher.setWatchPaths(newDirs);
-      }
-      
-      return newDirs;
+      const dir = result.filePaths[0];
+      await fileWatcher?.addWatchPath(dir);
+      return true;
     }
     
-    return store.get('watchDirectories');
+    return false;
   });
   
-  // Handler per impostare API keys
-  ipcMain.handle('settings:setApiKeys', (event, { assemblyAiKey, openAiKey }) => {
-    if (assemblyAiKey) {
-      store.set('assemblyAiKey', assemblyAiKey);
-      assemblyAiService = new AssemblyAiService(assemblyAiKey, databases, mainWindow);
-    }
-    
-    if (openAiKey) {
-      store.set('openAiKey', openAiKey);
-    }
-    
-    return {
-      assemblyAiKey: store.get('assemblyAiKey'),
-      openAiKey: store.get('openAiKey')
-    };
+  ipcMain.handle('fileWatcher:removeDirectory', async (_event, dir) => {
+    await fileWatcher?.removeWatchPath(dir);
+    return true;
   });
   
-  // Carica l'app
-  if (MAIN_WINDOW_WEBPACK_ENTRY) {
-    await mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-  }
+  // Registra handler IPC per AssemblyAI
+  ipcMain.handle('assemblyai:setApiKey', (_event, apiKey) => {
+    store.set('assemblyAiKey', apiKey);
+    
+    // Ricrea il servizio con la nuova API key
+    assemblyAi = new AssemblyAiService(
+      apiKey,
+      { store, meetingsDb, transcriptsDb, audioFilesDb },
+      mainWindow
+    );
+    
+    return true;
+  });
   
-  // Apri DevTools in modalità development
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
-  }
-};
+  ipcMain.handle('assemblyai:getApiKey', () => {
+    return store.get('assemblyAiKey', '');
+  });
+  
+  createWindow();
+});
 
-// Quando Electron è pronto
-app.whenReady().then(createWindow);
-
-// Gestione chiusura finestre
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
@@ -306,415 +309,179 @@ app.on('activate', () => {
 });
 ```
 
-### 4. src/preload/api.ts
+### 4. src/main/db/store.ts
 
 ```typescript
-import { contextBridge, ipcRenderer } from 'electron';
+import Store from 'electron-store';
+import { v4 as uuidv4 } from 'uuid';
 
-// Definizione API sicure esposte al renderer
-contextBridge.exposeInMainWorld('electronAPI', {
-  // Meeting API
-  meetings: {
-    getAll: () => ipcRenderer.invoke('meetings:getAll'),
-    getById: (id: string) => ipcRenderer.invoke('meetings:getById', id),
-    create: (meeting: any) => ipcRenderer.invoke('meetings:create', meeting),
-    update: (id: string, meeting: any) => ipcRenderer.invoke('meetings:update', id, meeting),
-    delete: (id: string) => ipcRenderer.invoke('meetings:delete', id),
-    generateMinutes: (id: string) => ipcRenderer.invoke('meetings:generateMinutes', id)
-  },
+// Funzione per generare ID unici
+export const generateId = (prefix: string): string => {
+  return `${prefix}_${uuidv4()}`;
+};
+
+// Funzione per configurare il database
+export function setupDatabase(store: Store<any>) {
+  // Garantire che lo store abbia le strutture di base
+  if (!store.has('meetings')) {
+    store.set('meetings', {});
+  }
   
-  // Transcript API
-  transcripts: {
-    getAll: () => ipcRenderer.invoke('transcripts:getAll'),
-    getById: (id: string) => ipcRenderer.invoke('transcripts:getById', id),
-    getByMeetingId: (meetingId: string) => ipcRenderer.invoke('transcripts:getByMeetingId', meetingId),
-    create: (meetingId: string, filePath: string) => ipcRenderer.invoke('transcripts:create', meetingId, filePath),
-    delete: (id: string) => ipcRenderer.invoke('transcripts:delete', id),
-    forceUpdate: (id: string) => ipcRenderer.invoke('transcripts:forceUpdate', id)
-  },
+  if (!store.has('meetingIds')) {
+    store.set('meetingIds', []);
+  }
   
-  // AudioFile API
-  audioFiles: {
-    getAll: () => ipcRenderer.invoke('audioFiles:getAll'),
-    getUnprocessed: () => ipcRenderer.invoke('audioFiles:getUnprocessed'),
-    process: (id: string) => ipcRenderer.invoke('audioFiles:process', id)
-  },
+  if (!store.has('transcripts')) {
+    store.set('transcripts', {});
+  }
   
-  // System API
-  system: {
-    selectDirectory: () => ipcRenderer.invoke('dialog:selectDirectory'),
-    setApiKeys: (keys: { assemblyAiKey?: string, openAiKey?: string }) => 
-      ipcRenderer.invoke('settings:setApiKeys', keys),
-    getSettings: () => ipcRenderer.invoke('settings:get')
-  },
+  if (!store.has('transcriptIds')) {
+    store.set('transcriptIds', []);
+  }
   
-  // Eventi
-  on: (channel: string, callback: (...args: any[]) => void) => {
-    const validChannels = [
-      'file:newAudioDetected',
-      'transcript:statusChanged',
-      'meeting:minutesGenerated'
-    ];
-    
-    if (validChannels.includes(channel)) {
-      const subscription = (_event: any, ...args: any[]) => callback(...args);
-      ipcRenderer.on(channel, subscription);
+  if (!store.has('audioFiles')) {
+    store.set('audioFiles', {});
+  }
+  
+  if (!store.has('audioFileIds')) {
+    store.set('audioFileIds', []);
+  }
+  
+  // Database meetings
+  const meetingsDb = {
+    async getAll() {
+      const meetings = store.get('meetings', {});
+      const meetingIds = store.get('meetingIds', []);
       
-      return () => {
-        ipcRenderer.removeListener(channel, subscription);
-      };
+      return meetingIds
+        .filter(id => meetings[id])
+        .map(id => meetings[id])
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    },
+    
+    async get(id: string) {
+      const meetings = store.get('meetings', {});
+      return meetings[id] || null;
+    },
+    
+    async put(meeting: any) {
+      // Genera ID se non esiste
+      if (!meeting.id) {
+        meeting.id = generateId('meeting');
+      }
+      
+      // Assicura che il tipo sia corretto
+      meeting.type = 'meeting';
+      
+      // Aggiorna data di creazione se necessario
+      if (!meeting.createdAt) {
+        meeting.createdAt = new Date().toISOString();
+      }
+      
+      // Ottieni meetings e meetingIds esistenti
+      const meetings = store.get('meetings', {});
+      const meetingIds = store.get('meetingIds', []);
+      
+      // Aggiungi o aggiorna il meeting
+      meetings[meeting.id] = meeting;
+      
+      // Aggiungi l'ID all'elenco se non esiste
+      if (!meetingIds.includes(meeting.id)) {
+        meetingIds.push(meeting.id);
+        store.set('meetingIds', meetingIds);
+      }
+      
+      // Salva meetings
+      store.set('meetings', meetings);
+      
+      return { id: meeting.id, ok: true };
+    },
+    
+    async delete(id: string) {
+      // Ottieni meetings e meetingIds esistenti
+      const meetings = store.get('meetings', {});
+      const meetingIds = store.get('meetingIds', []);
+      
+      // Rimuovi il meeting
+      delete meetings[id];
+      
+      // Rimuovi l'ID dall'elenco
+      const updatedMeetingIds = meetingIds.filter(meetingId => meetingId !== id);
+      
+      // Salva i dati aggiornati
+      store.set('meetings', meetings);
+      store.set('meetingIds', updatedMeetingIds);
+      
+      return { id, ok: true };
     }
-  }
-});
-```
-
-### 5. src/renderer/services/api.ts
-
-```typescript
-// Tipo per meeting
-export interface Meeting {
-  _id?: string;
-  title: string;
-  description: string;
-  date: string;
-  participants: string[];
-  createdAt?: string;
-  audioFileName?: string;
-  minutes?: string;
-}
-
-// Tipo per utterance
-export interface Utterance {
-  speaker: string;
-  text: string;
-  start: number;
-  end: number;
-}
-
-// Tipo per trascrizione
-export interface Transcript {
-  _id?: string;
-  meetingId: string;
-  assemblyAiId: string;
-  status: 'queued' | 'processing' | 'completed' | 'error';
-  fullText?: string;
-  utterances?: Utterance[];
-  createdAt?: string;
-  completedAt?: string;
-}
-
-// Tipo per file audio
-export interface AudioFile {
-  _id?: string;
-  filePath: string;
-  fileName: string;
-  processed: boolean;
-  processedAt?: string;
-  transcriptId?: string;
-  meetingId?: string;
-  fileSize: number;
-  duration?: number;
-}
-
-// API per i meeting
-export const meetingApi = {
-  // Ottieni tutti i meeting
-  getAll: async (): Promise<Meeting[]> => {
-    return window.electronAPI.meetings.getAll();
-  },
-
-  // Ottieni un meeting specifico
-  getById: async (id: string): Promise<Meeting> => {
-    return window.electronAPI.meetings.getById(id);
-  },
-
-  // Crea un nuovo meeting
-  create: async (meeting: Meeting): Promise<Meeting> => {
-    return window.electronAPI.meetings.create(meeting);
-  },
-
-  // Aggiorna un meeting esistente
-  update: async (id: string, meeting: Meeting): Promise<Meeting> => {
-    return window.electronAPI.meetings.update(id, meeting);
-  },
-
-  // Elimina un meeting
-  delete: async (id: string): Promise<void> => {
-    return window.electronAPI.meetings.delete(id);
-  },
+  };
   
-  // Genera minuta per un meeting
-  generateMinutes: async (id: string): Promise<Meeting> => {
-    return window.electronAPI.meetings.generateMinutes(id);
-  }
-};
-
-// API per le trascrizioni
-export const transcriptApi = {
-  // Ottieni tutte le trascrizioni
-  getAll: async (): Promise<Transcript[]> => {
-    return window.electronAPI.transcripts.getAll();
-  },
-
-  // Ottieni una trascrizione specifica
-  getById: async (id: string): Promise<Transcript> => {
-    return window.electronAPI.transcripts.getById(id);
-  },
-
-  // Ottieni trascrizioni per un meeting specifico
-  getByMeetingId: async (meetingId: string): Promise<Transcript[]> => {
-    return window.electronAPI.transcripts.getByMeetingId(meetingId);
-  },
-
-  // Avvia una nuova trascrizione
-  create: async (meetingId: string, filePath: string): Promise<Transcript> => {
-    return window.electronAPI.transcripts.create(meetingId, filePath);
-  },
-
-  // Elimina una trascrizione
-  delete: async (id: string): Promise<void> => {
-    return window.electronAPI.transcripts.delete(id);
-  },
+  // Database transcripts
+  const transcriptsDb = {
+    // Implementazione simile per trascrizioni
+    // ...
+  };
   
-  // Forza aggiornamento di una trascrizione
-  forceUpdate: async (id: string): Promise<Transcript> => {
-    return window.electronAPI.transcripts.forceUpdate(id);
-  }
-};
-
-// API per i file audio
-export const audioFileApi = {
-  // Ottieni tutti i file audio
-  getAll: async (): Promise<AudioFile[]> => {
-    return window.electronAPI.audioFiles.getAll();
-  },
-  
-  // Ottieni file audio non processati
-  getUnprocessed: async (): Promise<AudioFile[]> => {
-    return window.electronAPI.audioFiles.getUnprocessed();
-  },
-  
-  // Processa un file audio
-  process: async (id: string): Promise<AudioFile> => {
-    return window.electronAPI.audioFiles.process(id);
-  }
-};
-
-// API di sistema
-export const systemApi = {
-  // Seleziona directory da monitorare
-  selectDirectory: async (): Promise<string[]> => {
-    return window.electronAPI.system.selectDirectory();
-  },
-  
-  // Imposta chiavi API
-  setApiKeys: async (keys: { assemblyAiKey?: string, openAiKey?: string }): Promise<any> => {
-    return window.electronAPI.system.setApiKeys(keys);
-  },
-  
-  // Ottieni impostazioni
-  getSettings: async (): Promise<any> => {
-    return window.electronAPI.system.getSettings();
-  }
-};
-```
-
-### 6. src/main/db/pouchdb.ts
-
-```typescript
-import PouchDB from 'pouchdb';
-import PouchDBFind from 'pouchdb-find';
-import path from 'path';
-import { app } from 'electron';
-
-// Registra plugin
-PouchDB.plugin(PouchDBFind);
-
-// Path per il database
-const getDBPath = () => {
-  const userDataPath = app.getPath('userData');
-  return path.join(userDataPath, 'databases');
-};
-
-// Setup delle collezioni database
-export const setupDatabase = async () => {
-  const dbPath = getDBPath();
-  
-  const meetingsDb = new PouchDB(path.join(dbPath, 'meetings'));
-  const transcriptsDb = new PouchDB(path.join(dbPath, 'transcripts'));
-  const audioFilesDb = new PouchDB(path.join(dbPath, 'audiofiles'));
-  
-  // Crea indici
-  await meetingsDb.createIndex({
-    index: { fields: ['type', 'date'] }
-  });
-  
-  await transcriptsDb.createIndex({
-    index: { fields: ['type', 'meetingId'] }
-  });
-  
-  await audioFilesDb.createIndex({
-    index: { fields: ['type', 'processed'] }
-  });
+  // Database audioFiles
+  const audioFilesDb = {
+    // Implementazione simile per file audio
+    // ...
+  };
   
   return {
     meetingsDb,
     transcriptsDb,
     audioFilesDb
   };
-};
-
-// Definizione ID document con prefisso
-export const generateId = (prefix: string): string => {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-};
+}
 ```
 
-### 7. src/main/ipc/meetingHandlers.ts
+### 5. src/main/ipc/meetingHandlers.ts
 
 ```typescript
-import { ipcMain, BrowserWindow } from 'electron';
-import { generateId } from '../db/pouchdb';
-import { OpenAIService } from '../services/openAi';
-import Store from 'electron-store';
+import { IpcMain } from 'electron';
 
-const store = new Store();
-
-export const setupMeetingHandlers = (ipcMain: Electron.IpcMain, databases: any, mainWindow: BrowserWindow | null) => {
-  const { meetingsDb, transcriptsDb } = databases;
-  
-  // Get all meetings
+export function setupMeetingHandlers(ipcMain: IpcMain, meetingsDb: any) {
+  // Handler per ottenere tutte le riunioni
   ipcMain.handle('meetings:getAll', async () => {
     try {
-      const result = await meetingsDb.find({
-        selector: { type: 'meeting' },
-        sort: [{ date: 'desc' }]
-      });
-      return result.docs;
+      return await meetingsDb.getAll();
     } catch (error) {
-      console.error('Error getting meetings:', error);
-      throw new Error('Failed to get meetings');
+      console.error('Errore in meetings:getAll:', error);
+      throw error;
     }
   });
   
-  // Get meeting by ID
-  ipcMain.handle('meetings:getById', async (event, id) => {
+  // Handler per ottenere una riunione specifica
+  ipcMain.handle('meetings:get', async (_event, id) => {
     try {
       return await meetingsDb.get(id);
     } catch (error) {
-      console.error(`Error getting meeting ${id}:`, error);
-      throw new Error('Meeting not found');
+      console.error('Errore in meetings:get:', error);
+      throw error;
     }
   });
   
-  // Create new meeting
-  ipcMain.handle('meetings:create', async (event, meetingData) => {
+  // Handler per salvare una riunione
+  ipcMain.handle('meetings:save', async (_event, meeting) => {
     try {
-      const meeting = {
-        _id: generateId('meeting'),
-        ...meetingData,
-        createdAt: new Date().toISOString(),
-        type: 'meeting'
-      };
-      
-      const result = await meetingsDb.put(meeting);
-      return {
-        ...meeting,
-        _rev: result.rev
-      };
+      return await meetingsDb.put(meeting);
     } catch (error) {
-      console.error('Error creating meeting:', error);
-      throw new Error('Failed to create meeting');
+      console.error('Errore in meetings:save:', error);
+      throw error;
     }
   });
   
-  // Update meeting
-  ipcMain.handle('meetings:update', async (event, id, meetingData) => {
+  // Handler per eliminare una riunione
+  ipcMain.handle('meetings:delete', async (_event, id) => {
     try {
-      const existingMeeting = await meetingsDb.get(id);
-      
-      const updatedMeeting = {
-        ...existingMeeting,
-        ...meetingData
-      };
-      
-      const result = await meetingsDb.put(updatedMeeting);
-      return {
-        ...updatedMeeting,
-        _rev: result.rev
-      };
+      return await meetingsDb.delete(id);
     } catch (error) {
-      console.error(`Error updating meeting ${id}:`, error);
-      throw new Error('Failed to update meeting');
+      console.error('Errore in meetings:delete:', error);
+      throw error;
     }
   });
-  
-  // Delete meeting
-  ipcMain.handle('meetings:delete', async (event, id) => {
-    try {
-      const meeting = await meetingsDb.get(id);
-      return await meetingsDb.remove(meeting);
-    } catch (error) {
-      console.error(`Error deleting meeting ${id}:`, error);
-      throw new Error('Failed to delete meeting');
-    }
-  });
-  
-  // Generate minutes
-  ipcMain.handle('meetings:generateMinutes', async (event, id) => {
-    try {
-      const meeting = await meetingsDb.get(id);
-      
-      // Get transcript for meeting
-      const transcriptResult = await transcriptsDb.find({
-        selector: {
-          type: 'transcript',
-          meetingId: id,
-          status: 'completed'
-        }
-      });
-      
-      if (transcriptResult.docs.length === 0) {
-        throw new Error('No completed transcript found for this meeting');
-      }
-      
-      const transcript = transcriptResult.docs[0];
-      
-      // Generate minutes using OpenAI
-      const openAiKey = store.get('openAiKey') as string;
-      if (!openAiKey) {
-        throw new Error('OpenAI API key not configured');
-      }
-      
-      const openAIService = new OpenAIService(openAiKey);
-      const minutes = await openAIService.generateMinutes(transcript.fullText, meeting.participants);
-      
-      // Update meeting with minutes
-      const updatedMeeting = {
-        ...meeting,
-        minutes
-      };
-      
-      const result = await meetingsDb.put(updatedMeeting);
-      
-      // Notify renderer
-      if (mainWindow) {
-        mainWindow.webContents.send('meeting:minutesGenerated', {
-          ...updatedMeeting,
-          _rev: result.rev
-        });
-      }
-      
-      return {
-        ...updatedMeeting,
-        _rev: result.rev
-      };
-    } catch (error) {
-      console.error(`Error generating minutes for meeting ${id}:`, error);
-      throw new Error('Failed to generate minutes');
-    }
-  });
-};
+}
 ```
 
 ## Servizi Principali da Implementare
@@ -726,18 +493,18 @@ import chokidar from 'chokidar';
 import path from 'path';
 import fs from 'fs';
 import { BrowserWindow } from 'electron';
-import { generateId } from '../db/pouchdb';
+import { generateId } from '../db/store';
 import { AssemblyAiService } from './assemblyAi';
 
 export class FileWatcher {
-  private databases: any;
+  private store: any;
   private mainWindow: BrowserWindow | null;
   private watchPaths: string[];
   private watcher: chokidar.FSWatcher | null;
   private assemblyAiService: AssemblyAiService | null;
   
-  constructor(databases: any, mainWindow: BrowserWindow | null) {
-    this.databases = databases;
+  constructor(store: any, mainWindow: BrowserWindow | null) {
+    this.store = store;
     this.mainWindow = mainWindow;
     this.watchPaths = [];
     this.watcher = null;
@@ -769,7 +536,7 @@ export class FileWatcher {
       const ext = path.extname(filePath).toLowerCase();
       if (['.mp3', '.wav', '.m4a', '.ogg'].includes(ext)) {
         try {
-          const { audioFilesDb } = this.databases;
+          const { audioFilesDb } = this.store;
           
           // Verifica se il file esiste già nel database
           const result = await audioFilesDb.find({

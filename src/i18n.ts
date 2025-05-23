@@ -25,7 +25,7 @@ i18n
   // Initialize i18next
   .init({
     resources,
-    fallbackLng: 'it', // Default language
+    fallbackLng: 'en', // Default language
     interpolation: {
       escapeValue: false // Not needed for React
     },

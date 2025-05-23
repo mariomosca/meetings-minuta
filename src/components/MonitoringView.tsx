@@ -63,6 +63,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
   const [watchDirectory, setWatchDirectory] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [logs, setLogs] = useState<{ message: string; timestamp: string }[]>([]);
+  const [showPath, setShowPath] = useState<boolean>(false);
 
   // Load data on startup
   useEffect(() => {
@@ -282,14 +283,14 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
   };
   
   // Get transcription status for an audio file
-  const getTranscriptionStatus = (audioFileId: string): JSX.Element => {
+  function getTranscriptionStatus(audioFileId: string): JSX.Element {
     const transcript = transcripts.find(t => t.audioFileId === audioFileId);
     
     if (!transcript) {
       return (
         <button
           onClick={() => startTranscription(audioFileId)}
-          className="px-3 py-1 text-sm bg-[#7a5cf0] text-white rounded hover:bg-[#6146d9] transition-colors disabled:bg-gray-300 disabled:text-gray-800"
+          className="px-4 py-2 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-sm hover:shadow-md"
         >
           {t('transcription.start')}
         </button>
@@ -299,172 +300,200 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
     switch (transcript.status) {
       case 'queued':
         return (
-          <span className="flex items-center">
+          <div className="flex items-center px-3 py-1 bg-yellow-50 border border-yellow-200 rounded-full w-fit">
             <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 animate-pulse"></span>
-            <span className="text-yellow-700">{t('transcription.status.queued')}</span>
-          </span>
+            <span className="text-yellow-700 font-medium">{t('transcription.status.queued')}</span>
+          </div>
         );
       case 'processing':
         return (
-          <span className="flex items-center">
+          <div className="flex items-center px-3 py-1 bg-blue-50 border border-blue-200 rounded-full w-fit">
             <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
-            <span className="text-blue-700">{t('transcription.status.processing')}</span>
-          </span>
+            <span className="text-blue-700 font-medium">{t('transcription.status.processing')}</span>
+          </div>
         );
       case 'completed':
         return (
-          <span className="flex items-center">
+          <div className="flex items-center px-3 py-1 bg-green-50 border border-green-200 rounded-full w-fit">
             <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-            <span className="text-green-700">{t('transcription.status.completed')}</span>
-          </span>
+            <span className="text-green-700 font-medium">{t('transcription.status.completed')}</span>
+          </div>
         );
       case 'error':
         return (
           <div className="flex items-center space-x-2">
-            <span className="flex items-center">
+            <div className="flex items-center px-3 py-1 bg-red-50 border border-red-200 rounded-full">
               <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>
-              <span className="text-red-700">{t('transcription.status.error')}</span>
-            </span>
+              <span className="text-red-700 font-medium">{t('transcription.status.error')}</span>
+            </div>
             <button
               onClick={() => startTranscription(audioFileId)}
-              className="px-2 py-1 text-xs bg-[#7a5cf0] text-white rounded hover:bg-[#6146d9] transition-colors disabled:bg-gray-300 disabled:text-gray-800"
+              className="p-1 text-red-600 hover:text-red-800 transition-colors rounded-full hover:bg-red-50"
+              title={t('common.retry')}
             >
-              {t('common.retry')}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+              </svg>
             </button>
           </div>
         );
       default:
         return <span className="text-gray-500">{t('transcription.status.unknown')}</span>;
     }
-  };
+  }
 
   return (
-    <div className="h-full flex flex-col p-6 overflow-auto">
-      {/* Intestazione */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-        <div className="flex items-center">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800">{t('monitoring.title')}</h2>
-            <p className="text-gray-500 text-sm">{t('monitoring.subtitle')}</p>
-          </div>
-        </div>
-      </div>
-      
+    <div className="h-full flex flex-col p-6 overflow-auto bg-gray-50">
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0]"></div>
-          <p className="text-gray-500 ml-3">{t('common.loading')}</p>
+          <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600"></div>
+          <p className="text-gray-600 ml-3 font-medium">{t('common.loading')}</p>
         </div>
       ) : (
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Sezione stato monitoraggio */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">{t('monitoring.status')}</h3>
+        <div className="flex-1 grid grid-cols-1 gap-6">
+          {/* Monitoring Status Section */}
+          <div className="bg-white rounded-xl shadow-md border-0 p-0 flex flex-col overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 py-3 px-4">
+              <h3 className="text-lg font-semibold text-white mb-0">{t('monitoring.status')}</h3>
+            </div>
             
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
+            <div className="p-4 space-y-3 flex-grow">
+              {/* Status Indicator and Control in single row */}
+              <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-100">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                    isWatching ? 'bg-green-100' : 'bg-gray-100'
+                  }`}>
+                    <div className={`w-2 h-2 rounded-full ${
                       isWatching ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
-                    }`}></span>
-                    <span className="text-sm text-gray-600">
-                      {isWatching ? t('monitoring.active') : t('monitoring.inactive')}
-                    </span>
+                    }`}></div>
                   </div>
-                  
-                  <button
-                    type="button"
-                    onClick={toggleWatching}
-                    className={`px-4 py-2 rounded-md text-white shadow-sm text-sm font-medium transition-colors ${
-                      isWatching 
-                        ? 'bg-[#ef4444] hover:bg-[#dc2626]' 
-                        : 'bg-[#38b2ac] hover:bg-[#319795]'
-                    }`}
+                  <span className={`text-sm font-medium ${isWatching ? 'text-green-700' : 'text-gray-600'}`}>
+                    {isWatching ? t('monitoring.active') : t('monitoring.inactive')}
+                  </span>
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={toggleWatching}
+                  className={`px-3 py-1.5 rounded-full text-white shadow-sm text-xs font-medium transition-all transform hover:scale-105 ${
+                    isWatching 
+                      ? 'bg-red-500 hover:bg-red-600' 
+                      : 'bg-emerald-500 hover:bg-emerald-600'
+                  }`}
+                >
+                  {isWatching ? t('monitoring.stopWatching') : t('monitoring.startWatching')}
+                </button>
+              </div>
+              
+              {/* Directory Path - collapsible */}
+              <div>
+                <button
+                  onClick={() => setShowPath(!showPath)}
+                  className="w-full flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-100 text-left hover:bg-gray-100 transition-colors"
+                >
+                  <span className="text-xs font-medium text-gray-600">{t('monitoring.directoryPath')}</span>
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className={`h-4 w-4 text-gray-400 transform transition-transform ${showPath ? 'rotate-180' : ''}`} 
+                    viewBox="0 0 20 20" 
+                    fill="currentColor"
                   >
-                    {isWatching ? t('monitoring.stopWatching') : t('monitoring.startWatching')}
-                  </button>
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                
+                {showPath && (
+                  <div className="mt-1 px-3 py-2 bg-gray-50 rounded-lg text-gray-700 text-xs break-all">
+                    {watchDirectory || t('settings.monitoring.noDirectory')}
+                  </div>
+                )}
+              </div>
+              
+              {/* Statistics - combined in a single row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-medium text-indigo-800">{t('monitoring.detectedFiles')}</div>
+                    <div className="flex items-center">
+                      <div className="text-2xl font-bold text-indigo-700">{audioFiles.length}</div>
+                      <div className="text-indigo-500 ml-1 text-xs">files</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <div className="text-sm font-medium text-gray-700 mb-1">{t('monitoring.directoryPath')}</div>
-                <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-800 text-sm">
-                  {watchDirectory || t('settings.monitoring.noDirectory')}
+                
+                <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-medium text-purple-800">{t('transcription.title')}</div>
+                    <div className="flex items-center">
+                      <div className="text-2xl font-bold text-purple-700">{transcripts.length}</div>
+                      <div className="text-purple-500 ml-1 text-xs">transcripts</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <div className="text-sm font-medium text-gray-700 mb-1">{t('monitoring.detectedFiles')}</div>
-                <div className="text-xl font-semibold text-[#7a5cf0]">{audioFiles.length}</div>
-              </div>
-              
-              <div>
-                <div className="text-sm font-medium text-gray-700 mb-1">{t('transcription.title')}</div>
-                <div className="text-xl font-semibold text-[#7a5cf0]">{transcripts.length}</div>
               </div>
             </div>
           </div>
           
-          {/* Sezione log */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">{t('monitoring.logs')}</h3>
+          {/* Audio Files Section */}
+          <div className="bg-white rounded-xl shadow-md border-0 p-0 flex flex-col overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 flex justify-between items-center">
+              <h3 className="text-xl font-semibold text-white mb-0">{t('audio.title')}</h3>
+              <div className="text-white text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                {audioFiles.length} {audioFiles.length === 1 ? 'file' : 'files'}
+              </div>
+            </div>
             
-            <div className="h-64 overflow-y-auto border border-gray-200 rounded p-2 bg-gray-50">
-              {logs.length === 0 ? (
-                <p className="text-gray-500 text-sm italic p-2">{t('monitoring.noLogs')}</p>
+            <div className="p-4">
+              {audioFiles.length === 0 ? (
+                <div className="text-center py-12 px-4">
+                  <div className="bg-gray-50 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 font-medium text-lg mb-2">{t('monitoring.noFiles')}</p>
+                  <p className="text-gray-400 text-sm max-w-md mx-auto">When audio files are detected in the monitored directory, they will appear here.</p>
+                </div>
               ) : (
-                <div className="space-y-1">
-                  {logs.map((log, index) => (
-                    <div key={index} className="text-xs text-gray-700 p-1 hover:bg-gray-100">
-                      <span className="text-gray-500">{new Date(log.timestamp).toLocaleTimeString()}</span>
-                      {' - '}
-                      <span>{log.message}</span>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto rounded-lg">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('monitoring.fileName')}</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('audio.fileSize')}</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('meetings.date')}</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('transcription.status.title')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {audioFiles.map((file) => (
+                        <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center">
+                              <div className="mr-3 text-indigo-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-800">{file.fileName}</div>
+                                <div className="text-gray-500 text-xs truncate max-w-xs" title={file.filePath}>{file.filePath}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{formatFileSize(file.fileSize)}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{formatDate(file.createdAt)}</td>
+                          <td className="px-6 py-4 text-sm">
+                            {getTranscriptionStatus(file.id)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
-          </div>
-          
-          {/* Sezione file audio */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 md:col-span-2">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">{t('audio.title')}</h3>
-            
-            {audioFiles.length === 0 ? (
-              <div className="text-center py-8">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                <p className="text-gray-500">{t('monitoring.noFiles')}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-gray-50 text-gray-700 text-sm">
-                      <th className="px-4 py-2 w-5/12">{t('monitoring.fileName')}</th>
-                      <th className="px-4 py-2 w-2/12">{t('audio.fileSize')}</th>
-                      <th className="px-4 py-2 w-3/12">{t('meetings.date')}</th>
-                      <th className="px-4 py-2 w-2/12">{t('transcription.status.title')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {audioFiles.map((file) => (
-                      <tr key={file.id} className="border-t border-gray-100 hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm">
-                          <div className="font-medium">{file.fileName}</div>
-                          <div className="text-gray-500 text-xs truncate" title={file.filePath}>{file.filePath}</div>
-                        </td>
-                        <td className="px-4 py-3 text-sm">{formatFileSize(file.fileSize)}</td>
-                        <td className="px-4 py-3 text-sm">{formatDate(file.createdAt)}</td>
-                        <td className="px-4 py-3 text-sm min-w-[120px]">{getTranscriptionStatus(file.id)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
         </div>
       )}

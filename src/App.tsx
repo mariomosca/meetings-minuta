@@ -366,6 +366,10 @@ const App: React.FC = () => {
     setView('monitoring');
   }
   
+  const meetingsTitle = t('meetings.title');
+  const monitoringTitle = t('monitoring.title');
+  const settingsTitle = t('settings.title');
+  
   return (
     <div className="flex flex-col min-h-screen bg-[#f8f9fa]">
       {/* Toast container */}
@@ -430,18 +434,8 @@ const App: React.FC = () => {
           </div>
         </div>
         
-        {/* Right: Settings and Profile */}
+        {/* Right: Profile only (Settings removed) */}
         <div className="flex items-center space-x-3">
-          <button 
-            onClick={handleGoToSettings}
-            className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 transition-colors"
-            title={t('settings.title')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-            </svg>
-          </button>
-          
           <button className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -451,11 +445,11 @@ const App: React.FC = () => {
       </div>
       
       {/* Contenuto principale in base alla vista */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar (mostrata nella vista lista, monitoraggio e impostazioni) */}
         {(view === 'list' || view === 'monitoring' || view === 'settings') && (
-          <div className="w-56 bg-white border-r border-gray-200 h-screen p-4">
-            <div className="space-y-2">
+          <div className="w-56 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+            <div className="flex-grow overflow-y-auto p-4 space-y-2">
               <button
                 onClick={() => setView('list')}
                 className={`flex items-center p-3 rounded-md w-full ${
@@ -465,7 +459,7 @@ const App: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                <span>{t('meetings.title')}</span>
+                <span>{meetingsTitle}</span>
               </button>
               
               <button
@@ -477,20 +471,25 @@ const App: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                 </svg>
-                <span>{t('monitoring.title')}</span>
+                <span>{monitoringTitle}</span>
               </button>
-              
+            </div>
+            
+            {/* Settings button moved to bottom of sidebar with improved UI */}
+            <div className="p-4 pt-2 border-t border-gray-200">
               <button
                 onClick={handleGoToSettings}
-                className={`flex items-center p-3 rounded-md w-full ${
-                  view === 'settings' ? 'bg-[#7a5cf0] text-white' : 'text-gray-700 hover:bg-gray-100'
+                className={`flex items-center p-3 rounded-md w-full transition-all ${
+                  view === 'settings' 
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' 
+                    : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>{t('settings.title')}</span>
+                <span className="font-medium">{settingsTitle}</span>
               </button>
             </div>
           </div>

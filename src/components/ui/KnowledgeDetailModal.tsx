@@ -56,6 +56,143 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
     }
   };
 
+  const copyToMarkdown = async () => {
+    const markdown = generateMarkdown();
+    try {
+      await navigator.clipboard.writeText(markdown);
+      console.log('Appunti copiati negli appunti in formato Markdown');
+    } catch (err) {
+      console.error('Errore nel copiare negli appunti:', err);
+    }
+  };
+
+  const generateMarkdown = () => {
+    let markdown = `# ${knowledge.title}\n\n`;
+    
+    // Informazioni generali
+    markdown += `**Categoria:** ${knowledge.category}\n`;
+    markdown += `**Creato:** ${formatDateTime(knowledge.createdAt)}\n\n`;
+    
+    // Riassunto
+    if (knowledge.summary) {
+      markdown += `## Riassunto\n\n`;
+      markdown += `${knowledge.summary}\n\n`;
+    }
+    
+    // Tag
+    if (knowledge.tags && knowledge.tags.length > 0) {
+      markdown += `**Tag:** `;
+      markdown += knowledge.tags.map((tag: string) => `#${tag}`).join(' ');
+      markdown += `\n\n`;
+    }
+    
+    // Argomenti chiave
+    if (knowledge.keyTopics && knowledge.keyTopics.length > 0) {
+      markdown += `## Argomenti Principali\n\n`;
+      knowledge.keyTopics.forEach((topic: any) => {
+        markdown += `### ${topic.title || topic.topic}\n\n`;
+        if (topic.description) {
+          markdown += `${topic.description}\n\n`;
+        }
+        if (topic.summary) {
+          markdown += `${topic.summary}\n\n`;
+        }
+        if (topic.importance) {
+          markdown += `**Importanza:** ${topic.importance}\n\n`;
+        }
+      });
+    }
+    
+    // Insights
+    if (knowledge.insights && knowledge.insights.length > 0) {
+      markdown += `## Intuizioni e Analisi\n\n`;
+      knowledge.insights.forEach((insight: any, index: number) => {
+        markdown += `${index + 1}. `;
+        if (insight.title) {
+          markdown += `**${insight.title}**\n\n`;
+        }
+        const description = insight.description || insight.insight || (typeof insight === 'string' ? insight : 'Insight');
+        markdown += `   ${description}\n\n`;
+      });
+    }
+    
+    // Elementi azionabili
+    if (knowledge.actionableItems && knowledge.actionableItems.length > 0) {
+      markdown += `## Elementi Azionabili\n\n`;
+      knowledge.actionableItems.forEach((item: any, index: number) => {
+        const title = item.action || item.title || (typeof item === 'string' ? item : 'Elemento azionabile');
+        markdown += `${index + 1}. **${title}**\n`;
+        if (item.description) markdown += `   - Descrizione: ${item.description}\n`;
+        if (item.category) markdown += `   - Categoria: ${item.category}\n`;
+        if (item.priority) markdown += `   - Priorità: ${item.priority}\n`;
+        if (item.timeframe) markdown += `   - Tempistica: ${item.timeframe}\n`;
+        markdown += `\n`;
+      });
+    }
+    
+    // Connessioni
+    if (knowledge.connections && knowledge.connections.length > 0) {
+      markdown += `## Connessioni\n\n`;
+      knowledge.connections.forEach((connection: string) => {
+        markdown += `- ${connection}\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    // Domande aperte
+    if (knowledge.questions && knowledge.questions.length > 0) {
+      markdown += `## Domande Aperte\n\n`;
+      knowledge.questions.forEach((question: string, index: number) => {
+        markdown += `${index + 1}. ${question}\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    // Concetti
+    if (knowledge.concepts && knowledge.concepts.length > 0) {
+      markdown += `## Concetti\n\n`;
+      knowledge.concepts.forEach((concept: any) => {
+        const name = concept.name || concept.title || (typeof concept === 'string' ? concept : 'Concetto');
+        markdown += `- **${name}**`;
+        if (concept.description) markdown += `: ${concept.description}`;
+        markdown += `\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    // Apprendimenti
+    if (knowledge.learnings && knowledge.learnings.length > 0) {
+      markdown += `## Apprendimenti\n\n`;
+      knowledge.learnings.forEach((learning: any) => {
+        const lesson = learning.lesson || learning.title || (typeof learning === 'string' ? learning : 'Apprendimento');
+        markdown += `- **${lesson}**`;
+        if (learning.description) markdown += `: ${learning.description}`;
+        markdown += `\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    // Risorse
+    if (knowledge.resources && knowledge.resources.length > 0) {
+      markdown += `## Risorse\n\n`;
+      knowledge.resources.forEach((resource: any) => {
+        const title = resource.title || resource.name || (typeof resource === 'string' ? resource : 'Risorsa');
+        markdown += `- **${title}**`;
+        if (resource.url) markdown += ` - [${resource.url}](${resource.url})`;
+        if (resource.description) markdown += `\n  ${resource.description}`;
+        markdown += `\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    // Metadata
+    markdown += `---\n`;
+    markdown += `*Generato con ${knowledge.templateUsed || 'N/A'} tramite ${knowledge.aiProvider || 'N/A'}*\n`;
+    markdown += `*ID: ${knowledge.id}*\n`;
+    
+    return markdown;
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -340,7 +477,16 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
 
         {/* Footer */}
         <div className="border-t border-gray-200 px-6 py-4">
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            <button 
+              onClick={copyToMarkdown}
+              className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors flex items-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copia Markdown
+            </button>
             <button 
               onClick={onRequestClose}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"

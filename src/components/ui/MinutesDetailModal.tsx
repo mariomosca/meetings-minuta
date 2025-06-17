@@ -64,6 +64,97 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
     }
   };
 
+  const copyToMarkdown = async () => {
+    const markdown = generateMarkdown();
+    try {
+      await navigator.clipboard.writeText(markdown);
+      console.log('Minuta copiata negli appunti in formato Markdown');
+    } catch (err) {
+      console.error('Errore nel copiare negli appunti:', err);
+    }
+  };
+
+  const generateMarkdown = () => {
+    let markdown = `# ${minutes.title}\n\n`;
+    
+    // Informazioni generali
+    markdown += `**Data riunione:** ${formatDate(minutes.date)}\n`;
+    markdown += `**Creata:** ${formatDateTime(minutes.createdAt)}\n\n`;
+    
+    // Partecipanti
+    if (minutes.participants && minutes.participants.length > 0) {
+      markdown += `## Partecipanti\n\n`;
+      minutes.participants.forEach((participant: any) => {
+        markdown += `- **${participant.name}**`;
+        if (participant.role) markdown += ` - ${participant.role}`;
+        markdown += `\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    // Agenda
+    if (minutes.agenda && minutes.agenda.length > 0) {
+      markdown += `## Agenda\n\n`;
+      minutes.agenda.forEach((item: string, index: number) => {
+        markdown += `${index + 1}. ${item}\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    // Discussioni principali
+    if (minutes.keyDiscussions && minutes.keyDiscussions.length > 0) {
+      markdown += `## Discussioni Principali\n\n`;
+      minutes.keyDiscussions.forEach((discussion: any) => {
+        markdown += `### ${discussion.topic}\n\n`;
+        if (discussion.summary) {
+          markdown += `${discussion.summary}\n\n`;
+        }
+        if (discussion.decisions && discussion.decisions.length > 0) {
+          markdown += `**Decisioni:**\n`;
+          discussion.decisions.forEach((decision: string) => {
+            markdown += `- ✓ ${decision}\n`;
+          });
+          markdown += `\n`;
+        }
+      });
+    }
+    
+    // Action items
+    if (minutes.actionItems && minutes.actionItems.length > 0) {
+      markdown += `## Azioni da Intraprendere\n\n`;
+      minutes.actionItems.forEach((action: any, index: number) => {
+        markdown += `${index + 1}. **${action.action}**\n`;
+        if (action.owner) markdown += `   - Responsabile: ${action.owner}\n`;
+        if (action.priority) markdown += `   - Priorità: ${action.priority}\n`;
+        if (action.status) markdown += `   - Stato: ${action.status}\n`;
+        if (action.dueDate) markdown += `   - Scadenza: ${formatDate(action.dueDate)}\n`;
+        markdown += `\n`;
+      });
+    }
+    
+    // Prossima riunione
+    if (minutes.nextMeeting) {
+      markdown += `## Prossima Riunione\n\n`;
+      if (minutes.nextMeeting.date) {
+        markdown += `**Data:** ${formatDate(minutes.nextMeeting.date)}\n`;
+      }
+      if (minutes.nextMeeting.agenda && minutes.nextMeeting.agenda.length > 0) {
+        markdown += `**Agenda pianificata:**\n`;
+        minutes.nextMeeting.agenda.forEach((item: string, index: number) => {
+          markdown += `${index + 1}. ${item}\n`;
+        });
+      }
+      markdown += `\n`;
+    }
+    
+    // Metadata
+    markdown += `---\n`;
+    markdown += `*Generato con ${minutes.templateUsed || 'N/A'} tramite ${minutes.aiProvider || 'N/A'}*\n`;
+    markdown += `*ID: ${minutes.id}*\n`;
+    
+    return markdown;
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -266,7 +357,16 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
 
         {/* Footer */}
         <div className="border-t border-gray-200 px-6 py-4">
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            <button 
+              onClick={copyToMarkdown}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copia Markdown
+            </button>
             <button 
               onClick={onRequestClose}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"

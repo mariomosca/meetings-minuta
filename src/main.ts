@@ -307,6 +307,13 @@ function setupIPCHandlers() {
   ipcMain.handle('config:setAssemblyAiKey', (_event, apiKey) => {
     try {
       database.setAssemblyAiKey(apiKey);
+      
+      // Aggiorna anche il servizio AssemblyAI con la nuova chiave
+      if (assemblyAIService) {
+        assemblyAIService.setApiKey(apiKey);
+        console.log('AssemblyAI API key updated in service');
+      }
+      
       return true;
     } catch (error) {
       console.error('Error in handler config:setAssemblyAiKey:', error);
@@ -410,6 +417,125 @@ function setupIPCHandlers() {
       throw error;
     }
   });
+  
+  // ==================== SETTINGS HANDLERS ====================
+  
+  // Salvare la chiave API AssemblyAI (compatibilità con frontend)
+  ipcMain.handle('settings:saveAssemblyAIApiKey', (_event, apiKey) => {
+    try {
+      database.setAssemblyAiKey(apiKey);
+      
+      // Aggiorna anche il servizio AssemblyAI con la nuova chiave
+      if (assemblyAIService) {
+        assemblyAIService.setApiKey(apiKey);
+        console.log('AssemblyAI API key updated in service via settings handler');
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error in handler settings:saveAssemblyAIApiKey:', error);
+      return { success: false, error: error.message };
+    }
+  });
+  
+  // Ottenere la chiave API AssemblyAI (compatibilità con frontend)
+  ipcMain.handle('settings:getAssemblyAIApiKey', () => {
+    try {
+      const apiKey = database.getAssemblyAiKey();
+      return apiKey;
+    } catch (error) {
+      console.error('Error in handler settings:getAssemblyAIApiKey:', error);
+      return '';
+    }
+  });
+  
+  // Ottenere la directory di monitoraggio
+  ipcMain.handle('settings:getWatchDirectory', () => {
+    try {
+      const watchDirs = database.getWatchDirectories();
+      const firstDir = watchDirs.length > 0 ? watchDirs[0] : '';
+      
+      // Per compatibilità con il frontend, restituiamo un oggetto con directory e isEnabled
+      return {
+        directory: firstDir,
+        isEnabled: fileWatcher ? fileWatcher.isActive() : false
+      };
+    } catch (error) {
+      console.error('Error in handler settings:getWatchDirectory:', error);
+      return { directory: '', isEnabled: false };
+    }
+  });
+  
+  // Selezionare una directory di monitoraggio
+  ipcMain.handle('settings:selectWatchDirectory', async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        properties: ['openDirectory']
+      });
+      
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: false };
+      }
+      
+      const dirPath = result.filePaths[0];
+      database.addWatchDirectory(dirPath);
+      
+      return { 
+        success: true,
+        directory: dirPath
+      };
+    } catch (error) {
+      console.error('Error in handler settings:selectWatchDirectory:', error);
+      return { success: false, error: error.message };
+    }
+  });
+  
+  // Attivare/disattivare il monitoraggio
+  ipcMain.handle('settings:toggleWatching', (_event, isEnabled) => {
+    try {
+      if (!fileWatcher) {
+        return { success: false, error: 'FileWatcher not initialized' };
+      }
+      
+      if (isEnabled) {
+        const watchDirs = database.getWatchDirectories();
+        if (watchDirs.length === 0) {
+          return { success: false, error: 'No directories to monitor' };
+        }
+        
+        const result = fileWatcher.startWatching(watchDirs[0]);
+        return result;
+      } else {
+        fileWatcher.stopWatching();
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Error in handler settings:toggleWatching:', error);
+      return { success: false, error: error.message };
+    }
+  });
+  
+  // Ottenere la lingua dell'interfaccia
+  ipcMain.handle('settings:getLanguage', () => {
+    try {
+      const language = database.getLanguage();
+      return language;
+    } catch (error) {
+      console.error('Error in handler settings:getLanguage:', error);
+      return 'it';
+    }
+  });
+  
+  // Salvare la lingua dell'interfaccia
+  ipcMain.handle('settings:saveLanguage', (_event, language) => {
+    try {
+      database.setLanguage(language);
+      return { success: true };
+    } catch (error) {
+      console.error('Error in handler settings:saveLanguage:', error);
+      return { success: false, error: error.message };
+    }
+  });
 }
 
 const createWindow = (): void => {
@@ -455,6 +581,7 @@ function initializeServices() {
   
   // Inizializza AssemblyAIService
   const apiKey = database.getAssemblyAiKey();
+  console.log('Loading AssemblyAI API key on startup:', apiKey ? 'API key found' : 'API key not found');
   assemblyAIService = new AssemblyAIService(apiKey, mainWindow);
   
   // Avvia il monitoraggio se ci sono directory configurate

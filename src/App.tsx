@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import toast, { Toaster } from 'react-hot-toast';
@@ -145,8 +145,10 @@ const App: React.FC = () => {
   async function loadMeetings() {
     try {
       setIsLoading(true);
-      const fetchedMeetings = await electronAPI.meetings?.getAll() || [];
-      setMeetings(fetchedMeetings);
+      const meetingsData = await electronAPI.meetings?.getAll();
+      if (meetingsData) {
+        setMeetings(meetingsData);
+      }
     } catch (error) {
       console.error('Error loading meetings:', error);
       toast.error('Unable to load meetings');
@@ -285,8 +287,10 @@ const App: React.FC = () => {
         });
       }
       
-      // Reload meetings
-      await loadMeetings();
+      // Add the new meeting to the state directly instead of reloading all meetings
+      if (savedMeeting) {
+        setMeetings(prevMeetings => [savedMeeting, ...prevMeetings]);
+      }
       
       // Success notification
       toast.success('Audio file imported successfully');
@@ -306,14 +310,21 @@ const App: React.FC = () => {
   
   // Handler for new meetings created by main process
   function handleNewMeetingCreated(meeting: Meeting) {
-    // Update meetings list without reloading everything
-    setMeetings(prevMeetings => [meeting, ...prevMeetings]);
+    // Check if meeting already exists in the state to avoid duplicates
+    const existingMeeting = meetings.find(m => m.id === meeting.id);
     
-    // Notify user
-    toast.success('New meeting created from monitored audio file', {
-      duration: 5000,
-      icon: '🎙️'
-    });
+    if (!existingMeeting) {
+      // Update meetings list without reloading everything
+      setMeetings(prevMeetings => [meeting, ...prevMeetings]);
+      
+      // Notify user
+      toast.success('New meeting created from monitored audio file', {
+        duration: 5000,
+        icon: '🎙️'
+      });
+    } else {
+      console.log(`Meeting ${meeting.id} already exists in state, skipping duplicate`);
+    }
   }
   
   // Handler for transcript status updates
@@ -329,14 +340,11 @@ const App: React.FC = () => {
         icon: '📝'
       });
       
-      // Update meetings if needed
+      // Update meetings if needed (only update local state, don't save to database again)
       if (meeting && !meeting.transcriptId) {
         const updatedMeeting = { ...meeting, transcriptId: transcript.id };
         
-        // Update meeting in database
-        electronAPI.meetings?.save(updatedMeeting);
-        
-        // Update local state
+        // Only update local state - the database should already be updated by the AssemblyAI service
         setMeetings(prevMeetings => 
           prevMeetings.map(m => m.id === meeting.id ? updatedMeeting : m)
         );

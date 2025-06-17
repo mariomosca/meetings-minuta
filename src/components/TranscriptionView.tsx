@@ -14,6 +14,10 @@ interface ElectronAPI {
     getByMeetingId: (meetingId: string) => Promise<Transcript[]>;
     startTranscription: (audioFileId: string) => Promise<Transcript>;
   };
+  events?: {
+    on: (event: string, listener: (...args: any[]) => void) => void;
+    off: (event: string, listener: (...args: any[]) => void) => void;
+  };
 }
 
 // Access to APIs exposed by preload
@@ -144,9 +148,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   
   const transcriptTextRef = useRef<HTMLDivElement>(null);
   
-  // Reference to track polling interval
-  const transcriptPollingInterval = useRef<NodeJS.Timeout | null>(null);
-  
   // Format file size in readable format
   function formatFileSize(bytes: number): string {
     if (bytes < 1024) return bytes + ' B';
@@ -159,13 +160,15 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   useEffect(() => {
     loadData();
     
+    // Set up event listener for transcript updates
+    if (electronAPI.events) {
+      electronAPI.events.on('transcript:statusChanged', handleTranscriptStatusChanged);
+    }
+    
     // Cleanup function
     return () => {
-      // Make sure any active intervals are cleared
-      // when the component is unmounted
-      if (transcriptPollingInterval.current) {
-        clearInterval(transcriptPollingInterval.current);
-        transcriptPollingInterval.current = null;
+      if (electronAPI.events) {
+        electronAPI.events.off('transcript:statusChanged', handleTranscriptStatusChanged);
       }
     };
   }, [meetingId]);
@@ -225,40 +228,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         // Update transcript list
         setTranscripts(prev => [transcript, ...prev]);
         setActiveTranscript(transcript);
-        
-        // Clear any previous intervals
-        if (transcriptPollingInterval.current) {
-          clearInterval(transcriptPollingInterval.current);
-        }
-        
-        // Check status every 5 seconds
-        transcriptPollingInterval.current = setInterval(async () => {
-          const updatedTranscripts = await electronAPI.transcripts?.getByMeetingId(meetingId);
-          if (updatedTranscripts) {
-            setTranscripts(updatedTranscripts);
-            
-            // Update active transcript
-            const updatedTranscript = updatedTranscripts.find(t => t.id === transcript.id);
-            if (updatedTranscript) {
-              setActiveTranscript(updatedTranscript);
-              
-              // If transcript is completed or in error, stop polling
-              if (updatedTranscript.status === 'completed' || updatedTranscript.status === 'error') {
-                if (transcriptPollingInterval.current) {
-                  clearInterval(transcriptPollingInterval.current);
-                  transcriptPollingInterval.current = null;
-                }
-                setIsTranscribing(false);
-                
-                if (updatedTranscript.status === 'completed') {
-                  toast.success('Transcription completed successfully');
-                } else if (updatedTranscript.status === 'error') {
-                  toast.error('Error during transcription');
-                }
-              }
-            }
-          }
-        }, 5000);
       }
     } catch (error) {
       console.error('Error starting transcription:', error);
@@ -400,6 +369,41 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         return <span className="text-gray-500 text-xs">Unknown</span>;
     }
   }
+  
+  // Handle transcript status change event
+  const handleTranscriptStatusChanged = (transcript: Transcript) => {
+    // Only update if this transcript belongs to the current meeting
+    if (transcript.meetingId === meetingId) {
+      // Update transcripts list
+      setTranscripts(prev => {
+        const index = prev.findIndex(t => t.id === transcript.id);
+        if (index >= 0) {
+          const updated = [...prev];
+          updated[index] = transcript;
+          return updated;
+        } else {
+          return [...prev, transcript];
+        }
+      });
+      
+      // Update active transcript if it's the same one
+      setActiveTranscript(current => {
+        if (current && current.id === transcript.id) {
+          return transcript;
+        }
+        return current;
+      });
+      
+      // Handle completion notifications and state updates
+      if (transcript.status === 'completed') {
+        setIsTranscribing(false);
+        toast.success('Transcription completed successfully');
+      } else if (transcript.status === 'error') {
+        setIsTranscribing(false);
+        toast.error('Error during transcription');
+      }
+    }
+  };
   
   return (
     <div className="h-full flex flex-col">

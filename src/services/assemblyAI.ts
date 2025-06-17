@@ -20,7 +20,13 @@ export class AssemblyAIService {
    * @param apiKey Chiave API di AssemblyAI
    */
   public setApiKey(apiKey: string): void {
+    const previousKey = this.apiKey;
     this.apiKey = apiKey;
+    console.log('AssemblyAI API key updated:', {
+      hasKey: !!apiKey && apiKey.trim().length > 0,
+      keyLength: apiKey ? apiKey.length : 0,
+      changed: previousKey !== apiKey
+    });
   }
 
   /**
@@ -78,7 +84,9 @@ export class AssemblyAIService {
       if (!audioFile) {
         throw new Error(`Audio file not found: ${audioFileId}`);
       }
-      
+
+      console.log(`Starting transcription for audioFile ${audioFileId}, meetingId: ${audioFile.meetingId || 'none'}`);
+
       // Crea una trascrizione in stato "queued"
       const initialTranscript = await database.saveTranscript({
         meetingId: audioFile.meetingId || '',
@@ -87,7 +95,9 @@ export class AssemblyAIService {
         text: '',
         createdAt: new Date().toISOString()
       });
-      
+
+      console.log(`Created transcript ${initialTranscript.id} with meetingId: ${initialTranscript.meetingId || 'none'}`);
+
       // Notifica l'UI che la trascrizione è in coda
       this.notifyTranscriptionUpdate(initialTranscript);
       
@@ -234,7 +244,43 @@ export class AssemblyAIService {
             
             // Se la trascrizione non è associata a una riunione, creane una nuova
             if (!transcript.meetingId || transcript.meetingId === '') {
+              console.log(`Transcript ${transcript.id} has no meetingId, creating new meeting. AudioFileId: ${transcript.audioFileId}`);
+              
+              // Verifica di nuovo se l'audioFile ha un meetingId (potrebbe essere stato aggiornato nel frattempo)
+              if (transcript.audioFileId) {
+                const currentAudioFile = await database.getAudioFileById(transcript.audioFileId);
+                if (currentAudioFile && currentAudioFile.meetingId) {
+                  console.log(`AudioFile now has meetingId ${currentAudioFile.meetingId}, updating transcript instead of creating new meeting`);
+                  
+                  // Aggiorna la trascrizione con il meetingId del file audio
+                  await database.saveTranscript({
+                    ...updatedTranscript,
+                    meetingId: currentAudioFile.meetingId
+                  });
+                  
+                  // Aggiorna anche il meeting con il transcriptId se non ce l'ha già
+                  const meeting = await database.getMeetingById(currentAudioFile.meetingId);
+                  if (meeting && !meeting.transcriptId) {
+                    await database.saveMeeting({
+                      ...meeting,
+                      transcriptId: transcript.id
+                    });
+                  }
+                  
+                  // Invia notifica dell'aggiornamento della trascrizione con il nuovo meetingId
+                  const finalTranscript = await database.getTranscriptById(transcript.id);
+                  if (finalTranscript) {
+                    this.notifyTranscriptionUpdate(finalTranscript);
+                  }
+                  
+                  return; // Non creare una nuova riunione
+                }
+              }
+              
+              console.log('Creating new meeting from transcript');
               await this.createMeetingFromTranscription(updatedTranscript);
+            } else {
+              console.log(`Transcript ${transcript.id} already associated with meeting ${transcript.meetingId}`);
             }
           }
         } else if (status === 'error') {

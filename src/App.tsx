@@ -454,6 +454,17 @@ const App: React.FC = () => {
     {
       items: [
         {
+          id: 'monitoring',
+          label: monitoringTitle,
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+            </svg>
+          ),
+          onClick: handleViewMonitoring,
+          isActive: view === 'monitoring'
+        },
+        {
           id: 'meetings',
           label: meetingsTitle,
           icon: (
@@ -466,7 +477,7 @@ const App: React.FC = () => {
         },
         {
           id: 'saved',
-          label: 'Contenuti Salvati',
+          label: 'Minutes & Knowledge Base',
           icon: (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -474,17 +485,6 @@ const App: React.FC = () => {
           ),
           onClick: handleViewSaved,
           isActive: view === 'saved'
-        },
-        {
-          id: 'monitoring',
-          label: monitoringTitle,
-          icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-            </svg>
-          ),
-          onClick: handleViewMonitoring,
-          isActive: view === 'monitoring'
         }
       ]
     }

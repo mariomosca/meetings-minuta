@@ -545,7 +545,7 @@ const App: React.FC = () => {
                 }}
                 searchPlaceholder={t('meetings.search')}
                 actions={
-                  <div className="space-x-3">
+                  <div className="flex items-center space-x-3">
                     <Button
                       onClick={() => setIsCreating(true)}
                       disabled={isLoading}

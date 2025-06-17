@@ -286,7 +286,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
   };
   
   // Get transcription status for an audio file
-  function getTranscriptionStatus(audioFileId: string): JSX.Element {
+  function getTranscriptionStatus(audioFileId: string): React.ReactElement {
     const transcript = transcripts.find(t => t.audioFileId === audioFileId);
     
     if (!transcript) {
@@ -295,7 +295,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
           onClick={() => startTranscription(audioFileId)}
           variant="primary"
           size="sm"
-          className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105"
+          className="rounded-full bg-orange-100 hover:bg-orange-200 border border-orange-400 text-gray-900 transform hover:scale-105 shadow-none hover:shadow-none !bg-orange-100 !text-gray-900 hover:!bg-orange-200"
         >
           {t('transcription.start')}
         </Button>
@@ -305,43 +305,45 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
     switch (transcript.status) {
       case 'queued':
         return (
-          <div className="flex items-center px-3 py-1 bg-yellow-50 border border-yellow-200 rounded-full w-fit">
-            <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 animate-pulse"></span>
-            <span className="text-yellow-700 font-medium">{t('transcription.status.queued')}</span>
+          <div className="flex items-center px-3 py-1 bg-orange-500 border border-orange-400 rounded-full w-fit">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white mr-2 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+            </svg>
+            <span className="text-gray-900 font-medium">{t('transcription.status.queued')}</span>
           </div>
         );
       case 'processing':
         return (
-          <div className="flex items-center px-3 py-1 bg-blue-50 border border-blue-200 rounded-full w-fit">
-            <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
-            <span className="text-blue-700 font-medium">{t('transcription.status.processing')}</span>
+          <div className="flex items-center px-3 py-1 bg-primary-50 border border-primary-200 rounded-full w-fit">
+            <span className="inline-block w-2 h-2 rounded-full bg-primary-500 mr-2 animate-pulse"></span>
+            <span className="text-primary-700 font-medium">{t('transcription.status.processing')}</span>
           </div>
         );
       case 'completed':
         return (
-          <div className="flex items-center px-3 py-1 bg-green-50 border border-green-200 rounded-full w-fit">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-            <span className="text-green-700 font-medium">{t('transcription.status.completed')}</span>
+          <div className="flex items-center px-3 py-1 bg-success-50 border border-success-200 rounded-full w-fit">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-success-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span className="text-success-700 font-medium">{t('transcription.status.completed')}</span>
           </div>
         );
       case 'error':
         return (
           <div className="flex items-center space-x-2">
-            <div className="flex items-center px-3 py-1 bg-red-50 border border-red-200 rounded-full">
-              <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>
-              <span className="text-red-700 font-medium">{t('transcription.status.error')}</span>
+            <div className="flex items-center px-3 py-1 bg-error-50 border border-error-200 rounded-full">
+              <span className="inline-block w-2 h-2 rounded-full bg-error-500 mr-2"></span>
+              <span className="text-error-700 font-medium">{t('transcription.status.error')}</span>
             </div>
-            <Button
+            <button
               onClick={() => startTranscription(audioFileId)}
-              variant="ghost"
-              size="sm"
-              className="p-1 text-red-600 hover:text-red-800 rounded-full hover:bg-red-50"
-              leftIcon={
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                </svg>
-              }
-            />
+              className="p-1 text-red-600 hover:text-red-800 rounded-full hover:bg-red-50 transition-colors"
+              title={t('common.retry')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+              </svg>
+            </button>
           </div>
         );
       default:
@@ -353,15 +355,15 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
     <div className="h-full flex flex-col p-6 overflow-auto bg-gray-50">
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600"></div>
+          <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500"></div>
           <p className="text-gray-600 ml-3 font-medium">{t('common.loading')}</p>
         </div>
       ) : (
         <div className="flex-1 grid grid-cols-1 gap-6">
           {/* Monitoring Status Section */}
-          <div className="bg-white rounded-xl shadow-md border-0 p-0 flex flex-col overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 py-3 px-4">
-              <h3 className="text-lg font-semibold text-white mb-0">{t('monitoring.status')}</h3>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-0 flex flex-col overflow-hidden">
+            <div className="bg-white py-3 px-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-0">{t('monitoring.status')}</h3>
             </div>
             
             <div className="p-4 space-y-3 flex-grow">
@@ -380,37 +382,34 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                   </span>
                 </div>
                 
-                <Button
+                <button
                   onClick={toggleWatching}
-                  variant={isWatching ? "danger" : "primary"}
-                  size="sm"
-                  className={`rounded-full transform hover:scale-105 ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium transform hover:scale-105 transition-all duration-200 border-2 text-gray-900 ${
                     isWatching 
-                      ? '' 
-                      : 'bg-emerald-500 hover:bg-emerald-600'
+                      ? 'border-red-500 bg-red-50 hover:bg-red-100' 
+                      : 'border-green-500 bg-green-50 hover:bg-green-100'
                   }`}
                 >
                   {isWatching ? t('monitoring.stopWatching') : t('monitoring.startWatching')}
-                </Button>
+                </button>
               </div>
               
               {/* Directory Path - collapsible */}
               <div>
-                <Button
+                <button
                   onClick={() => setShowPath(!showPath)}
-                  variant="ghost"
-                  className="w-full flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-100 text-left hover:bg-gray-100"
-                >
-                  <span className="text-xs font-medium text-gray-600">{t('monitoring.directoryPath')}</span>
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className={`h-4 w-4 text-gray-600 transform transition-transform ${showPath ? 'rotate-180' : ''}`} 
-                    viewBox="0 0 20 20" 
-                    fill="currentColor"
-                  >
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </Button>
+                  className="w-full flex items-center justify-between bg-gray-50 rounded-lg p-3 text-left hover:bg-gray-100 transition-colors"
+                                  >
+                    <span className="text-xs font-medium text-gray-600">{t('monitoring.directoryPath')}</span>
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className={`h-4 w-4 text-gray-600 transform transition-transform ${showPath ? 'rotate-180' : ''}`} 
+                      viewBox="0 0 20 20" 
+                      fill="currentColor"
+                    >
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
                 
                 {showPath && (
                   <div className="mt-1 px-3 py-2 bg-gray-50 rounded-lg text-gray-700 text-xs break-all">
@@ -421,22 +420,22 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
               
               {/* Statistics - combined in a single row */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                <div className="bg-primary-50 rounded-lg p-3 border border-primary-100">
                   <div className="flex items-center justify-between">
-                    <div className="text-xs font-medium text-indigo-800">{t('monitoring.detectedFiles')}</div>
+                    <div className="text-xs font-medium text-primary-800">{t('monitoring.detectedFiles')}</div>
                     <div className="flex items-center">
-                      <div className="text-2xl font-bold text-indigo-700">{audioFiles.length}</div>
-                      <div className="text-indigo-500 ml-1 text-xs">files</div>
+                      <div className="text-2xl font-bold text-primary-700">{audioFiles.length}</div>
+                      <div className="text-primary-500 ml-1 text-xs">files</div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
+                <div className="bg-success-50 rounded-lg p-3 border border-success-100">
                   <div className="flex items-center justify-between">
-                    <div className="text-xs font-medium text-purple-800">{t('transcription.title')}</div>
+                    <div className="text-xs font-medium text-success-800">{t('transcription.title')}</div>
                     <div className="flex items-center">
-                      <div className="text-2xl font-bold text-purple-700">{transcripts.length}</div>
-                      <div className="text-purple-500 ml-1 text-xs">transcripts</div>
+                      <div className="text-2xl font-bold text-success-700">{transcripts.length}</div>
+                      <div className="text-success-500 ml-1 text-xs">transcripts</div>
                     </div>
                   </div>
                 </div>
@@ -445,10 +444,10 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
           </div>
           
           {/* Audio Files Section */}
-          <div className="bg-white rounded-xl shadow-md border-0 p-0 flex flex-col overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-white mb-0">{t('audio.title')}</h3>
-              <div className="text-white text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-0 flex flex-col overflow-hidden">
+            <div className="bg-white p-4 flex justify-between items-center border-b border-gray-100">
+              <h3 className="text-xl font-semibold text-gray-900 mb-0">{t('audio.title')}</h3>
+              <div className="text-gray-700 text-sm bg-gray-100 px-3 py-1 rounded-full">
                 {audioFiles.length} {audioFiles.length === 1 ? 'file' : 'files'}
               </div>
             </div>
@@ -465,41 +464,30 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                   <p className="text-gray-600 text-sm max-w-md mx-auto">When audio files are detected in the monitored directory, they will appear here.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-lg">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">{t('monitoring.fileName')}</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">{t('audio.fileSize')}</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">{t('meetings.date')}</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">{t('transcription.status.title')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {audioFiles.map((file) => (
-                        <tr key={file.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              <div className="mr-3 text-indigo-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                                </svg>
-                              </div>
-                              <div>
-                                <div className="font-medium text-gray-800">{file.fileName}</div>
-                                <div className="text-gray-600 text-xs truncate max-w-xs" title={file.filePath}>{file.filePath}</div>
-                              </div>
+                <div className="space-y-4">
+                  {audioFiles.map((file) => (
+                    <div key={file.id} className="bg-white border border-gray-100 rounded-lg p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center flex-1 min-w-0">
+                          <div className="mr-3 text-primary-500 flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-900 truncate">{file.fileName}</div>
+                            <div className="text-gray-600 text-sm truncate" title={file.filePath}>{file.filePath}</div>
+                            <div className="text-gray-600 text-xs mt-1">
+                              {formatFileSize(file.fileSize)} • {formatDate(file.createdAt)}
                             </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{formatFileSize(file.fileSize)}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{formatDate(file.createdAt)}</td>
-                          <td className="px-6 py-4 text-sm">
-                            {getTranscriptionStatus(file.id)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          {getTranscriptionStatus(file.id)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

@@ -6,7 +6,7 @@ import { database, AudioFile } from './db';
 
 export class FileWatcher {
   private watcher: chokidar.FSWatcher | null = null;
-  private isWatching: boolean = false;
+  private isWatching = false;
   private supportedExtensions: string[] = ['.mp3', '.wav', '.m4a', '.ogg'];
   private mainWindow: BrowserWindow | null = null;
 
@@ -35,7 +35,7 @@ export class FileWatcher {
       console.log(`Starting directory monitoring: ${directoryPath}`);
       
       this.watcher = chokidar.watch(directoryPath, {
-        ignored: /(^|[\/\\])\../, // ignore hidden files
+        ignored: /(^|[/\\])\../, // ignore hidden files
         persistent: true,
         ignoreInitial: false, // process existing files
         awaitWriteFinish: {

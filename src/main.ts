@@ -506,6 +506,72 @@ function setupIPCHandlers() {
     }
   });
 
+  // Generare minute del meeting
+  ipcMain.handle('ai:generateMinutes', async (_event, transcriptText, participants, meetingDate, templateName) => {
+    try {
+      const { aiService } = await import('./services/aiService');
+      
+      // Configura il provider se necessario
+      const provider = database.getAIProvider() || 'gemini'; // Default fallback
+
+      let apiKey = '';
+      switch (provider) {
+        case 'gemini':
+          apiKey = database.getGeminiApiKey();
+          break;
+        case 'claude':
+          apiKey = database.getClaudeApiKey();
+          break;
+        case 'chatgpt':
+          apiKey = database.getChatGPTApiKey();
+          break;
+      }
+
+      if (!apiKey) {
+        throw new Error(`AI_CONFIG_MISSING:${provider}:Per utilizzare la funzionalità AI, configura prima l'API key di ${provider.charAt(0).toUpperCase() + provider.slice(1)} nelle Impostazioni.`);
+      }
+
+      aiService.setProvider(provider, apiKey);
+      return await aiService.generateMeetingMinutes(transcriptText, participants || [], meetingDate, templateName);
+    } catch (error) {
+      console.error('Error in handler ai:generateMinutes:', error);
+      throw error;
+    }
+  });
+
+  // Generare knowledge base
+  ipcMain.handle('ai:generateKnowledge', async (_event, transcriptText, templateName) => {
+    try {
+      const { aiService } = await import('./services/aiService');
+      
+      // Configura il provider se necessario
+      const provider = database.getAIProvider() || 'gemini'; // Default fallback
+
+      let apiKey = '';
+      switch (provider) {
+        case 'gemini':
+          apiKey = database.getGeminiApiKey();
+          break;
+        case 'claude':
+          apiKey = database.getClaudeApiKey();
+          break;
+        case 'chatgpt':
+          apiKey = database.getChatGPTApiKey();
+          break;
+      }
+
+      if (!apiKey) {
+        throw new Error(`AI_CONFIG_MISSING:${provider}:Per utilizzare la funzionalità AI, configura prima l'API key di ${provider.charAt(0).toUpperCase() + provider.slice(1)} nelle Impostazioni.`);
+      }
+
+      aiService.setProvider(provider, apiKey);
+      return await aiService.generateKnowledgeBase(transcriptText, templateName);
+    } catch (error) {
+      console.error('Error in handler ai:generateKnowledge:', error);
+      throw error;
+    }
+  });
+
   // ==================== FILE WATCHER HANDLERS ====================
 
   // Avviare il monitoraggio di una directory
@@ -587,6 +653,112 @@ function setupIPCHandlers() {
       return await database.updateTranscript(transcript);
     } catch (error) {
       console.error('Error in handler transcripts:update:', error);
+      throw error;
+    }
+  });
+
+  // ==================== MEETING MINUTES HANDLERS ====================
+
+  // Salvare minute di meeting
+  ipcMain.handle('minutes:save', async (_event, minutes) => {
+    try {
+      return await database.saveMeetingMinutes(minutes);
+    } catch (error) {
+      console.error('Error in handler minutes:save:', error);
+      throw error;
+    }
+  });
+
+  // Ottenere tutte le minute
+  ipcMain.handle('minutes:getAll', async () => {
+    try {
+      return await database.getAllMeetingMinutes();
+    } catch (error) {
+      console.error('Error in handler minutes:getAll:', error);
+      throw error;
+    }
+  });
+
+  // Ottenere minute per meeting ID
+  ipcMain.handle('minutes:getByMeetingId', async (_event, meetingId) => {
+    try {
+      return await database.getMeetingMinutesByMeetingId(meetingId);
+    } catch (error) {
+      console.error(`Error in handler minutes:getByMeetingId (${meetingId}):`, error);
+      throw error;
+    }
+  });
+
+  // Eliminare minute
+  ipcMain.handle('minutes:delete', async (_event, id) => {
+    try {
+      await database.deleteMeetingMinutes(id);
+      return { success: true, id };
+    } catch (error) {
+      console.error(`Error in handler minutes:delete (${id}):`, error);
+      throw error;
+    }
+  });
+
+  // ==================== KNOWLEDGE BASE HANDLERS ====================
+
+  // Salvare knowledge entry
+  ipcMain.handle('knowledge:save', async (_event, entry) => {
+    try {
+      return await database.saveKnowledgeEntry(entry);
+    } catch (error) {
+      console.error('Error in handler knowledge:save:', error);
+      throw error;
+    }
+  });
+
+  // Ottenere tutte le knowledge entries
+  ipcMain.handle('knowledge:getAll', async () => {
+    try {
+      return await database.getAllKnowledgeEntries();
+    } catch (error) {
+      console.error('Error in handler knowledge:getAll:', error);
+      throw error;
+    }
+  });
+
+  // Cercare knowledge entries
+  ipcMain.handle('knowledge:search', async (_event, query) => {
+    try {
+      return await database.searchKnowledgeEntries(query);
+    } catch (error) {
+      console.error(`Error in handler knowledge:search (${query}):`, error);
+      throw error;
+    }
+  });
+
+  // Ottenere knowledge entries per categoria
+  ipcMain.handle('knowledge:getByCategory', async (_event, category) => {
+    try {
+      return await database.getKnowledgeEntriesByCategory(category);
+    } catch (error) {
+      console.error(`Error in handler knowledge:getByCategory (${category}):`, error);
+      throw error;
+    }
+  });
+
+  // Ottenere knowledge entries per tag
+  ipcMain.handle('knowledge:getByTag', async (_event, tag) => {
+    try {
+      return await database.getKnowledgeEntriesByTag(tag);
+    } catch (error) {
+      console.error(`Error in handler knowledge:getByTag (${tag}):`, error);
+      throw error;
+    }
+  });
+
+  // Eliminare knowledge entry
+  ipcMain.handle('knowledge:delete', async (_event, id) => {
+    try {
+      await database.deleteKnowledgeEntry(id);
+      return { success: true, id };
+    } catch (error) {
+      console.error(`Error in handler knowledge:delete (${id}):`, error);
       throw error;
     }
   });

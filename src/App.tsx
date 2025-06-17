@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import TranscriptionView from './components/TranscriptionView';
 import SettingsView from './components/SettingsView';
 import MonitoringView from './components/MonitoringView';
+import SavedContentView from './components/SavedContentView';
 import { 
   Button, 
   Input, 
@@ -135,7 +136,7 @@ const App: React.FC = () => {
     meetingId: undefined
   });
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
-  const [view, setView] = useState<'list' | 'transcription' | 'settings' | 'monitoring'>('list');
+  const [view, setView] = useState<'list' | 'transcription' | 'settings' | 'monitoring' | 'saved'>('list');
   
   // Load meetings on startup
   useEffect(() => {
@@ -400,6 +401,10 @@ const App: React.FC = () => {
   function handleViewMonitoring() {
     setView('monitoring');
   }
+
+  function handleViewSaved() {
+    setView('saved');
+  }
   
   const meetingsTitle = t('meetings.title');
   const monitoringTitle = t('monitoring.title');
@@ -419,6 +424,17 @@ const App: React.FC = () => {
           ),
           onClick: () => setView('list'),
           isActive: view === 'list'
+        },
+        {
+          id: 'saved',
+          label: 'Contenuti Salvati',
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+          ),
+          onClick: handleViewSaved,
+          isActive: view === 'saved'
         },
         {
           id: 'monitoring',
@@ -521,8 +537,8 @@ const App: React.FC = () => {
       
       {/* Contenuto principale in base alla vista */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar (mostrata nella vista lista, monitoraggio e impostazioni) - FIXED */}
-        {(view === 'list' || view === 'monitoring' || view === 'settings') && (
+        {/* Sidebar (mostrata nella vista lista, saved, monitoraggio e impostazioni) - FIXED */}
+        {(view === 'list' || view === 'saved' || view === 'monitoring' || view === 'settings') && (
           <div className="flex-shrink-0 h-full">
             <Sidebar 
               sections={sidebarSections}
@@ -781,6 +797,15 @@ const App: React.FC = () => {
           <main className="flex-1 flex flex-col overflow-hidden">
             <div className="p-6 h-full">
               <SettingsView onBack={handleBackToList} />
+            </div>
+          </main>
+        )}
+        
+        {/* Vista contenuti salvati */}
+        {view === 'saved' && (
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="p-6 h-full">
+              <SavedContentView onBack={handleBackToList} />
             </div>
           </main>
         )}

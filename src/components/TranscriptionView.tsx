@@ -31,6 +31,16 @@ interface ElectronAPI {
         reasoning: string;
       }>;
     }>;
+    generateMinutes: (transcriptText: string, participants?: string[], meetingDate?: string, templateName?: string) => Promise<any>;
+    generateKnowledge: (transcriptText: string, templateName?: string) => Promise<any>;
+  };
+  minutes?: {
+    save: (minutes: any) => Promise<any>;
+    getByMeetingId: (meetingId: string) => Promise<any[]>;
+  };
+  knowledge?: {
+    save: (entry: any) => Promise<any>;
+    search: (query: string) => Promise<any[]>;
   };
 }
 
@@ -165,6 +175,16 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   const [isIdentifyingSpeakers, setIsIdentifyingSpeakers] = useState(false);
   const [speakerSuggestions, setSpeakerSuggestions] = useState<any[]>([]);
   const [showSpeakerSuggestions, setShowSpeakerSuggestions] = useState(false);
+  const [isGeneratingMinutes, setIsGeneratingMinutes] = useState(false);
+  const [isGeneratingKnowledge, setIsGeneratingKnowledge] = useState(false);
+  const [showMinutesModal, setShowMinutesModal] = useState(false);
+  const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
+  const [generatedMinutes, setGeneratedMinutes] = useState<any>(null);
+  const [generatedKnowledge, setGeneratedKnowledge] = useState<any>(null);
+  
+  // Stati per l'editing del titolo
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
   
   const transcriptTextRef = useRef<HTMLDivElement>(null);
   
@@ -567,11 +587,189 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
     }
   }
 
+  // Gestione editing del titolo
+  function startEditingTitle() {
+    if (meeting) {
+      setEditedTitle(meeting.title);
+      setIsEditingTitle(true);
+    }
+  }
+
+  function cancelEditingTitle() {
+    setIsEditingTitle(false);
+    setEditedTitle('');
+  }
+
+  async function saveEditedTitle() {
+    if (!meeting || !electronAPI.meetings?.updateMeeting) {
+      toast.error('Impossibile aggiornare il titolo');
+      return;
+    }
+
+    if (editedTitle.trim() === '') {
+      toast.error('Il titolo non può essere vuoto');
+      return;
+    }
+
+    try {
+      const updatedMeeting = {
+        ...meeting,
+        title: editedTitle.trim()
+      };
+
+      await electronAPI.meetings.updateMeeting(updatedMeeting);
+      setMeeting(updatedMeeting);
+      setIsEditingTitle(false);
+      setEditedTitle('');
+      toast.success('Titolo aggiornato con successo');
+    } catch (error) {
+      console.error('Error updating meeting title:', error);
+      toast.error('Errore durante l\'aggiornamento del titolo');
+    }
+  }
+
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      saveEditedTitle();
+    } else if (e.key === 'Escape') {
+      cancelEditingTitle();
+    }
+  }
+
+  // Generate meeting minutes
+  async function generateMeetingMinutes() {
+    if (!activeTranscript?.text || activeTranscript.status !== 'completed') {
+      toast.error('Per generare le minute è necessaria una trascrizione completata');
+      return;
+    }
+
+    try {
+      setIsGeneratingMinutes(true);
+
+      const participants = meeting?.participants || [];
+      const meetingDate = meeting?.date || new Date().toISOString().split('T')[0];
+
+      const result = await electronAPI.ai?.generateMinutes(
+        activeTranscript.text,
+        participants,
+        meetingDate
+      );
+
+      if (result) {
+        setGeneratedMinutes(result);
+        setShowMinutesModal(true);
+        toast.success('Minute generate con successo!');
+      }
+    } catch (error: any) {
+      console.error('Error generating minutes:', error);
+      
+      if (error.message?.includes('AI_CONFIG_MISSING')) {
+        const [, provider, message] = error.message.split(':');
+        toast.error(
+          <div className="space-y-2">
+            <div className="font-medium">⚙️ Configurazione AI Richiesta</div>
+            <div className="text-sm">{message || `Per utilizzare la funzionalità AI, configura prima l'API key di ${provider} nelle Impostazioni.`}</div>
+            <div className="text-xs text-gray-600">Vai in Impostazioni → AI Provider → {provider}</div>
+          </div>,
+          { duration: 6000 }
+        );
+      } else {
+        toast.error('Errore nella generazione delle minute: ' + (error.message || 'Errore sconosciuto'));
+      }
+    } finally {
+      setIsGeneratingMinutes(false);
+    }
+  }
+
+  // Generate knowledge base entry
+  async function generateKnowledgeBase() {
+    if (!activeTranscript?.text || activeTranscript.status !== 'completed') {
+      toast.error('Per generare la knowledge base è necessaria una trascrizione completata');
+      return;
+    }
+
+    try {
+      setIsGeneratingKnowledge(true);
+
+      const result = await electronAPI.ai?.generateKnowledge(
+        activeTranscript.text
+      );
+
+      if (result) {
+        setGeneratedKnowledge(result);
+        setShowKnowledgeModal(true);
+        toast.success('Knowledge base generata con successo!');
+      }
+    } catch (error: any) {
+      console.error('Error generating knowledge:', error);
+      
+      if (error.message?.includes('AI_CONFIG_MISSING')) {
+        const [, provider, message] = error.message.split(':');
+        toast.error(
+          <div className="space-y-2">
+            <div className="font-medium">⚙️ Configurazione AI Richiesta</div>
+            <div className="text-sm">{message || `Per utilizzare la funzionalità AI, configura prima l'API key di ${provider} nelle Impostazioni.`}</div>
+            <div className="text-xs text-gray-600">Vai in Impostazioni → AI Provider → {provider}</div>
+          </div>,
+          { duration: 6000 }
+        );
+      } else {
+        toast.error('Errore nella generazione della knowledge base: ' + (error.message || 'Errore sconosciuto'));
+      }
+    } finally {
+      setIsGeneratingKnowledge(false);
+    }
+  }
+
+  // Save minutes to database
+  async function saveMinutes() {
+    if (!generatedMinutes || !meetingId) return;
+
+    try {
+      const minutesToSave = {
+        ...generatedMinutes,
+        meetingId,
+        transcriptId: activeTranscript?.id,
+        aiProvider: 'gemini', // This could be dynamic based on current provider
+        templateUsed: 'default'
+      };
+
+      await electronAPI.minutes?.save(minutesToSave);
+      toast.success('Minute salvate con successo!');
+      setShowMinutesModal(false);
+    } catch (error) {
+      console.error('Error saving minutes:', error);
+      toast.error('Errore nel salvataggio delle minute');
+    }
+  }
+
+  // Save knowledge to database
+  async function saveKnowledge() {
+    if (!generatedKnowledge || !meetingId) return;
+
+    try {
+      const knowledgeToSave = {
+        ...generatedKnowledge,
+        meetingId,
+        transcriptId: activeTranscript?.id,
+        aiProvider: 'gemini', // This could be dynamic based on current provider
+        templateUsed: 'default'
+      };
+
+      await electronAPI.knowledge?.save(knowledgeToSave);
+      toast.success('Knowledge base salvata con successo!');
+      setShowKnowledgeModal(false);
+    } catch (error) {
+      console.error('Error saving knowledge:', error);
+      toast.error('Errore nel salvataggio della knowledge base');
+    }
+  }
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 pt-2 pb-4 border-b border-gray-200">
-        <div className="flex items-center">
+        <div className="flex items-center flex-1">
           <button 
             onClick={onBack}
             className="mr-4 text-gray-600 hover:text-gray-600 transition-colors"
@@ -580,20 +778,92 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800">
-              {meeting ? meeting.title : 'Loading...'}
-            </h2>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              {isEditingTitle ? (
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    {/* Elemento nascosto per misurare la larghezza del testo */}
+                    <span 
+                      className="invisible absolute text-xl font-semibold whitespace-pre px-2 py-1"
+                      style={{ top: 0, left: 0, pointerEvents: 'none' }}
+                    >
+                      {editedTitle || 'A'}
+                    </span>
+                    <input
+                      type="text"
+                      value={editedTitle}
+                      onChange={(e) => setEditedTitle(e.target.value)}
+                      onKeyDown={handleTitleKeyDown}
+                      className="text-xl font-semibold text-gray-800 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      style={{ 
+                        width: `${Math.max((editedTitle?.length || 1) * 12 + 24, 200)}px`,
+                        minWidth: '200px',
+                        maxWidth: '100%'
+                      }}
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    onClick={saveEditedTitle}
+                    className="p-1 text-green-600 hover:text-green-700 transition-colors flex-shrink-0"
+                    title="Salva"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={cancelEditingTitle}
+                    className="p-1 text-red-600 hover:text-red-700 transition-colors flex-shrink-0"
+                    title="Annulla"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {meeting ? meeting.title : 'Loading...'}
+                  </h2>
+                  {meeting && (
+                    <button
+                      onClick={startEditingTitle}
+                      className="p-1 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                      title="Modifica titolo"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
             {meeting && (
-              <p className="text-gray-600 text-sm">{meeting.date}</p>
+              <p className="text-gray-600 text-sm mt-1">{meeting.date}</p>
             )}
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
-          {/* AI Actions */}
-          {activeTranscript?.status === 'completed' && (
-            <>
+
+      </div>
+
+      {/* Sezione AI Actions dedicata */}
+      {activeTranscript?.status === 'completed' && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v-.07zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+              </div>
+              <h3 className="text-sm font-semibold text-gray-800">Azioni AI</h3>
+            </div>
+            <div className="flex items-center gap-2">
               <Button
                 onClick={generateMeetingTitle}
                 disabled={isGeneratingTitle}
@@ -615,23 +885,32 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               >
                 👥 Identifica speaker
               </Button>
-            </>
-          )}
-          
-          {audioFile && (
-            <Button
-              onClick={startTranscription}
-              disabled={isTranscribing || transcripts.some(t => t.status === 'processing' || t.status === 'queued')}
-              variant="primary"
-              size="md"
-              isLoading={isTranscribing}
-              className="shadow-none hover:shadow-none !bg-orange-100 !text-gray-900 hover:!bg-orange-200 border border-orange-400"
-            >
-              {isTranscribing ? 'Transcribing...' : 'Transcribe Audio'}
-            </Button>
-          )}
+
+              <Button
+                onClick={generateMeetingMinutes}
+                disabled={isGeneratingMinutes}
+                variant="primary"
+                size="sm"
+                isLoading={isGeneratingMinutes}
+                className="shadow-none hover:shadow-none !bg-green-100 !text-gray-900 hover:!bg-green-200 border border-green-400"
+              >
+                📋 Genera minuta
+              </Button>
+
+              <Button
+                onClick={generateKnowledgeBase}
+                disabled={isGeneratingKnowledge}
+                variant="primary"
+                size="sm"
+                isLoading={isGeneratingKnowledge}
+                className="shadow-none hover:shadow-none !bg-yellow-100 !text-gray-900 hover:!bg-yellow-200 border border-yellow-400"
+              >
+                🧠 Genera appunti
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
       
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -647,7 +926,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               {audioFile && (
                 <div className="mb-4 pb-4 border-b border-gray-100">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Audio File</h4>
-                  <div className="flex items-center space-x-2 bg-primary-50 p-3 rounded-md">
+                  <div className="flex items-center space-x-2 bg-primary-50 p-3 rounded-md mb-3">
                     <div className="rounded-full bg-primary-100 p-2 flex-shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
@@ -660,6 +939,16 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                       <p className="text-xs text-gray-600">{formatFileSize(audioFile.fileSize)}</p>
                     </div>
                   </div>
+                  <Button
+                    onClick={startTranscription}
+                    disabled={isTranscribing || transcripts.some(t => t.status === 'processing' || t.status === 'queued')}
+                    variant="primary"
+                    size="sm"
+                    isLoading={isTranscribing}
+                    className="w-full shadow-none hover:shadow-none !bg-orange-100 !text-gray-900 hover:!bg-orange-200 border border-orange-400"
+                  >
+                    {isTranscribing ? 'Transcribing...' : 'Transcribe Audio'}
+                  </Button>
                 </div>
               )}
               
@@ -920,6 +1209,278 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           Close
         </button>
       </Modal>
+
+      {/* Meeting Minutes Modal */}
+      {showMinutesModal && generatedMinutes && (
+        <Modal
+          isOpen={showMinutesModal}
+          onRequestClose={() => setShowMinutesModal(false)}
+          style={customModalStyles}
+          contentLabel="Meeting Minutes"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-800">📋 Minuta Meeting Generata</h2>
+            <button 
+              onClick={() => setShowMinutesModal(false)}
+              className="text-gray-600 hover:text-gray-600 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="space-y-6 max-h-[500px] overflow-y-auto">
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="text-lg font-semibold text-gray-900">{generatedMinutes.title}</h3>
+              <p className="text-sm text-gray-600">Data: {generatedMinutes.date}</p>
+            </div>
+
+            {generatedMinutes.participants && generatedMinutes.participants.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Partecipanti</h4>
+                <div className="space-y-1">
+                  {generatedMinutes.participants.map((participant: any, index: number) => (
+                    <div key={index} className="text-sm text-gray-700">
+                      • {participant.name} {participant.role && `(${participant.role})`}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {generatedMinutes.agenda && generatedMinutes.agenda.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Agenda</h4>
+                <div className="space-y-1">
+                  {generatedMinutes.agenda.map((item: string, index: number) => (
+                    <div key={index} className="text-sm text-gray-700">• {item}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {generatedMinutes.keyDiscussions && generatedMinutes.keyDiscussions.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Discussioni Principali</h4>
+                <div className="space-y-3">
+                  {generatedMinutes.keyDiscussions.map((discussion: any, index: number) => (
+                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                      <h5 className="font-medium text-gray-800">{discussion.topic}</h5>
+                      <p className="text-sm text-gray-700 mt-1">{discussion.summary}</p>
+                      {discussion.decisions && discussion.decisions.length > 0 && (
+                        <div className="mt-2">
+                          <span className="text-xs font-medium text-green-700">Decisioni:</span>
+                          {discussion.decisions.map((decision: string, i: number) => (
+                            <div key={i} className="text-xs text-green-600 ml-2">• {decision}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {generatedMinutes.actionItems && generatedMinutes.actionItems.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Azioni da Intraprendere</h4>
+                <div className="space-y-2">
+                  {generatedMinutes.actionItems.map((action: any, index: number) => (
+                    <div key={index} className="bg-blue-50 p-3 rounded-lg flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{action.action}</p>
+                        <p className="text-xs text-gray-600 mt-1">Responsabile: {action.owner}</p>
+                        {action.dueDate && (
+                          <p className="text-xs text-gray-600">Scadenza: {action.dueDate}</p>
+                        )}
+                      </div>
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                        action.priority === 'High' ? 'bg-red-100 text-red-700' :
+                        action.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {action.priority}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {generatedMinutes.nextMeeting && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Prossima Riunione</h4>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  {generatedMinutes.nextMeeting.date && (
+                    <p className="text-sm text-gray-700">Data: {generatedMinutes.nextMeeting.date}</p>
+                  )}
+                  {generatedMinutes.nextMeeting.agenda && generatedMinutes.nextMeeting.agenda.length > 0 && (
+                    <div className="mt-2">
+                      <span className="text-sm font-medium text-gray-700">Agenda prevista:</span>
+                      {generatedMinutes.nextMeeting.agenda.map((item: string, i: number) => (
+                        <div key={i} className="text-sm text-gray-600 ml-2">• {item}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+            <button
+              onClick={() => setShowMinutesModal(false)}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors shadow-sm"
+            >
+              Chiudi
+            </button>
+            <Button
+              onClick={saveMinutes}
+              variant="primary"
+              className="shadow-none hover:shadow-none !bg-green-600 hover:!bg-green-700 text-white"
+            >
+              💾 Salva Minuta
+            </Button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Knowledge Base Modal */}
+      {showKnowledgeModal && generatedKnowledge && (
+        <Modal
+          isOpen={showKnowledgeModal}
+          onRequestClose={() => setShowKnowledgeModal(false)}
+          style={customModalStyles}
+          contentLabel="Knowledge Base"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-800">🧠 Appunti Knowledge Base Generati</h2>
+            <button 
+              onClick={() => setShowKnowledgeModal(false)}
+              className="text-gray-600 hover:text-gray-600 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="space-y-6 max-h-[500px] overflow-y-auto">
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="text-lg font-semibold text-gray-900">{generatedKnowledge.title}</h3>
+              <p className="text-sm text-gray-600 mt-1">{generatedKnowledge.summary}</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {generatedKnowledge.tags?.map((tag: string, index: number) => (
+                  <span key={index} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {generatedKnowledge.keyTopics && generatedKnowledge.keyTopics.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Argomenti Principali</h4>
+                <div className="space-y-4">
+                  {generatedKnowledge.keyTopics.map((topic: any, index: number) => (
+                    <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-medium text-gray-800 mb-2">{topic.topic}</h5>
+                      <p className="text-sm text-gray-700 mb-2">{topic.summary}</p>
+                      {topic.keyPoints && topic.keyPoints.length > 0 && (
+                        <div>
+                          <span className="text-xs font-medium text-gray-600">Punti chiave:</span>
+                          <div className="mt-1 space-y-1">
+                            {topic.keyPoints.map((point: string, i: number) => (
+                              <div key={i} className="text-xs text-gray-600 ml-2">• {point}</div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {generatedKnowledge.insights && generatedKnowledge.insights.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Insights</h4>
+                <div className="space-y-3">
+                  {generatedKnowledge.insights.map((insight: any, index: number) => (
+                    <div key={index} className="bg-yellow-50 p-3 rounded-lg">
+                      <p className="text-sm font-medium text-gray-900">{insight.insight}</p>
+                      <p className="text-xs text-gray-600 mt-1">Contesto: {insight.context}</p>
+                      <p className="text-xs text-gray-600">Applicabilità: {insight.applicability}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {generatedKnowledge.actionableItems && generatedKnowledge.actionableItems.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Azioni da Intraprendere</h4>
+                <div className="space-y-2">
+                  {generatedKnowledge.actionableItems.map((item: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{item.item}</p>
+                        <p className="text-xs text-gray-600">Categoria: {item.category}</p>
+                      </div>
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                        item.priority === 'high' ? 'bg-red-100 text-red-700' :
+                        item.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {item.priority}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {generatedKnowledge.questions && generatedKnowledge.questions.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Domande per Approfondimenti</h4>
+                <div className="space-y-1">
+                  {generatedKnowledge.questions.map((question: string, index: number) => (
+                    <div key={index} className="text-sm text-gray-700">❓ {question}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {generatedKnowledge.connections && generatedKnowledge.connections.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Collegamenti</h4>
+                <div className="space-y-1">
+                  {generatedKnowledge.connections.map((connection: string, index: number) => (
+                    <div key={index} className="text-sm text-gray-700">🔗 {connection}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+            <button
+              onClick={() => setShowKnowledgeModal(false)}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors shadow-sm"
+            >
+              Chiudi
+            </button>
+            <Button
+              onClick={saveKnowledge}
+              variant="primary"
+              className="shadow-none hover:shadow-none !bg-yellow-600 hover:!bg-yellow-700 text-white"
+            >
+              💾 Salva Appunti
+            </Button>
+          </div>
+        </Modal>
+      )}
 
       {/* Modal per le suggerimenti degli speaker */}
       <Modal

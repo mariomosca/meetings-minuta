@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { promptTemplateService, TitlePromptParams, SpeakerPromptParams, MinutesPromptParams, KnowledgePromptParams } from './promptTemplateService';
 
 // Interface for utterance
 interface Utterance {
@@ -27,10 +28,131 @@ export interface SpeakerIdentificationResponse {
   }>;
 }
 
+// Interfaccia per le minute del meeting
+export interface MeetingMinutes {
+  title: string;
+  date: string;
+  participants: Array<{
+    name: string;
+    role?: string;
+    attendance?: string;
+  }>;
+  agenda?: string[];
+  keyDiscussions?: Array<{
+    topic: string;
+    summary: string;
+    keyPoints?: string[];
+    decisions?: string[];
+    concerns?: string[];
+  }>;
+  actionItems: Array<{
+    id?: string;
+    action: string;
+    owner: string;
+    dueDate?: string;
+    priority: 'High' | 'Medium' | 'Low';
+    status?: string;
+    dependencies?: string[];
+  }>;
+  nextMeeting?: {
+    date?: string;
+    agenda?: string[];
+  };
+  metadata?: {
+    duration?: string;
+    location?: string;
+    type?: string;
+  };
+  executiveSummary?: string;
+  keyDecisions?: string[];
+  criticalActions?: Array<{
+    action: string;
+    owner: string;
+    dueDate: string;
+    impact: string;
+  }>;
+  risks?: string[];
+  nextSteps?: string[];
+  followUp?: {
+    nextMeeting?: string;
+    preparationNeeded?: string[];
+  };
+}
+
+// Interfaccia per la knowledge base
+export interface KnowledgeBase {
+  title: string;
+  summary: string;
+  tags: string[];
+  category: string;
+  keyTopics: Array<{
+    topic: string;
+    summary: string;
+    keyPoints: string[];
+    examples?: string[];
+    references?: string[];
+  }>;
+  insights: Array<{
+    insight: string;
+    context: string;
+    applicability: string;
+  }>;
+  actionableItems: Array<{
+    item: string;
+    category: 'learn' | 'implement' | 'research';
+    priority: 'high' | 'medium' | 'low';
+  }>;
+  connections: string[];
+  questions: string[];
+  // Per template di ricerca
+  abstract?: string;
+  keywords?: string[];
+  methodology?: string;
+  findings?: Array<{
+    finding: string;
+    evidence: string;
+    significance: string;
+  }>;
+  concepts?: Array<{
+    concept: string;
+    definition: string;
+    examples: string[];
+    relatedConcepts: string[];
+  }>;
+  hypotheses?: string[];
+  futureResearch?: string[];
+  bibliography?: string[];
+  // Per template personale
+  reflection?: string;
+  learnings?: Array<{
+    learning: string;
+    application: string;
+    timeline: string;
+  }>;
+  ideas?: Array<{
+    idea: string;
+    potential: string;
+    nextSteps: string[];
+  }>;
+  resources?: Array<{
+    resource: string;
+    type: 'book' | 'article' | 'tool' | 'person';
+    priority: 'high' | 'medium' | 'low';
+  }>;
+  habits?: Array<{
+    habit: string;
+    reason: string;
+    implementation: string;
+  }>;
+  reminders?: string[];
+}
+
 // Interfaccia base per i provider AI
 export interface AIProviderInterface {
-  generateTitle(transcriptText: string): Promise<TitleGenerationResponse>;
-  identifySpeakers(transcriptText: string, utterances: Utterance[]): Promise<SpeakerIdentificationResponse>;
+  generateTitle(transcriptText: string, templateName?: string): Promise<TitleGenerationResponse>;
+  identifySpeakers(transcriptText: string, utterances: Utterance[], templateName?: string): Promise<SpeakerIdentificationResponse>;
+  generateMinutes(transcriptText: string, participants: string[], meetingDate: string, templateName?: string): Promise<MeetingMinutes>;
+  generateKnowledge(transcriptText: string, templateName?: string): Promise<KnowledgeBase>;
 }
 
 // Provider Gemini
@@ -42,26 +164,13 @@ export class GeminiProvider implements AIProviderInterface {
     this.apiKey = apiKey;
   }
 
-  async generateTitle(transcriptText: string): Promise<TitleGenerationResponse> {
+  async generateTitle(transcriptText: string, templateName?: string): Promise<TitleGenerationResponse> {
     try {
-      const prompt = `
-Analizza questa trascrizione di una riunione e genera un titolo conciso e professionale.
-
-Regole:
-- Massimo 80 caratteri
-- Cattura l'argomento principale
-- Usa un linguaggio formale
-- In italiano
-
-Trascrizione:
-${transcriptText.substring(0, 3000)} ${transcriptText.length > 3000 ? '...' : ''}
-
-Rispondi solo con un JSON nel formato:
-{
-  "title": "Titolo della riunione",
-  "confidence": 0.85
-}
-`;
+      // Usa il servizio di templating per generare il prompt
+      const prompt = promptTemplateService.generateTitlePrompt({
+        transcriptText,
+        templateName
+      });
 
       const response = await axios.post(
         `${this.baseURL}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
@@ -98,40 +207,22 @@ Rispondi solo con un JSON nel formato:
     }
   }
 
-  async identifySpeakers(transcriptText: string, utterances: Utterance[]): Promise<SpeakerIdentificationResponse> {
+  async identifySpeakers(transcriptText: string, utterances: Utterance[], templateName?: string): Promise<SpeakerIdentificationResponse> {
     try {
-      // Crea un campione delle utterances per l'analisi
-      const sampleUtterances = utterances.slice(0, 20).map(u => 
-        `${u.speaker}: ${u.text}`
-      ).join('\n');
+      // Usa il servizio di templating per generare il prompt
+      const settings = promptTemplateService.getSettings();
+      const sampleUtterances = utterances
+        .slice(0, settings.maxSampleUtterances)
+        .map(u => `${u.speaker}: ${u.text}`)
+        .join('\n');
 
-      const prompt = `
-Analizza questa trascrizione di una riunione e suggerisci nomi realistici per gli speaker basandoti sul contenuto.
+      const currentSpeakers = Array.from(new Set(utterances.map(u => u.speaker)));
 
-Regole:
-- Usa nomi italiani comuni
-- Basati su ruoli, argomenti discussi, e stile di comunicazione
-- Fornisci una spiegazione del ragionamento
-- Confidence da 0.1 a 1.0
-
-Speaker attualmente identificati:
-${Array.from(new Set(utterances.map(u => u.speaker))).join(', ')}
-
-Campione di trascrizione:
-${sampleUtterances}
-
-Rispondi solo con un JSON nel formato:
-{
-  "speakers": [
-    {
-      "originalName": "Speaker 1",
-      "suggestedName": "Marco Rossi",
-      "confidence": 0.75,
-      "reasoning": "Sembra essere il coordinatore, usa linguaggio formale"
-    }
-  ]
-}
-`;
+      const prompt = promptTemplateService.generateSpeakerPrompt({
+        currentSpeakers,
+        sampleUtterances,
+        templateName
+      });
 
       const response = await axios.post(
         `${this.baseURL}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
@@ -164,6 +255,88 @@ Rispondi solo con un JSON nel formato:
       throw new Error(`Gemini speaker identification failed: ${error.message}`);
     }
   }
+
+  async generateMinutes(transcriptText: string, participants: string[], meetingDate: string, templateName?: string): Promise<MeetingMinutes> {
+    try {
+      // Usa il servizio di templating per generare il prompt
+      const prompt = promptTemplateService.generateMinutesPrompt({
+        transcriptText,
+        participants,
+        meetingDate,
+        templateName
+      });
+
+      const response = await axios.post(
+        `${this.baseURL}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
+        {
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }]
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      const generatedText = response.data.candidates[0].content.parts[0].text;
+      
+      // Estrai il JSON dalla risposta
+      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const result = JSON.parse(jsonMatch[0]);
+        return result;
+      }
+
+      throw new Error('Invalid response format from Gemini');
+    } catch (error) {
+      console.error('Error generating minutes with Gemini:', error);
+      throw new Error(`Gemini minutes generation failed: ${error.message}`);
+    }
+  }
+
+  async generateKnowledge(transcriptText: string, templateName?: string): Promise<KnowledgeBase> {
+    try {
+      // Usa il servizio di templating per generare il prompt
+      const prompt = promptTemplateService.generateKnowledgePrompt({
+        transcriptText,
+        templateName
+      });
+
+      const response = await axios.post(
+        `${this.baseURL}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
+        {
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }]
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      const generatedText = response.data.candidates[0].content.parts[0].text;
+      
+      // Estrai il JSON dalla risposta
+      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const result = JSON.parse(jsonMatch[0]);
+        return result;
+      }
+
+      throw new Error('Invalid response format from Gemini');
+    } catch (error) {
+      console.error('Error generating knowledge with Gemini:', error);
+      throw new Error(`Gemini knowledge generation failed: ${error.message}`);
+    }
+  }
 }
 
 // Provider Claude (per implementazione futura)
@@ -175,12 +348,22 @@ export class ClaudeProvider implements AIProviderInterface {
     this.apiKey = apiKey;
   }
 
-  async generateTitle(_transcriptText: string): Promise<TitleGenerationResponse> {
+  async generateTitle(_transcriptText: string, _templateName?: string): Promise<TitleGenerationResponse> {
     // TODO: Implementare quando necessario
     throw new Error('Claude provider not implemented yet');
   }
 
-  async identifySpeakers(_transcriptText: string, _utterances: Utterance[]): Promise<SpeakerIdentificationResponse> {
+  async identifySpeakers(_transcriptText: string, _utterances: Utterance[], _templateName?: string): Promise<SpeakerIdentificationResponse> {
+    // TODO: Implementare quando necessario
+    throw new Error('Claude provider not implemented yet');
+  }
+
+  async generateMinutes(_transcriptText: string, _participants: string[], _meetingDate: string, _templateName?: string): Promise<MeetingMinutes> {
+    // TODO: Implementare quando necessario
+    throw new Error('Claude provider not implemented yet');
+  }
+
+  async generateKnowledge(_transcriptText: string, _templateName?: string): Promise<KnowledgeBase> {
     // TODO: Implementare quando necessario
     throw new Error('Claude provider not implemented yet');
   }
@@ -195,12 +378,22 @@ export class ChatGPTProvider implements AIProviderInterface {
     this.apiKey = apiKey;
   }
 
-  async generateTitle(_transcriptText: string): Promise<TitleGenerationResponse> {
+  async generateTitle(_transcriptText: string, _templateName?: string): Promise<TitleGenerationResponse> {
     // TODO: Implementare quando necessario
     throw new Error('ChatGPT provider not implemented yet');
   }
 
-  async identifySpeakers(_transcriptText: string, _utterances: Utterance[]): Promise<SpeakerIdentificationResponse> {
+  async identifySpeakers(_transcriptText: string, _utterances: Utterance[], _templateName?: string): Promise<SpeakerIdentificationResponse> {
+    // TODO: Implementare quando necessario
+    throw new Error('ChatGPT provider not implemented yet');
+  }
+
+  async generateMinutes(_transcriptText: string, _participants: string[], _meetingDate: string, _templateName?: string): Promise<MeetingMinutes> {
+    // TODO: Implementare quando necessario
+    throw new Error('ChatGPT provider not implemented yet');
+  }
+
+  async generateKnowledge(_transcriptText: string, _templateName?: string): Promise<KnowledgeBase> {
     // TODO: Implementare quando necessario
     throw new Error('ChatGPT provider not implemented yet');
   }
@@ -254,7 +447,7 @@ export class AIService {
   /**
    * Genera un titolo per la riunione
    */
-  async generateMeetingTitle(transcriptText: string): Promise<TitleGenerationResponse> {
+  async generateMeetingTitle(transcriptText: string, templateName?: string): Promise<TitleGenerationResponse> {
     if (!this.currentProvider) {
       throw new Error('No AI provider configured');
     }
@@ -263,13 +456,13 @@ export class AIService {
       throw new Error('Transcript too short for title generation');
     }
 
-    return await this.currentProvider.generateTitle(transcriptText);
+    return await this.currentProvider.generateTitle(transcriptText, templateName);
   }
 
   /**
    * Identifica i nomi degli speaker
    */
-  async identifySpeakers(transcriptText: string, utterances: Utterance[]): Promise<SpeakerIdentificationResponse> {
+  async identifySpeakers(transcriptText: string, utterances: Utterance[], templateName?: string): Promise<SpeakerIdentificationResponse> {
     if (!this.currentProvider) {
       throw new Error('No AI provider configured');
     }
@@ -278,7 +471,51 @@ export class AIService {
       throw new Error('Not enough utterances for speaker identification');
     }
 
-    return await this.currentProvider.identifySpeakers(transcriptText, utterances);
+    return await this.currentProvider.identifySpeakers(transcriptText, utterances, templateName);
+  }
+
+  /**
+   * Genera le minute del meeting
+   */
+  async generateMeetingMinutes(transcriptText: string, participants: string[], meetingDate: string, templateName?: string): Promise<MeetingMinutes> {
+    if (!this.currentProvider) {
+      throw new Error('No AI provider configured');
+    }
+
+    if (!transcriptText || transcriptText.trim().length < 100) {
+      throw new Error('Transcript too short for minutes generation');
+    }
+
+    return await this.currentProvider.generateMinutes(transcriptText, participants, meetingDate, templateName);
+  }
+
+  /**
+   * Genera appunti per la knowledge base
+   */
+  async generateKnowledgeBase(transcriptText: string, templateName?: string): Promise<KnowledgeBase> {
+    if (!this.currentProvider) {
+      throw new Error('No AI provider configured');
+    }
+
+    if (!transcriptText || transcriptText.trim().length < 100) {
+      throw new Error('Transcript too short for knowledge generation');
+    }
+
+    return await this.currentProvider.generateKnowledge(transcriptText, templateName);
+  }
+
+  /**
+   * Ottiene i template disponibili per una categoria
+   */
+  getAvailableTemplates(category: 'titleGeneration' | 'speakerIdentification' | 'minutesGeneration' | 'knowledgeGeneration') {
+    return promptTemplateService.getAvailableTemplates(category);
+  }
+
+  /**
+   * Ottiene le impostazioni dei template
+   */
+  getTemplateSettings() {
+    return promptTemplateService.getSettings();
   }
 }
 

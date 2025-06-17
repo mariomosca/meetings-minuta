@@ -91,6 +91,42 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Import an audio file from the filesystem
     import: () => ipcRenderer.invoke('audioFiles:import'),
   },
+
+  // APIs for meeting minutes
+  minutes: {
+    // Save meeting minutes
+    save: (minutes: any) => ipcRenderer.invoke('minutes:save', minutes),
+    
+    // Get all minutes
+    getAll: () => ipcRenderer.invoke('minutes:getAll'),
+    
+    // Get minutes by meeting ID
+    getByMeetingId: (meetingId: string) => ipcRenderer.invoke('minutes:getByMeetingId', meetingId),
+    
+    // Delete minutes
+    delete: (id: string) => ipcRenderer.invoke('minutes:delete', id),
+  },
+
+  // APIs for knowledge base
+  knowledge: {
+    // Save knowledge entry
+    save: (entry: any) => ipcRenderer.invoke('knowledge:save', entry),
+    
+    // Get all knowledge entries
+    getAll: () => ipcRenderer.invoke('knowledge:getAll'),
+    
+    // Search knowledge entries
+    search: (query: string) => ipcRenderer.invoke('knowledge:search', query),
+    
+    // Get knowledge entries by category
+    getByCategory: (category: string) => ipcRenderer.invoke('knowledge:getByCategory', category),
+    
+    // Get knowledge entries by tag
+    getByTag: (tag: string) => ipcRenderer.invoke('knowledge:getByTag', tag),
+    
+    // Delete knowledge entry
+    delete: (id: string) => ipcRenderer.invoke('knowledge:delete', id),
+  },
   
   // APIs for configuration
   config: {
@@ -354,6 +390,28 @@ contextBridge.exposeInMainWorld('electronAPI', {
         return await ipcRenderer.invoke('ai:identifySpeakers', transcriptText, utterances);
       } catch (error) {
         console.error('preload: error in ai:identifySpeakers:', error);
+        throw error;
+      }
+    },
+
+    // Generate meeting minutes
+    generateMinutes: async (transcriptText: string, participants?: string[], meetingDate?: string, templateName?: string) => {
+      console.log('preload: call to ai:generateMinutes');
+      try {
+        return await ipcRenderer.invoke('ai:generateMinutes', transcriptText, participants, meetingDate, templateName);
+      } catch (error) {
+        console.error('preload: error in ai:generateMinutes:', error);
+        throw error;
+      }
+    },
+
+    // Generate knowledge base
+    generateKnowledge: async (transcriptText: string, templateName?: string) => {
+      console.log('preload: call to ai:generateKnowledge');
+      try {
+        return await ipcRenderer.invoke('ai:generateKnowledge', transcriptText, templateName);
+      } catch (error) {
+        console.error('preload: error in ai:generateKnowledge:', error);
         throw error;
       }
     }

@@ -1,15 +1,15 @@
 import axios from 'axios';
 import fs from 'fs';
-import { database, Transcript, Utterance, Meeting } from './db';
+import { database, Transcript, Utterance } from './db';
 import { BrowserWindow } from 'electron';
-import path from 'path';
+
 
 export class AssemblyAIService {
   private apiKey: string;
-  private baseURL: string = 'https://api.assemblyai.com/v2';
+  private baseURL = 'https://api.assemblyai.com/v2';
   private mainWindow: BrowserWindow | null = null;
 
-  constructor(apiKey: string = '', mainWindow: BrowserWindow | null = null) {
+  constructor(apiKey = '', mainWindow: BrowserWindow | null = null) {
     this.apiKey = apiKey;
     this.mainWindow = mainWindow;
     console.log('AssemblyAIService inizializzato');

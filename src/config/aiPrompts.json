@@ -1,0 +1,153 @@
+{
+  "version": "1.0.0",
+  "description": "Template di prompt per le funzionalità AI",
+  "templates": {
+    "titleGeneration": {
+      "default": {
+        "name": "Generazione Titolo Standard",
+        "description": "Template base per la generazione di titoli di riunioni",
+        "prompt": "Analizza questa trascrizione di una riunione e genera un titolo conciso e professionale.\n\nRegole:\n- Massimo {{maxCharacters}} caratteri\n- Cattura l'argomento principale\n- Usa un linguaggio {{language}}\n- {{additionalRules}}\n\nTrascrizione:\n{{transcriptText}}\n\nRispondi solo con un JSON nel formato:\n{\n  \"title\": \"Titolo della riunione\",\n  \"confidence\": 0.85\n}",
+        "variables": {
+          "maxCharacters": 80,
+          "language": "formale",
+          "additionalRules": "In italiano"
+        }
+      },
+      "concise": {
+        "name": "Titolo Conciso",
+        "description": "Template per titoli molto brevi e diretti",
+        "prompt": "Crea un titolo brevissimo per questa riunione.\n\nRegole:\n- Massimo {{maxCharacters}} caratteri\n- Una frase semplice\n- Linguaggio {{language}}\n\nTrascrizione:\n{{transcriptText}}\n\nRispondi con JSON:\n{\n  \"title\": \"Titolo\",\n  \"confidence\": 0.85\n}",
+        "variables": {
+          "maxCharacters": 50,
+          "language": "informale"
+        }
+      },
+      "detailed": {
+        "name": "Titolo Dettagliato",
+        "description": "Template per titoli più descrittivi",
+        "prompt": "Analizza la trascrizione e crea un titolo dettagliato che includa il tema principale e sottotemi.\n\nRegole:\n- Massimo {{maxCharacters}} caratteri\n- Include tema principale e argomenti chiave\n- Linguaggio {{language}}\n- {{additionalRules}}\n\nTrascrizione:\n{{transcriptText}}\n\nFormato JSON richiesto:\n{\n  \"title\": \"Titolo completo della riunione\",\n  \"confidence\": 0.85\n}",
+        "variables": {
+          "maxCharacters": 120,
+          "language": "professionale",
+          "additionalRules": "Includi data se rilevante"
+        }
+      }
+    },
+    "speakerIdentification": {
+      "default": {
+        "name": "Identificazione Speaker Standard",
+        "description": "Template base per l'identificazione dei partecipanti",
+        "prompt": "Analizza questa trascrizione di una riunione e suggerisci nomi realistici per gli speaker basandoti sul contenuto.\n\nRegole:\n- Usa nomi {{nameOrigin}} comuni\n- Basati su ruoli, argomenti discussi, e stile di comunicazione\n- Fornisci una spiegazione del ragionamento\n- Confidence da {{minConfidence}} a {{maxConfidence}}\n- {{additionalGuidelines}}\n\nSpeaker attualmente identificati:\n{{currentSpeakers}}\n\nCampione di trascrizione:\n{{sampleUtterances}}\n\nRispondi solo con un JSON nel formato:\n{\n  \"speakers\": [\n    {\n      \"originalName\": \"Speaker 1\",\n      \"suggestedName\": \"Marco Rossi\",\n      \"confidence\": 0.75,\n      \"reasoning\": \"Sembra essere il coordinatore, usa linguaggio formale\"\n    }\n  ]\n}",
+        "variables": {
+          "nameOrigin": "italiani",
+          "minConfidence": "0.1",
+          "maxConfidence": "1.0",
+          "additionalGuidelines": "Considera il contesto professionale"
+        }
+      },
+      "formal": {
+        "name": "Identificazione Formale",
+        "description": "Template per contesti aziendali formali",
+        "prompt": "Analizza questa trascrizione di una riunione aziendale e identifica i partecipanti.\n\nContesto: Riunione {{meetingContext}}\nRegole:\n- Nomi {{nameOrigin}} professionali\n- Identifica ruoli aziendali (manager, coordinatore, specialista)\n- Confidence da {{minConfidence}} a {{maxConfidence}}\n- {{additionalGuidelines}}\n\nSpeaker:\n{{currentSpeakers}}\n\nTrascrizione:\n{{sampleUtterances}}\n\nJSON format:\n{\n  \"speakers\": [\n    {\n      \"originalName\": \"Speaker 1\",\n      \"suggestedName\": \"Dott. Marco Rossi\",\n      \"confidence\": 0.80,\n      \"reasoning\": \"Linguaggio tecnico, sembra un dirigente\"\n    }\n  ]\n}",
+        "variables": {
+          "nameOrigin": "italiani",
+          "meetingContext": "aziendale",
+          "minConfidence": "0.3",
+          "maxConfidence": "1.0",
+          "additionalGuidelines": "Includi titoli professionali quando appropriato"
+        }
+      },
+      "casual": {
+        "name": "Identificazione Informale",
+        "description": "Template per riunioni informali o team",
+        "prompt": "Identifica i partecipanti di questa riunione informale.\n\nRegole:\n- Nomi {{nameOrigin}} friendly\n- Stile {{meetingStyle}}\n- Confidence da {{minConfidence}} a {{maxConfidence}}\n\nPartecipanti attuali:\n{{currentSpeakers}}\n\nConversazione:\n{{sampleUtterances}}\n\nRisposta JSON:\n{\n  \"speakers\": [\n    {\n      \"originalName\": \"Speaker 1\",\n      \"suggestedName\": \"Marco\",\n      \"confidence\": 0.70,\n      \"reasoning\": \"Tono amichevole, probabilmente un collega\"\n    }\n  ]\n}",
+        "variables": {
+          "nameOrigin": "italiani",
+          "meetingStyle": "colloquiale",
+          "minConfidence": "0.2",
+          "maxConfidence": "0.9"
+        }
+      }
+    },
+    "minutesGeneration": {
+      "default": {
+        "name": "Minuta Meeting Standard",
+        "description": "Template base per la generazione di minute di riunione",
+        "prompt": "Analizza questa trascrizione di riunione e genera una minuta professionale strutturata.\n\nRegole:\n- Formato {{format}}\n- Linguaggio {{language}}\n- Include {{sections}}\n- {{additionalRequirements}}\n\nTrascrizione:\n{{transcriptText}}\n\nPartecipanti identificati:\n{{participants}}\n\nRispondi con JSON nel formato:\n{\n  \"title\": \"Titolo della riunione\",\n  \"date\": \"{{meetingDate}}\",\n  \"participants\": [\n    {\n      \"name\": \"Marco Rossi\",\n      \"role\": \"Project Manager\"\n    }\n  ],\n  \"agenda\": [\n    \"Punto 1: Discussione budget\",\n    \"Punto 2: Timeline progetto\"\n  ],\n  \"keyDiscussions\": [\n    {\n      \"topic\": \"Budget Q1\",\n      \"summary\": \"Discussione sui costi del primo trimestre\",\n      \"decisions\": [\"Approvato budget di 50k\"]\n    }\n  ],\n  \"actionItems\": [\n    {\n      \"action\": \"Preparare report finanziario\",\n      \"owner\": \"Marco Rossi\",\n      \"dueDate\": \"2025-01-30\",\n      \"priority\": \"High\",\n      \"status\": \"Assigned\"\n    }\n  ],\n  \"nextMeeting\": {\n    \"date\": \"2025-02-01\",\n    \"agenda\": [\"Review report finanziario\"]\n  }\n}",
+        "variables": {
+          "format": "professionale",
+          "language": "italiano formale",
+          "sections": "partecipanti, agenda, discussioni chiave, azioni",
+          "additionalRequirements": "Identifica chiaramente owner e scadenze"
+        }
+      },
+      "executive": {
+        "name": "Minuta Esecutiva",
+        "description": "Template per minute executive brief",
+        "prompt": "Crea una minuta esecutiva concisa per il management.\n\nFocus:\n- {{executiveFocus}}\n- Formato {{format}}\n- Massimo {{maxLength}} caratteri\n- {{additionalRequirements}}\n\nTrascrizione:\n{{transcriptText}}\n\nPartecipanti:\n{{participants}}\n\nJSON format:\n{\n  \"title\": \"Executive Summary - [Titolo]\",\n  \"date\": \"{{meetingDate}}\",\n  \"executiveSummary\": \"Riassunto esecutivo in 2-3 righe\",\n  \"keyDecisions\": [\"Decisione 1\", \"Decisione 2\"],\n  \"criticalActions\": [\n    {\n      \"action\": \"Azione critica\",\n      \"owner\": \"Responsabile\",\n      \"dueDate\": \"Data\",\n      \"impact\": \"Alto/Medio/Basso\"\n    }\n  ],\n  \"risks\": [\"Rischio identificato\"],\n  \"nextSteps\": [\"Prossimo passo\"]\n}",
+        "variables": {
+          "executiveFocus": "decisioni chiave e azioni critiche",
+          "format": "executive brief",
+          "maxLength": "2000",
+          "additionalRequirements": "Evidenzia rischi e impatti business"
+        }
+      },
+      "detailed": {
+        "name": "Minuta Dettagliata",
+        "description": "Template per minute complete e dettagliate",
+        "prompt": "Genera una minuta dettagliata e completa della riunione.\n\nSpecifiche:\n- Livello dettaglio: {{detailLevel}}\n- Include {{sections}}\n- Formato {{format}}\n- {{additionalRequirements}}\n\nTrascrizione completa:\n{{transcriptText}}\n\nPartecipanti identificati:\n{{participants}}\n\nRispondi con JSON:\n{\n  \"title\": \"Titolo dettagliato\",\n  \"metadata\": {\n    \"date\": \"{{meetingDate}}\",\n    \"duration\": \"Durata stimata\",\n    \"location\": \"Virtual/Office\",\n    \"type\": \"Tipo riunione\"\n  },\n  \"participants\": [\n    {\n      \"name\": \"Nome\",\n      \"role\": \"Ruolo\",\n      \"attendance\": \"Present/Absent\"\n    }\n  ],\n  \"agenda\": [\"Punto dettagliato 1\"],\n  \"discussions\": [\n    {\n      \"topic\": \"Argomento\",\n      \"summary\": \"Riassunto discussione\",\n      \"keyPoints\": [\"Punto chiave 1\"],\n      \"decisions\": [\"Decisione presa\"],\n      \"concerns\": [\"Preoccupazione sollevata\"]\n    }\n  ],\n  \"actionItems\": [\n    {\n      \"id\": \"ACT-001\",\n      \"action\": \"Azione dettagliata\",\n      \"owner\": \"Responsabile\",\n      \"dueDate\": \"Data scadenza\",\n      \"priority\": \"High/Medium/Low\",\n      \"dependencies\": [\"Dipendenza\"],\n      \"status\": \"New\"\n    }\n  ],\n  \"followUp\": {\n    \"nextMeeting\": \"Data prossima riunione\",\n    \"preparationNeeded\": [\"Preparazione richiesta\"]\n  }\n}",
+        "variables": {
+          "detailLevel": "massimo",
+          "sections": "tutti i dettagli disponibili",
+          "format": "verbale completo",
+          "additionalRequirements": "Include concerns, dependencies e follow-up"
+        }
+      }
+    },
+    "knowledgeGeneration": {
+      "default": {
+        "name": "Appunti Knowledge Base",
+        "description": "Template per generare appunti strutturati per knowledge base",
+        "prompt": "Trasforma questa trascrizione in appunti strutturati per una knowledge base.\n\nObiettivo: {{objective}}\nStruttura: {{structure}}\nFocus: {{focus}}\n{{additionalRequirements}}\n\nTrascrizione:\n{{transcriptText}}\n\nGenera JSON:\n{\n  \"title\": \"Titolo degli appunti\",\n  \"summary\": \"Riassunto in 2-3 righe\",\n  \"tags\": [\"tag1\", \"tag2\", \"tag3\"],\n  \"category\": \"Categoria principale\",\n  \"keyTopics\": [\n    {\n      \"topic\": \"Argomento principale\",\n      \"summary\": \"Riassunto dell'argomento\",\n      \"keyPoints\": [\"Punto chiave 1\", \"Punto chiave 2\"],\n      \"examples\": [\"Esempio pratico\"],\n      \"references\": [\"Riferimento o fonte\"]\n    }\n  ],\n  \"insights\": [\n    {\n      \"insight\": \"Intuizione o apprendimento\",\n      \"context\": \"Contesto dell'intuizione\",\n      \"applicability\": \"Come può essere applicata\"\n    }\n  ],\n  \"actionableItems\": [\n    {\n      \"item\": \"Cosa fare\",\n      \"category\": \"learn/implement/research\",\n      \"priority\": \"high/medium/low\"\n    }\n  ],\n  \"connections\": [\n    \"Collegamento ad altri argomenti o concetti\"\n  ],\n  \"questions\": [\n    \"Domande aperte per ulteriori ricerche\"\n  ]\n}",
+        "variables": {
+          "objective": "creare appunti ricercabili e riutilizzabili",
+          "structure": "gerarchica per topic",
+          "focus": "concetti chiave e insights",
+          "additionalRequirements": "Include tag per la ricerca e collegamenti tra concetti"
+        }
+      },
+      "research": {
+        "name": "Appunti Ricerca",
+        "description": "Template per appunti orientati alla ricerca e studio",
+        "prompt": "Estrai e organizza le informazioni per la ricerca e lo studio.\n\nFocus: {{researchFocus}}\nMetodologia: {{methodology}}\nOutput: {{outputType}}\n{{additionalRequirements}}\n\nTrascrizione:\n{{transcriptText}}\n\nJSON format:\n{\n  \"title\": \"Titolo ricerca\",\n  \"abstract\": \"Abstract/riassunto esecutivo\",\n  \"keywords\": [\"parola chiave 1\", \"parola chiave 2\"],\n  \"methodology\": \"Metodologia discussa\",\n  \"findings\": [\n    {\n      \"finding\": \"Scoperta o risultato\",\n      \"evidence\": \"Evidenza o supporto\",\n      \"significance\": \"Importanza del finding\"\n    }\n  ],\n  \"concepts\": [\n    {\n      \"concept\": \"Concetto principale\",\n      \"definition\": \"Definizione\",\n      \"examples\": [\"Esempio 1\"],\n      \"relatedConcepts\": [\"Concetto correlato\"]\n    }\n  ],\n  \"hypotheses\": [\"Ipotesi formulate\"],\n  \"futureResearch\": [\"Direzioni per ricerca futura\"],\n  \"bibliography\": [\"Fonte o riferimento citato\"]\n}",
+        "variables": {
+          "researchFocus": "analisi e categorizzazione dei concetti",
+          "methodology": "estrazione sistematica",
+          "outputType": "database di conoscenza strutturato",
+          "additionalRequirements": "Evidenzia gaps di conoscenza e aree per approfondimento"
+        }
+      },
+      "personal": {
+        "name": "Appunti Personali",
+        "description": "Template per appunti per uso personale e produttività",
+        "prompt": "Crea appunti personali focalizzati su produttività e crescita.\n\nStile: {{style}}\nFocus: {{personalFocus}}\nUtilizzo: {{usage}}\n{{additionalRequirements}}\n\nTrascrizione:\n{{transcriptText}}\n\nGenera JSON:\n{\n  \"title\": \"Titolo personale\",\n  \"reflection\": \"Riflessione personale sui contenuti\",\n  \"learnings\": [\n    {\n      \"learning\": \"Cosa ho imparato\",\n      \"application\": \"Come posso applicarlo\",\n      \"timeline\": \"Quando implementare\"\n    }\n  ],\n  \"ideas\": [\n    {\n      \"idea\": \"Idea generata\",\n      \"potential\": \"Potenziale dell'idea\",\n      \"nextSteps\": [\"Prossimi passi\"]\n    }\n  ],\n  \"resources\": [\n    {\n      \"resource\": \"Risorsa da esplorare\",\n      \"type\": \"book/article/tool/person\",\n      \"priority\": \"high/medium/low\"\n    }\n  ],\n  \"habits\": [\n    {\n      \"habit\": \"Abitudine da sviluppare\",\n      \"reason\": \"Perché è importante\",\n      \"implementation\": \"Come implementare\"\n    }\n  ],\n  \"reminders\": [\"Promemoria importante\"]\n}",
+        "variables": {
+          "style": "personale e riflessivo",
+          "personalFocus": "crescita personale e applicazione pratica",
+          "usage": "second brain personale",
+          "additionalRequirements": "Include riflessioni e applicazioni pratiche"
+        }
+      }
+    }
+  },
+  "settings": {
+    "defaultTemplate": {
+      "titleGeneration": "default",
+      "speakerIdentification": "default",
+      "minutesGeneration": "default",
+      "knowledgeGeneration": "default"
+    },
+    "maxTranscriptLength": 3000,
+    "maxSampleUtterances": 20
+  }
+} 

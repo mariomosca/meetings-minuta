@@ -59,6 +59,139 @@ export interface AudioFile {
   type: 'audioFile';
 }
 
+// Interfaccia per le minute di riunione
+export interface MeetingMinutes {
+  id: string;
+  meetingId: string;
+  transcriptId?: string;
+  title: string;
+  date: string;
+  participants: Array<{
+    name: string;
+    role?: string;
+    attendance?: string;
+  }>;
+  agenda?: string[];
+  keyDiscussions?: Array<{
+    topic: string;
+    summary: string;
+    keyPoints?: string[];
+    decisions?: string[];
+    concerns?: string[];
+  }>;
+  actionItems: Array<{
+    id?: string;
+    action: string;
+    owner: string;
+    dueDate?: string;
+    priority: 'High' | 'Medium' | 'Low';
+    status?: string;
+    dependencies?: string[];
+  }>;
+  nextMeeting?: {
+    date?: string;
+    agenda?: string[];
+  };
+  metadata?: {
+    duration?: string;
+    location?: string;
+    type?: string;
+  };
+  executiveSummary?: string;
+  keyDecisions?: string[];
+  criticalActions?: Array<{
+    action: string;
+    owner: string;
+    dueDate: string;
+    impact: string;
+  }>;
+  risks?: string[];
+  nextSteps?: string[];
+  followUp?: {
+    nextMeeting?: string;
+    preparationNeeded?: string[];
+  };
+  templateUsed?: string;
+  aiProvider?: string;
+  createdAt: string;
+  type: 'meetingMinutes';
+}
+
+// Interfaccia per gli appunti knowledge base
+export interface KnowledgeEntry {
+  id: string;
+  meetingId?: string;
+  transcriptId?: string;
+  title: string;
+  summary: string;
+  tags: string[];
+  category: string;
+  keyTopics: Array<{
+    topic: string;
+    summary: string;
+    keyPoints: string[];
+    examples?: string[];
+    references?: string[];
+  }>;
+  insights: Array<{
+    insight: string;
+    context: string;
+    applicability: string;
+  }>;
+  actionableItems: Array<{
+    item: string;
+    category: 'learn' | 'implement' | 'research';
+    priority: 'high' | 'medium' | 'low';
+  }>;
+  connections: string[];
+  questions: string[];
+  // Per template di ricerca
+  abstract?: string;
+  keywords?: string[];
+  methodology?: string;
+  findings?: Array<{
+    finding: string;
+    evidence: string;
+    significance: string;
+  }>;
+  concepts?: Array<{
+    concept: string;
+    definition: string;
+    examples: string[];
+    relatedConcepts: string[];
+  }>;
+  hypotheses?: string[];
+  futureResearch?: string[];
+  bibliography?: string[];
+  // Per template personale
+  reflection?: string;
+  learnings?: Array<{
+    learning: string;
+    application: string;
+    timeline: string;
+  }>;
+  ideas?: Array<{
+    idea: string;
+    potential: string;
+    nextSteps: string[];
+  }>;
+  resources?: Array<{
+    resource: string;
+    type: 'book' | 'article' | 'tool' | 'person';
+    priority: 'high' | 'medium' | 'low';
+  }>;
+  habits?: Array<{
+    habit: string;
+    reason: string;
+    implementation: string;
+  }>;
+  reminders?: string[];
+  templateUsed?: string;
+  aiProvider?: string;
+  createdAt: string;
+  type: 'knowledgeEntry';
+}
+
 // Interfaccia per lo schema dello store
 interface StoreSchema {
   notes: Record<string, Note>;
@@ -69,6 +202,10 @@ interface StoreSchema {
   transcriptIds: string[];
   audioFiles: Record<string, AudioFile>;
   audioFileIds: string[];
+  meetingMinutes: Record<string, MeetingMinutes>;
+  meetingMinutesIds: string[];
+  knowledgeEntries: Record<string, KnowledgeEntry>;
+  knowledgeEntryIds: string[];
   config: {
     watchDirectories: string[];
     assemblyAiKey?: string;
@@ -103,6 +240,10 @@ export class Database {
         transcriptIds: [],
         audioFiles: {},
         audioFileIds: [],
+        meetingMinutes: {},
+        meetingMinutesIds: [],
+        knowledgeEntries: {},
+        knowledgeEntryIds: [],
         config: {
           watchDirectories: []
         }
@@ -703,6 +844,282 @@ export class Database {
   setAIProvider(provider: 'gemini' | 'claude' | 'chatgpt'): void {
     this.store.set('config.aiProvider', provider);
     console.log(`AI provider set to: ${provider}`);
+  }
+
+  // ========== MEETING MINUTES METHODS ==========
+
+  // Salvare le minute di un meeting
+  async saveMeetingMinutes(minutes: Omit<MeetingMinutes, 'id' | 'type'> & { id?: string }): Promise<MeetingMinutes> {
+    try {
+      // Crea un ID se non esiste
+      const id = minutes.id || generateId('minutes');
+      
+      // Crea le minute complete
+      const completeMinutes: MeetingMinutes = {
+        id,
+        meetingId: minutes.meetingId,
+        transcriptId: minutes.transcriptId,
+        title: minutes.title,
+        date: minutes.date,
+        participants: minutes.participants,
+        agenda: minutes.agenda,
+        keyDiscussions: minutes.keyDiscussions,
+        actionItems: minutes.actionItems,
+        nextMeeting: minutes.nextMeeting,
+        metadata: minutes.metadata,
+        executiveSummary: minutes.executiveSummary,
+        keyDecisions: minutes.keyDecisions,
+        criticalActions: minutes.criticalActions,
+        risks: minutes.risks,
+        nextSteps: minutes.nextSteps,
+        followUp: minutes.followUp,
+        templateUsed: minutes.templateUsed,
+        aiProvider: minutes.aiProvider,
+        createdAt: minutes.createdAt || new Date().toISOString(),
+        type: 'meetingMinutes'
+      };
+      
+      // Ottieni le minute esistenti e aggiungi/aggiorna le nuove
+      const meetingMinutes = this.store.get('meetingMinutes', {});
+      meetingMinutes[id] = completeMinutes;
+      
+      // Ottieni gli ID esistenti e aggiungi il nuovo se necessario
+      const meetingMinutesIds = this.store.get('meetingMinutesIds', []);
+      if (!meetingMinutesIds.includes(id)) {
+        meetingMinutesIds.push(id);
+        this.store.set('meetingMinutesIds', meetingMinutesIds);
+      }
+      
+      // Salva le minute aggiornate
+      this.store.set('meetingMinutes', meetingMinutes);
+      
+      console.log('Minute salvate:', completeMinutes);
+      return completeMinutes;
+    } catch (error) {
+      console.error('Error while saving meeting minutes:', error);
+      throw error;
+    }
+  }
+
+  // Ottenere tutte le minute
+  async getAllMeetingMinutes(): Promise<MeetingMinutes[]> {
+    try {
+      const meetingMinutes = this.store.get('meetingMinutes', {});
+      const meetingMinutesIds = this.store.get('meetingMinutesIds', []);
+      
+      // Converte l'oggetto in un array ordinato in base a meetingMinutesIds
+      const minutesArray = meetingMinutesIds
+        .filter(id => meetingMinutes[id]) // Filtra ID non validi
+        .map(id => meetingMinutes[id])
+        .sort((a, b) => {
+          // Ordina per data di creazione (dal più recente)
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+      
+      console.log('Minute recuperate:', minutesArray);
+      return minutesArray;
+    } catch (error) {
+      console.error('Error while retrieving meeting minutes:', error);
+      throw error;
+    }
+  }
+
+  // Ottenere minute per meeting ID
+  async getMeetingMinutesByMeetingId(meetingId: string): Promise<MeetingMinutes[]> {
+    try {
+      const allMinutes = await this.getAllMeetingMinutes();
+      return allMinutes.filter(minutes => minutes.meetingId === meetingId);
+    } catch (error) {
+      console.error(`Error while retrieving minutes for meeting ${meetingId}:`, error);
+      throw error;
+    }
+  }
+
+  // Eliminare delle minute
+  async deleteMeetingMinutes(id: string): Promise<void> {
+    try {
+      // Ottieni tutte le minute e rimuovi quelle con l'ID specificato
+      const meetingMinutes = this.store.get('meetingMinutes', {});
+      delete meetingMinutes[id];
+      
+      // Aggiorna le minute nello store
+      this.store.set('meetingMinutes', meetingMinutes);
+      
+      // Rimuovi l'ID dall'elenco degli ID
+      const meetingMinutesIds = this.store.get('meetingMinutesIds', []);
+      const updatedIds = meetingMinutesIds.filter(minutesId => minutesId !== id);
+      this.store.set('meetingMinutesIds', updatedIds);
+      
+      console.log(`Minute ${id} eliminate`);
+    } catch (error) {
+      console.error(`Error while deleting meeting minutes ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // ========== KNOWLEDGE ENTRY METHODS ==========
+
+  // Salvare un'entry di knowledge base
+  async saveKnowledgeEntry(entry: Omit<KnowledgeEntry, 'id' | 'type'> & { id?: string }): Promise<KnowledgeEntry> {
+    try {
+      // Crea un ID se non esiste
+      const id = entry.id || generateId('knowledge');
+      
+      // Crea l'entry completa
+      const completeEntry: KnowledgeEntry = {
+        id,
+        meetingId: entry.meetingId,
+        transcriptId: entry.transcriptId,
+        title: entry.title,
+        summary: entry.summary,
+        tags: entry.tags,
+        category: entry.category,
+        keyTopics: entry.keyTopics,
+        insights: entry.insights,
+        actionableItems: entry.actionableItems,
+        connections: entry.connections,
+        questions: entry.questions,
+        abstract: entry.abstract,
+        keywords: entry.keywords,
+        methodology: entry.methodology,
+        findings: entry.findings,
+        concepts: entry.concepts,
+        hypotheses: entry.hypotheses,
+        futureResearch: entry.futureResearch,
+        bibliography: entry.bibliography,
+        reflection: entry.reflection,
+        learnings: entry.learnings,
+        ideas: entry.ideas,
+        resources: entry.resources,
+        habits: entry.habits,
+        reminders: entry.reminders,
+        templateUsed: entry.templateUsed,
+        aiProvider: entry.aiProvider,
+        createdAt: entry.createdAt || new Date().toISOString(),
+        type: 'knowledgeEntry'
+      };
+      
+      // Ottieni le entry esistenti e aggiungi/aggiorna la nuova
+      const knowledgeEntries = this.store.get('knowledgeEntries', {});
+      knowledgeEntries[id] = completeEntry;
+      
+      // Ottieni gli ID esistenti e aggiungi il nuovo se necessario
+      const knowledgeEntryIds = this.store.get('knowledgeEntryIds', []);
+      if (!knowledgeEntryIds.includes(id)) {
+        knowledgeEntryIds.push(id);
+        this.store.set('knowledgeEntryIds', knowledgeEntryIds);
+      }
+      
+      // Salva le entry aggiornate
+      this.store.set('knowledgeEntries', knowledgeEntries);
+      
+      console.log('Knowledge entry salvata:', completeEntry);
+      return completeEntry;
+    } catch (error) {
+      console.error('Error while saving knowledge entry:', error);
+      throw error;
+    }
+  }
+
+  // Ottenere tutte le knowledge entries
+  async getAllKnowledgeEntries(): Promise<KnowledgeEntry[]> {
+    try {
+      const knowledgeEntries = this.store.get('knowledgeEntries', {});
+      const knowledgeEntryIds = this.store.get('knowledgeEntryIds', []);
+      
+      // Converte l'oggetto in un array ordinato in base a knowledgeEntryIds
+      const entriesArray = knowledgeEntryIds
+        .filter(id => knowledgeEntries[id]) // Filtra ID non validi
+        .map(id => knowledgeEntries[id])
+        .sort((a, b) => {
+          // Ordina per data di creazione (dal più recente)
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+      
+      console.log('Knowledge entries recuperate:', entriesArray);
+      return entriesArray;
+    } catch (error) {
+      console.error('Error while retrieving knowledge entries:', error);
+      throw error;
+    }
+  }
+
+  // Cercare knowledge entries per tag o parole chiave
+  async searchKnowledgeEntries(query: string): Promise<KnowledgeEntry[]> {
+    try {
+      const allEntries = await this.getAllKnowledgeEntries();
+      const lowerQuery = query.toLowerCase();
+      
+      return allEntries.filter(entry => {
+        // Cerca in titolo, summary, tag, categoria, domande
+        const searchFields = [
+          entry.title,
+          entry.summary,
+          entry.category,
+          ...entry.tags,
+          ...entry.questions,
+          ...entry.connections,
+          ...(entry.keywords || [])
+        ].join(' ').toLowerCase();
+        
+        // Cerca anche negli insights e key topics
+        const insightTexts = entry.insights.map(i => i.insight + ' ' + i.context).join(' ').toLowerCase();
+        const topicTexts = entry.keyTopics.map(t => t.topic + ' ' + t.summary + ' ' + t.keyPoints.join(' ')).join(' ').toLowerCase();
+        
+        const allText = searchFields + ' ' + insightTexts + ' ' + topicTexts;
+        
+        return allText.includes(lowerQuery);
+      });
+    } catch (error) {
+      console.error('Error while searching knowledge entries:', error);
+      throw error;
+    }
+  }
+
+  // Ottenere knowledge entries per categoria
+  async getKnowledgeEntriesByCategory(category: string): Promise<KnowledgeEntry[]> {
+    try {
+      const allEntries = await this.getAllKnowledgeEntries();
+      return allEntries.filter(entry => entry.category.toLowerCase() === category.toLowerCase());
+    } catch (error) {
+      console.error(`Error while retrieving entries for category ${category}:`, error);
+      throw error;
+    }
+  }
+
+  // Ottenere knowledge entries per tag
+  async getKnowledgeEntriesByTag(tag: string): Promise<KnowledgeEntry[]> {
+    try {
+      const allEntries = await this.getAllKnowledgeEntries();
+      return allEntries.filter(entry => 
+        entry.tags.some(t => t.toLowerCase() === tag.toLowerCase())
+      );
+    } catch (error) {
+      console.error(`Error while retrieving entries for tag ${tag}:`, error);
+      throw error;
+    }
+  }
+
+  // Eliminare una knowledge entry
+  async deleteKnowledgeEntry(id: string): Promise<void> {
+    try {
+      // Ottieni tutte le entry e rimuovi quella con l'ID specificato
+      const knowledgeEntries = this.store.get('knowledgeEntries', {});
+      delete knowledgeEntries[id];
+      
+      // Aggiorna le entry nello store
+      this.store.set('knowledgeEntries', knowledgeEntries);
+      
+      // Rimuovi l'ID dall'elenco degli ID
+      const knowledgeEntryIds = this.store.get('knowledgeEntryIds', []);
+      const updatedIds = knowledgeEntryIds.filter(entryId => entryId !== id);
+      this.store.set('knowledgeEntryIds', updatedIds);
+      
+      console.log(`Knowledge entry ${id} eliminata`);
+    } catch (error) {
+      console.error(`Error while deleting knowledge entry ${id}:`, error);
+      throw error;
+    }
   }
 }
 

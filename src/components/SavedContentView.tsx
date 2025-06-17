@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input } from './ui';
+import { Button, Input, MinutesDetailModal, KnowledgeDetailModal } from './ui';
 import toast from 'react-hot-toast';
 
 interface ElectronAPI {
@@ -37,12 +37,33 @@ const SavedContentView: React.FC<SavedContentViewProps> = ({ onBack }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const [selectedMinute, setSelectedMinute] = useState<any>(null);
+  const [selectedKnowledge, setSelectedKnowledge] = useState<any>(null);
+  const [showMinutesDetail, setShowMinutesDetail] = useState(false);
+  const [showKnowledgeDetail, setShowKnowledgeDetail] = useState(false);
 
   const electronAPI = window.electronAPI;
 
   useEffect(() => {
+    loadAllContent();
+  }, []);
+
+  useEffect(() => {
     loadContent();
   }, [activeTab]);
+
+  async function loadAllContent() {
+    try {
+      const [allMinutes, allKnowledge] = await Promise.all([
+        electronAPI.minutes?.getAll() || [],
+        electronAPI.knowledge?.getAll() || []
+      ]);
+      setMinutes(allMinutes);
+      setKnowledgeEntries(allKnowledge);
+    } catch (error) {
+      console.error('Error loading all content:', error);
+    }
+  }
 
   async function loadContent() {
     setIsLoading(true);
@@ -124,6 +145,26 @@ const SavedContentView: React.FC<SavedContentViewProps> = ({ onBack }) => {
 
   function toggleExpanded(id: string) {
     setExpandedItem(expandedItem === id ? null : id);
+  }
+
+  function openMinutesDetail(minute: any) {
+    setSelectedMinute(minute);
+    setShowMinutesDetail(true);
+  }
+
+  function openKnowledgeDetail(knowledge: any) {
+    setSelectedKnowledge(knowledge);
+    setShowKnowledgeDetail(true);
+  }
+
+  function closeMinutesDetail() {
+    setShowMinutesDetail(false);
+    setSelectedMinute(null);
+  }
+
+  function closeKnowledgeDetail() {
+    setShowKnowledgeDetail(false);
+    setSelectedKnowledge(null);
   }
 
   return (
@@ -228,6 +269,16 @@ const SavedContentView: React.FC<SavedContentViewProps> = ({ onBack }) => {
                         </div>
                         <div className="flex items-center gap-2 ml-4">
                           <button
+                            onClick={() => openMinutesDetail(minute)}
+                            className="text-gray-400 hover:text-green-600 transition-colors"
+                            title="Visualizza dettaglio"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
+                          <button
                             onClick={() => toggleExpanded(minute.id)}
                             className="text-gray-400 hover:text-gray-600 transition-colors"
                             title="Espandi/Comprimi"
@@ -330,6 +381,16 @@ const SavedContentView: React.FC<SavedContentViewProps> = ({ onBack }) => {
                         </div>
                         <div className="flex items-center gap-2 ml-4">
                           <button
+                            onClick={() => openKnowledgeDetail(entry)}
+                            className="text-gray-400 hover:text-yellow-600 transition-colors"
+                            title="Visualizza dettaglio"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
+                          <button
                             onClick={() => toggleExpanded(entry.id)}
                             className="text-gray-400 hover:text-gray-600 transition-colors"
                             title="Espandi/Comprimi"
@@ -402,6 +463,19 @@ const SavedContentView: React.FC<SavedContentViewProps> = ({ onBack }) => {
           </div>
         )}
       </div>
+
+      {/* Detail Modals */}
+      <MinutesDetailModal
+        isOpen={showMinutesDetail}
+        onRequestClose={closeMinutesDetail}
+        minutes={selectedMinute}
+      />
+
+      <KnowledgeDetailModal
+        isOpen={showKnowledgeDetail}
+        onRequestClose={closeKnowledgeDetail}
+        knowledge={selectedKnowledge}
+      />
     </div>
   );
 };

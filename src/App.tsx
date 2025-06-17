@@ -57,6 +57,12 @@ interface ElectronAPI {
   };
   onNewMeetingCreated?: (handler: (meeting: Meeting) => void) => void;
   onTranscriptionStatusUpdate?: (handler: (transcript: Transcript) => void) => void;
+  minutes?: {
+    getByMeetingId: (meetingId: string) => Promise<any[]>;
+  };
+  knowledge?: {
+    getAll: () => Promise<any[]>;
+  };
 }
 
 // Access to APIs exposed by preload
@@ -137,6 +143,7 @@ const App: React.FC = () => {
   });
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'transcription' | 'settings' | 'monitoring' | 'saved'>('list');
+  const [meetingContents, setMeetingContents] = useState<Record<string, { minutes: number; knowledge: number }>>({});
   
   // Load meetings on startup
   useEffect(() => {
@@ -162,12 +169,44 @@ const App: React.FC = () => {
       const meetingsData = await electronAPI.meetings?.getAll();
       if (meetingsData) {
         setMeetings(meetingsData);
+        // Load content counts for each meeting
+        await loadMeetingContents(meetingsData);
       }
     } catch (error) {
       console.error('Error loading meetings:', error);
       toast.error('Unable to load meetings');
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  // Load content counts for all meetings
+  async function loadMeetingContents(meetings: Meeting[]) {
+    try {
+      const contents: Record<string, { minutes: number; knowledge: number }> = {};
+      
+      // Get all knowledge entries once
+      const allKnowledge = await electronAPI.knowledge?.getAll() || [];
+      
+      // Process each meeting
+      for (const meeting of meetings) {
+        if (meeting.id) {
+          // Get minutes for this meeting
+          const minutes = await electronAPI.minutes?.getByMeetingId(meeting.id) || [];
+          
+          // Filter knowledge for this meeting
+          const knowledge = allKnowledge.filter((k: any) => k.meetingId === meeting.id);
+          
+          contents[meeting.id] = {
+            minutes: minutes.length,
+            knowledge: knowledge.length
+          };
+        }
+      }
+      
+      setMeetingContents(contents);
+    } catch (error) {
+      console.error('Error loading meeting contents:', error);
     }
   }
   
@@ -757,6 +796,23 @@ const App: React.FC = () => {
                                 </svg>
                                 {t('meetings.hasTranscript')}
                               </span>
+                            )}
+
+                            {/* Content indicators */}
+                            {meeting.id && meetingContents[meeting.id] && (
+                              <>
+                                {meetingContents[meeting.id].minutes > 0 && (
+                                  <span className="inline-flex items-center bg-green-50 text-green-600 px-2 py-1 rounded-full text-xs font-medium">
+                                    📋 {meetingContents[meeting.id].minutes}
+                                  </span>
+                                )}
+                                
+                                {meetingContents[meeting.id].knowledge > 0 && (
+                                  <span className="inline-flex items-center bg-yellow-50 text-yellow-600 px-2 py-1 rounded-full text-xs font-medium">
+                                    🧠 {meetingContents[meeting.id].knowledge}
+                                  </span>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>

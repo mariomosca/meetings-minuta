@@ -13,4 +13,8 @@ export {
 // Navigation Components
 export { default as Breadcrumbs, type BreadcrumbsProps, type BreadcrumbItem } from './Breadcrumbs';
 export { default as Header, type HeaderProps } from './Header';
-export { default as Sidebar, type SidebarProps, type SidebarItem, type SidebarSection } from './Sidebar'; 
+export { default as Sidebar, type SidebarProps, type SidebarItem, type SidebarSection } from './Sidebar';
+
+// Detail Modal Components
+export { default as MinutesDetailModal } from './MinutesDetailModal';
+export { default as KnowledgeDetailModal } from './KnowledgeDetailModal'; 

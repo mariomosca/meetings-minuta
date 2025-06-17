@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import Modal from 'react-modal';
-import { Button } from './ui';
+import { Button, MinutesDetailModal, KnowledgeDetailModal } from './ui';
 
 // Interface for Electron APIs
 interface ElectronAPI {
@@ -179,8 +179,14 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   const [isGeneratingKnowledge, setIsGeneratingKnowledge] = useState(false);
   const [showMinutesModal, setShowMinutesModal] = useState(false);
   const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
+  const [savedMinutes, setSavedMinutes] = useState<any[]>([]);
+  const [savedKnowledge, setSavedKnowledge] = useState<any[]>([]);
   const [generatedMinutes, setGeneratedMinutes] = useState<any>(null);
   const [generatedKnowledge, setGeneratedKnowledge] = useState<any>(null);
+  const [selectedSavedMinute, setSelectedSavedMinute] = useState<any>(null);
+  const [selectedSavedKnowledge, setSelectedSavedKnowledge] = useState<any>(null);
+  const [showSavedMinutesDetail, setShowSavedMinutesDetail] = useState(false);
+  const [showSavedKnowledgeDetail, setShowSavedKnowledgeDetail] = useState(false);
   
   // Stati per l'editing del titolo
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -242,6 +248,19 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         } else {
           setActiveTranscript(transcriptData[0]);
         }
+      }
+
+      // Load saved minutes and knowledge for this meeting
+      const minutesData = await electronAPI.minutes?.getByMeetingId(meetingId);
+      if (minutesData) {
+        setSavedMinutes(minutesData);
+      }
+
+      // Non c'è un getByMeetingId per knowledge, quindi dobbiamo filtrare localmente
+      const allKnowledge = await electronAPI.knowledge?.getAll();
+      if (allKnowledge) {
+        const meetingKnowledge = allKnowledge.filter((k: any) => k.meetingId === meetingId);
+        setSavedKnowledge(meetingKnowledge);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -737,6 +756,12 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       await electronAPI.minutes?.save(minutesToSave);
       toast.success('Minute salvate con successo!');
       setShowMinutesModal(false);
+      
+      // Ricarica le minute salvate
+      const minutesData = await electronAPI.minutes?.getByMeetingId(meetingId);
+      if (minutesData) {
+        setSavedMinutes(minutesData);
+      }
     } catch (error) {
       console.error('Error saving minutes:', error);
       toast.error('Errore nel salvataggio delle minute');
@@ -759,10 +784,38 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       await electronAPI.knowledge?.save(knowledgeToSave);
       toast.success('Knowledge base salvata con successo!');
       setShowKnowledgeModal(false);
+      
+      // Ricarica gli appunti salvati
+      const allKnowledge = await electronAPI.knowledge?.getAll();
+      if (allKnowledge) {
+        const meetingKnowledge = allKnowledge.filter((k: any) => k.meetingId === meetingId);
+        setSavedKnowledge(meetingKnowledge);
+      }
     } catch (error) {
       console.error('Error saving knowledge:', error);
       toast.error('Errore nel salvataggio della knowledge base');
     }
+  }
+
+  // Functions for saved content detail modals
+  function openSavedMinutesDetail(minute: any) {
+    setSelectedSavedMinute(minute);
+    setShowSavedMinutesDetail(true);
+  }
+
+  function openSavedKnowledgeDetail(knowledge: any) {
+    setSelectedSavedKnowledge(knowledge);
+    setShowSavedKnowledgeDetail(true);
+  }
+
+  function closeSavedMinutesDetail() {
+    setShowSavedMinutesDetail(false);
+    setSelectedSavedMinute(null);
+  }
+
+  function closeSavedKnowledgeDetail() {
+    setShowSavedKnowledgeDetail(false);
+    setSelectedSavedKnowledge(null);
   }
 
   return (
@@ -952,6 +1005,75 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                 </div>
               )}
               
+              {/* Saved Content Section */}
+              {(savedMinutes.length > 0 || savedKnowledge.length > 0) && (
+                <div className="mb-4 pb-4 border-b border-gray-100">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Contenuti Salvati</h4>
+                  
+                  <div className="space-y-3">
+                    {/* Saved Minutes */}
+                    {savedMinutes.length > 0 && (
+                      <div>
+                        <h5 className="text-xs font-medium text-green-700 mb-2 flex items-center">
+                          <span className="mr-1">📋</span>
+                          Minute ({savedMinutes.length})
+                        </h5>
+                        <div className="space-y-2">
+                          {savedMinutes.slice(0, 2).map((minute: any) => (
+                            <div 
+                              key={minute.id} 
+                              onClick={() => openSavedMinutesDetail(minute)}
+                              className="bg-green-50 border border-green-200 rounded-md p-2 cursor-pointer hover:bg-green-100 transition-colors"
+                              title="Clicca per visualizzare i dettagli"
+                            >
+                              <p className="text-xs font-medium text-gray-900 truncate" title={minute.title}>
+                                {minute.title}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                {new Date(minute.createdAt).toLocaleDateString('it-IT')}
+                              </p>
+                            </div>
+                          ))}
+                          {savedMinutes.length > 2 && (
+                            <p className="text-xs text-gray-500">+{savedMinutes.length - 2} altre</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Saved Knowledge */}
+                    {savedKnowledge.length > 0 && (
+                      <div>
+                        <h5 className="text-xs font-medium text-yellow-700 mb-2 flex items-center">
+                          <span className="mr-1">🧠</span>
+                          Appunti ({savedKnowledge.length})
+                        </h5>
+                        <div className="space-y-2">
+                          {savedKnowledge.slice(0, 2).map((knowledge: any) => (
+                            <div 
+                              key={knowledge.id} 
+                              onClick={() => openSavedKnowledgeDetail(knowledge)}
+                              className="bg-yellow-50 border border-yellow-200 rounded-md p-2 cursor-pointer hover:bg-yellow-100 transition-colors"
+                              title="Clicca per visualizzare i dettagli"
+                            >
+                              <p className="text-xs font-medium text-gray-900 truncate" title={knowledge.title}>
+                                {knowledge.title}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                {knowledge.category}
+                              </p>
+                            </div>
+                          ))}
+                          {savedKnowledge.length > 2 && (
+                            <p className="text-xs text-gray-500">+{savedKnowledge.length - 2} altri</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Available transcripts</h4>
                 {transcripts.length === 0 ? (
@@ -1481,6 +1603,19 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           </div>
         </Modal>
       )}
+
+      {/* Detail Modals for Saved Content */}
+      <MinutesDetailModal
+        isOpen={showSavedMinutesDetail}
+        onRequestClose={closeSavedMinutesDetail}
+        minutes={selectedSavedMinute}
+      />
+
+      <KnowledgeDetailModal
+        isOpen={showSavedKnowledgeDetail}
+        onRequestClose={closeSavedKnowledgeDetail}
+        knowledge={selectedSavedKnowledge}
+      />
 
       {/* Modal per le suggerimenti degli speaker */}
       <Modal

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { Button } from './ui';
 
 // Interface for Electron APIs
 interface ElectronAPI {
@@ -290,12 +291,14 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
     
     if (!transcript) {
       return (
-        <button
+        <Button
           onClick={() => startTranscription(audioFileId)}
-          className="px-4 py-2 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-sm hover:shadow-md"
+          variant="primary"
+          size="sm"
+          className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105"
         >
           {t('transcription.start')}
-        </button>
+        </Button>
       );
     }
     
@@ -328,15 +331,17 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
               <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>
               <span className="text-red-700 font-medium">{t('transcription.status.error')}</span>
             </div>
-            <button
+            <Button
               onClick={() => startTranscription(audioFileId)}
-              className="p-1 text-red-600 hover:text-red-800 transition-colors rounded-full hover:bg-red-50"
-              title={t('common.retry')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-              </svg>
-            </button>
+              variant="ghost"
+              size="sm"
+              className="p-1 text-red-600 hover:text-red-800 rounded-full hover:bg-red-50"
+              leftIcon={
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                </svg>
+              }
+            />
           </div>
         );
       default:
@@ -375,24 +380,26 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                   </span>
                 </div>
                 
-                <button
-                  type="button"
+                <Button
                   onClick={toggleWatching}
-                  className={`px-3 py-1.5 rounded-full text-white shadow-sm text-xs font-medium transition-all transform hover:scale-105 ${
+                  variant={isWatching ? "danger" : "primary"}
+                  size="sm"
+                  className={`rounded-full transform hover:scale-105 ${
                     isWatching 
-                      ? 'bg-red-500 hover:bg-red-600' 
+                      ? '' 
                       : 'bg-emerald-500 hover:bg-emerald-600'
                   }`}
                 >
                   {isWatching ? t('monitoring.stopWatching') : t('monitoring.startWatching')}
-                </button>
+                </Button>
               </div>
               
               {/* Directory Path - collapsible */}
               <div>
-                <button
+                <Button
                   onClick={() => setShowPath(!showPath)}
-                  className="w-full flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-100 text-left hover:bg-gray-100 transition-colors"
+                  variant="ghost"
+                  className="w-full flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-100 text-left hover:bg-gray-100"
                 >
                   <span className="text-xs font-medium text-gray-600">{t('monitoring.directoryPath')}</span>
                   <svg 
@@ -403,7 +410,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                   >
                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
-                </button>
+                </Button>
                 
                 {showPath && (
                   <div className="mt-1 px-3 py-2 bg-gray-50 rounded-lg text-gray-700 text-xs break-all">

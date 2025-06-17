@@ -52,9 +52,12 @@ const Button: React.FC<ButtonProps> = ({
     </svg>
   );
   
+  // Combine styles - className first to allow overrides but keep important variant styles
+  const combinedClassName = `${baseStyles} ${sizeStyles[size]} ${className} ${variantStyles[variant]}`;
+
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={combinedClassName}
       disabled={disabled || isLoading}
       {...props}
     >

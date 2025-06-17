@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <div className={`
       ${widthClasses[width]} 
       ${positionClasses[position]} 
-      bg-white border-gray-200 flex flex-col overflow-hidden 
+      bg-white border-gray-200 flex flex-col h-full overflow-hidden 
       ${className}
     `}>
       {/* Navigation sections */}
@@ -69,18 +69,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                   onClick={item.onClick}
                   disabled={item.disabled}
                   className={`
-                    flex items-center justify-between p-3 rounded-md w-full transition-all duration-200 group
+                    flex items-center justify-between p-3 rounded-md w-full transition-all duration-200 group border-2
                     ${item.isActive 
-                      ? 'bg-primary-500 text-white shadow-sm' 
+                      ? 'bg-white text-gray-900 border-primary-500' 
                       : item.disabled
-                        ? 'text-gray-600 cursor-not-allowed'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'text-gray-600 cursor-not-allowed border-transparent'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-transparent'
                     }
                   `}
                 >
                   <div className="flex items-center">
                     <div className={`
-                      ${item.isActive ? 'text-white' : 'text-gray-600 group-hover:text-gray-700'}
+                      ${item.isActive ? 'text-primary-600' : 'text-gray-600 group-hover:text-gray-700'}
                       ${item.disabled ? 'text-gray-300' : ''}
                       mr-3 flex-shrink-0
                     `}>
@@ -96,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <span className={`
                       inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-full
                       ${item.isActive 
-                        ? 'bg-primary-400 text-white' 
+                        ? 'bg-primary-100 text-primary-700' 
                         : 'bg-gray-200 text-gray-600'
                       }
                     `}>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
+import { Button } from './ui';
 
 // Interface for Electron APIs
 interface ElectronAPI {
@@ -249,14 +250,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
                     placeholder={t('settings.monitoring.noDirectory')}
                   />
-                  <button
-                    type="button"
+                  <Button
                     onClick={handleSelectDirectory}
                     disabled={isSaving}
-                    className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors disabled:opacity-50 shadow-sm"
+                    variant="primary"
+                    size="md"
                   >
                     {t('common.select')}
-                  </button>
+                  </Button>
                 </div>
               </div>
               
@@ -302,14 +303,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                     placeholder={t('settings.api.keyPlaceholder')}
                   />
-                  <button
-                    type="button"
+                  <Button
                     onClick={handleSaveApiKey}
                     disabled={isSaving}
-                    className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors disabled:opacity-50 shadow-sm"
+                    variant="primary"
+                    size="md"
+                    isLoading={isSaving}
                   >
                     {t('common.save')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -337,14 +339,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     <option value="it">{t('settings.language.italian')}</option>
                     <option value="en">{t('settings.language.english')}</option>
                   </select>
-                  <button
-                    type="button"
+                  <Button
                     onClick={handleSelectLanguage}
                     disabled={isSaving}
-                    className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors disabled:opacity-50 shadow-sm"
+                    variant="primary"
+                    size="md"
+                    isLoading={isSaving}
                   >
                     {t('common.select')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

@@ -7,7 +7,18 @@ import { useTranslation } from 'react-i18next';
 import TranscriptionView from './components/TranscriptionView';
 import SettingsView from './components/SettingsView';
 import MonitoringView from './components/MonitoringView';
-import './notes.css';
+import { 
+  Button, 
+  Input, 
+  TextArea, 
+  Modal as UIModal, 
+  Loading, 
+  PageLoading,
+  Header,
+  Sidebar,
+  type SidebarSection
+} from './components/ui';
+
 
 // Initialize react-modal
 try {
@@ -131,8 +142,8 @@ const App: React.FC = () => {
     loadMeetings();
     
     // Register handlers for events from main process
-    const unsubscribeNewMeeting = electronAPI.onNewMeetingCreated?.(handleNewMeetingCreated);
-    const unsubscribeTranscriptionUpdate = electronAPI.onTranscriptionStatusUpdate?.(handleTranscriptionStatusUpdate);
+    const unsubscribeNewMeeting = electronAPI.onNewMeetingCreated ? electronAPI.onNewMeetingCreated(handleNewMeetingCreated) : undefined;
+    const unsubscribeTranscriptionUpdate = electronAPI.onTranscriptionStatusUpdate ? electronAPI.onTranscriptionStatusUpdate(handleTranscriptionStatusUpdate) : undefined;
     
     // Cleanup
     return () => {
@@ -289,7 +300,14 @@ const App: React.FC = () => {
       
       // Add the new meeting to the state directly instead of reloading all meetings
       if (savedMeeting) {
-        setMeetings(prevMeetings => [savedMeeting, ...prevMeetings]);
+        setMeetings(prevMeetings => {
+          // Check if meeting already exists to avoid duplicates
+          const existingMeeting = prevMeetings.find(m => m.id === savedMeeting.id);
+          if (existingMeeting) {
+            return prevMeetings; // Don't add duplicate
+          }
+          return [savedMeeting, ...prevMeetings];
+        });
       }
       
       // Success notification
@@ -315,7 +333,14 @@ const App: React.FC = () => {
     
     if (!existingMeeting) {
       // Update meetings list without reloading everything
-      setMeetings(prevMeetings => [meeting, ...prevMeetings]);
+      setMeetings(prevMeetings => {
+        // Double-check for duplicates inside the state update
+        const stillExists = prevMeetings.find(m => m.id === meeting.id);
+        if (stillExists) {
+          return prevMeetings; // Don't add duplicate
+        }
+        return [meeting, ...prevMeetings];
+      });
       
       // Notify user
       toast.success('New meeting created from monitored audio file', {
@@ -377,9 +402,57 @@ const App: React.FC = () => {
   const meetingsTitle = t('meetings.title');
   const monitoringTitle = t('monitoring.title');
   const settingsTitle = t('settings.title');
+
+  // Sidebar configuration
+  const sidebarSections: SidebarSection[] = [
+    {
+      items: [
+        {
+          id: 'meetings',
+          label: meetingsTitle,
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          ),
+          onClick: () => setView('list'),
+          isActive: view === 'list'
+        },
+        {
+          id: 'monitoring',
+          label: monitoringTitle,
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+            </svg>
+          ),
+          onClick: handleViewMonitoring,
+          isActive: view === 'monitoring'
+        }
+      ]
+    }
+  ];
+
+  // Sidebar footer with settings
+  const sidebarFooter = (
+    <Button
+      onClick={handleGoToSettings}
+      variant={view === 'settings' ? 'primary' : 'ghost'}
+      size="md"
+      className="w-full"
+      leftIcon={
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      }
+    >
+      {settingsTitle}
+    </Button>
+  );
   
   return (
-    <div className="flex flex-col min-h-screen bg-[#f8f9fa]">
+    <div className="flex flex-col h-screen bg-gray-50">
       {/* Toast container */}
       <Toaster 
         position="top-right"
@@ -413,11 +486,11 @@ const App: React.FC = () => {
         }}
       />
       
-      {/* Desktop App Menu Bar */}
-      <div className="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between">
+      {/* Desktop App Menu Bar - FIXED */}
+      <div className="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between flex-shrink-0 z-20">
         {/* Left: App Icon/Logo */}
         <div className="flex items-center">
-          <div className="flex items-center text-[#7a5cf0]">
+          <div className="flex items-center text-primary-500">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
             </svg>
@@ -425,24 +498,7 @@ const App: React.FC = () => {
           </div>
         </div>
         
-        {/* Center: Search (non-functional placeholder) */}
-        <div className="max-w-md w-full mx-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder={t('meetings.search')}
-              className="w-full bg-gray-50 border border-gray-200 rounded-md pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
-              disabled
-            />
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        
-        {/* Right: Profile only (Settings removed) */}
+        {/* Right: Profile only */}
         <div className="flex items-center space-x-3">
           <button className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -454,154 +510,117 @@ const App: React.FC = () => {
       
       {/* Contenuto principale in base alla vista */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar (mostrata nella vista lista, monitoraggio e impostazioni) */}
+        {/* Sidebar (mostrata nella vista lista, monitoraggio e impostazioni) - FIXED */}
         {(view === 'list' || view === 'monitoring' || view === 'settings') && (
-          <div className="w-56 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
-            <div className="flex-grow overflow-y-auto p-4 space-y-2">
-              <button
-                onClick={() => setView('list')}
-                className={`flex items-center p-3 rounded-md w-full ${
-                  view === 'list' ? 'bg-[#7a5cf0] text-white' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                <span>{meetingsTitle}</span>
-              </button>
-              
-              <button
-                onClick={handleViewMonitoring}
-                className={`flex items-center p-3 rounded-md w-full ${
-                  view === 'monitoring' ? 'bg-[#7a5cf0] text-white' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                </svg>
-                <span>{monitoringTitle}</span>
-              </button>
-            </div>
-            
-            {/* Settings button moved to bottom of sidebar with improved UI */}
-            <div className="p-4 pt-2 border-t border-gray-200">
-              <button
-                onClick={handleGoToSettings}
-                className={`flex items-center p-3 rounded-md w-full transition-all ${
-                  view === 'settings' 
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="font-medium">{settingsTitle}</span>
-              </button>
-            </div>
+          <div className="flex-shrink-0">
+            <Sidebar 
+              sections={sidebarSections}
+              footer={sidebarFooter}
+            />
           </div>
         )}
         
         {/* Vista principale delle riunioni */}
         {view === 'list' && (
-          <main className="max-w-4xl mx-auto p-6 w-full flex-1">
-            {/* Azioni */}
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">{t('meetings.list')}</h2>
-              <div className="space-x-3">
-                <button
-                  onClick={() => setIsCreating(true)}
-                  disabled={isLoading || isCreating}
-                  className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-800 text-sm font-medium shadow-sm"
-                >
-                  {t('meetings.new')}
-                </button>
-                <button
-                  onClick={handleImportAudio}
-                  disabled={isLoading}
-                  className="px-4 py-2 bg-[#38b2ac] text-white rounded-md hover:bg-[#319795] transition-colors disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-800 text-sm font-medium shadow-sm"
-                >
-                  {t('audio.import')}
-                </button>
-              </div>
+          <main className="flex-1 flex flex-col overflow-hidden">
+            {/* Header fisso */}
+            <div className="flex-shrink-0">
+              <Header
+                title={t('meetings.list')}
+                showSearch={true}
+                onSearch={(query) => {
+                  // Search functionality will be implemented later
+                  console.log('Search query:', query);
+                }}
+                searchPlaceholder={t('meetings.search')}
+                actions={
+                  <div className="space-x-3">
+                    <Button
+                      onClick={() => setIsCreating(true)}
+                      disabled={isLoading}
+                      leftIcon={
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                      }
+                    >
+                      {t('meetings.new')}
+                    </Button>
+                    <Button
+                      onClick={handleImportAudio}
+                      disabled={isLoading}
+                      variant="secondary"
+                      className="bg-teal-500 text-white hover:bg-teal-600 focus:ring-teal-500"
+                    >
+                      {t('audio.import')}
+                    </Button>
+                  </div>
+                }
+              />
             </div>
+            
+            {/* Contenuto scrollabile */}
+            <div className="flex-1 overflow-y-auto p-6">
             
             {/* Form per creare una nuova riunione */}
             {isCreating && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#7a5cf0] mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
                   </svg>
                   {t('meetings.new')}
                 </h3>
                 
                 <div className="space-y-5">
-                  <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('meetings.title')}
-                    </label>
-                    <input
-                      type="text"
-                      id="title"
-                      value={newMeeting.title}
-                      onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
-                      placeholder={t('meetings.title')}
-                      required
-                    />
-                  </div>
+                  <Input
+                    label={t('meetings.title')}
+                    type="text"
+                    value={newMeeting.title || ''}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })}
+                    placeholder={t('meetings.title')}
+                    required
+                  />
+                  
+                  <TextArea
+                    label={t('meetings.description')}
+                    value={newMeeting.description || ''}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, description: e.target.value })}
+                    placeholder={t('meetings.description')}
+                    rows={3}
+                  />
+                  
+                  <Input
+                    label={t('meetings.date')}
+                    type="date"
+                    value={newMeeting.date || ''}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, date: e.target.value })}
+                    required
+                  />
                   
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('meetings.description')}
-                    </label>
-                    <textarea
-                      id="description"
-                      value={newMeeting.description}
-                      onChange={(e) => setNewMeeting({ ...newMeeting, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
-                      placeholder={t('meetings.description')}
-                      rows={3}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('meetings.date')}
-                    </label>
-                    <input
-                      type="date"
-                      id="date"
-                      value={newMeeting.date}
-                      onChange={(e) => setNewMeeting({ ...newMeeting, date: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
                       {t('meetings.participants')}
                     </label>
-                    <div className="flex mb-2">
-                      <input
-                        type="text"
+                    <div className="flex space-x-2 mb-3">
+                      <Input
                         value={newParticipant}
                         onChange={(e) => setNewParticipant(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
                         placeholder={t('meetings.addParticipant')}
+                        className="flex-1"
                       />
-                      <button
+                      <Button
                         type="button"
                         onClick={handleAddParticipant}
-                        className="px-4 py-2 bg-[#7a5cf0] text-white rounded-r-md hover:bg-[#6146d9] transition-colors"
+                        size="md"
+                        leftIcon={
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                          </svg>
+                        }
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
+                        {t('common.add')}
+                      </Button>
                     </div>
                     
                     {newMeeting.participants && newMeeting.participants.length > 0 ? (
@@ -622,40 +641,35 @@ const App: React.FC = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">{t('meetings.empty')}</p>
+                      <p className="text-sm text-gray-600">{t('meetings.empty')}</p>
                     )}
                   </div>
                 </div>
                 
                 <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
                     onClick={() => setIsCreating(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors shadow-sm"
                   >
                     {t('common.cancel')}
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
                     onClick={handleCreateMeeting}
-                    className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors shadow-sm"
+                    isLoading={isLoading}
                   >
                     {t('common.save')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
             
             {/* Elenco riunioni */}
             {isLoading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0]"></div>
-                <p className="text-gray-500 mt-3">{t('common.loading')}</p>
-              </div>
+              <PageLoading text={t('common.loading')} />
             ) : meetings.length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                <p className="text-gray-500 text-lg">{t('meetings.empty')}</p>
-                <p className="text-gray-500 text-sm mt-2 mb-6">
+                <p className="text-gray-600 text-lg">{t('meetings.empty')}</p>
+                <p className="text-gray-600 text-sm mt-2 mb-6">
                   {t('meetings.emptyDescription')}
                 </p>
               </div>
@@ -670,14 +684,14 @@ const App: React.FC = () => {
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex items-start space-x-4">
-                        <div className="rounded-full bg-[#f0eafb] p-3 mt-1 flex-shrink-0">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#7a5cf0]" viewBox="0 0 20 20" fill="currentColor">
+                        <div className="rounded-full bg-primary-50 p-3 mt-1 flex-shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-500" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                           </svg>
                         </div>
                         <div className="flex-1">
                           <h3 className="text-lg font-medium text-gray-900">{meeting.title}</h3>
-                          <p className="text-gray-500 text-sm">{formatDate(meeting.date)}</p>
+                          <p className="text-gray-600 text-sm">{formatDate(meeting.date)}</p>
                           
                           {meeting.description && (
                             <p className="text-gray-700 mt-2 text-sm line-clamp-2">{meeting.description}</p>
@@ -687,7 +701,7 @@ const App: React.FC = () => {
                             <div className="mt-3">
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {meeting.participants.map((participant, index) => (
-                                  <span key={index} className="inline-block bg-[#eeedfd] text-[#7a5cf0] px-2 py-1 rounded-full text-xs">
+                                  <span key={index} className="inline-block bg-primary-50 text-primary-500 px-2 py-1 rounded-full text-xs">
                                     {participant}
                                   </span>
                                 ))}
@@ -697,7 +711,7 @@ const App: React.FC = () => {
                           
                           <div className="flex mt-3 space-x-2">
                             {meeting.audioFileId && (
-                              <span className="inline-flex items-center bg-[#e6f7f5] text-[#38b2ac] px-2 py-1 rounded-full text-xs">
+                              <span className="inline-flex items-center bg-success-50 text-success-500 px-2 py-1 rounded-full text-xs">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                 </svg>
@@ -706,7 +720,7 @@ const App: React.FC = () => {
                             )}
                             
                             {meeting.transcriptId && (
-                              <span className="inline-flex items-center bg-[#f0eafb] text-[#7a5cf0] px-2 py-1 rounded-full text-xs">
+                              <span className="inline-flex items-center bg-primary-50 text-primary-500 px-2 py-1 rounded-full text-xs">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                                 </svg>
@@ -722,7 +736,7 @@ const App: React.FC = () => {
                             e.stopPropagation();
                             confirmDeleteMeeting(meeting.id!);
                           }}
-                          className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                          className="text-gray-600 hover:text-red-600 transition-colors p-1"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -734,6 +748,7 @@ const App: React.FC = () => {
                 ))}
               </div>
             )}
+            </div>
           </main>
         )}
         
@@ -744,16 +759,16 @@ const App: React.FC = () => {
         
         {/* Vista impostazioni */}
         {view === 'settings' && (
-          <div className="flex-1 overflow-auto">
+          <main className="flex-1 flex flex-col overflow-hidden">
             <SettingsView onBack={handleBackToList} />
-          </div>
+          </main>
         )}
         
         {/* Vista di monitoraggio */}
         {view === 'monitoring' && (
-          <div className="flex-1 overflow-auto">
+          <main className="flex-1 flex flex-col overflow-hidden">
             <MonitoringView onBack={handleBackToList} />
-          </div>
+          </main>
         )}
       </div>
       
@@ -768,7 +783,7 @@ const App: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-800">{t('meetings.deleteConfirmTitle')}</h2>
           <button 
             onClick={() => setDeleteModal({ isOpen: false, meetingId: undefined })}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-600 hover:text-gray-600 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -784,23 +799,24 @@ const App: React.FC = () => {
           </div>
           <div>
             <p className="text-gray-700">{t('meetings.confirmDelete')}</p>
-            <p className="text-gray-500 text-sm mt-1">{t('meetings.deleteWarning')}</p>
+            <p className="text-gray-600 text-sm mt-1">{t('meetings.deleteWarning')}</p>
           </div>
         </div>
         
         <div className="flex justify-end space-x-3">
-          <button
+          <Button
+            variant="secondary"
             onClick={() => setDeleteModal({ isOpen: false, meetingId: undefined })}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors shadow-sm"
           >
             {t('common.cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="danger"
             onClick={handleDeleteMeeting}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors shadow-sm"
+            isLoading={isLoading}
           >
             {t('common.delete')}
-          </button>
+          </Button>
         </div>
       </Modal>
     </div>

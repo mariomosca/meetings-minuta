@@ -119,6 +119,8 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
         return [...prev, transcript];
       }
     });
+    
+    // NO toast notifications here - handled by App.tsx
   };
   
   // Add a message to logs
@@ -338,7 +340,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
           </div>
         );
       default:
-        return <span className="text-gray-500">{t('transcription.status.unknown')}</span>;
+        return <span className="text-gray-600">{t('transcription.status.unknown')}</span>;
     }
   }
 
@@ -395,7 +397,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                   <span className="text-xs font-medium text-gray-600">{t('monitoring.directoryPath')}</span>
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
-                    className={`h-4 w-4 text-gray-400 transform transition-transform ${showPath ? 'rotate-180' : ''}`} 
+                    className={`h-4 w-4 text-gray-600 transform transition-transform ${showPath ? 'rotate-180' : ''}`} 
                     viewBox="0 0 20 20" 
                     fill="currentColor"
                   >
@@ -448,22 +450,22 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
               {audioFiles.length === 0 ? (
                 <div className="text-center py-12 px-4">
                   <div className="bg-gray-50 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
                   </div>
-                  <p className="text-gray-500 font-medium text-lg mb-2">{t('monitoring.noFiles')}</p>
-                  <p className="text-gray-400 text-sm max-w-md mx-auto">When audio files are detected in the monitored directory, they will appear here.</p>
+                  <p className="text-gray-600 font-medium text-lg mb-2">{t('monitoring.noFiles')}</p>
+                  <p className="text-gray-600 text-sm max-w-md mx-auto">When audio files are detected in the monitored directory, they will appear here.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-lg">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="bg-gray-50">
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('monitoring.fileName')}</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('audio.fileSize')}</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('meetings.date')}</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('transcription.status.title')}</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">{t('monitoring.fileName')}</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">{t('audio.fileSize')}</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">{t('meetings.date')}</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">{t('transcription.status.title')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -478,7 +480,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                               </div>
                               <div>
                                 <div className="font-medium text-gray-800">{file.fileName}</div>
-                                <div className="text-gray-500 text-xs truncate max-w-xs" title={file.filePath}>{file.filePath}</div>
+                                <div className="text-gray-600 text-xs truncate max-w-xs" title={file.filePath}>{file.filePath}</div>
                               </div>
                             </div>
                           </td>

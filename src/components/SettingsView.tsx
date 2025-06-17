@@ -217,15 +217,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
         <div className="flex items-center">
           <div>
             <h2 className="text-xl font-semibold text-gray-800">{t('settings.title')}</h2>
-            <p className="text-gray-500 text-sm">{t('settings.subtitle')}</p>
+            <p className="text-gray-600 text-sm">{t('settings.subtitle')}</p>
           </div>
         </div>
       </div>
       
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0]"></div>
-          <p className="text-gray-500 ml-3">{t('common.loading')}</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+          <p className="text-gray-600 ml-3">{t('common.loading')}</p>
         </div>
       ) : (
         <div className="flex-1 space-y-8">
@@ -253,7 +253,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     type="button"
                     onClick={handleSelectDirectory}
                     disabled={isSaving}
-                    className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 shadow-sm"
+                    className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors disabled:opacity-50 shadow-sm"
                   >
                     {t('common.select')}
                   </button>
@@ -269,7 +269,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     onChange={handleToggleWatching}
                     disabled={isSaving || !watchDirectory}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-[#7a5cf0] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7a5cf0]"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-primary-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                 </label>
                 <span className="text-sm font-medium text-gray-700">
                   {isWatchingEnabled ? t('settings.monitoring.enabled') : t('settings.monitoring.disabled')}
@@ -283,7 +283,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
             <h3 className="text-lg font-medium text-gray-800 mb-4">{t('settings.api.title')}</h3>
             <p className="text-gray-600 text-sm mb-6">
               {t('settings.api.description')}
-              <a href="https://www.assemblyai.com/" target="_blank" rel="noopener noreferrer" className="text-[#7a5cf0] hover:underline ml-1">
+              <a href="https://www.assemblyai.com/" target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline ml-1">
                 {t('settings.api.getKey')}
               </a>
             </p>
@@ -299,14 +299,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     id="apiKey"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                     placeholder={t('settings.api.keyPlaceholder')}
                   />
                   <button
                     type="button"
                     onClick={handleSaveApiKey}
                     disabled={isSaving}
-                    className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 shadow-sm"
+                    className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors disabled:opacity-50 shadow-sm"
                   >
                     {t('common.save')}
                   </button>
@@ -332,7 +332,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     id="language"
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0]"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="it">{t('settings.language.italian')}</option>
                     <option value="en">{t('settings.language.english')}</option>
@@ -341,7 +341,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     type="button"
                     onClick={handleSelectLanguage}
                     disabled={isSaving}
-                    className="px-4 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors disabled:opacity-50 shadow-sm"
+                    className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors disabled:opacity-50 shadow-sm"
                   >
                     {t('common.select')}
                   </button>

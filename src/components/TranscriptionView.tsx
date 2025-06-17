@@ -92,7 +92,7 @@ const customModalStyles = {
 // Component to display utterances of a transcript
 const UtterancesList: React.FC<{ utterances: Utterance[] }> = ({ utterances }) => {
   if (!utterances || utterances.length === 0) {
-    return <p className="text-gray-500 italic">No utterances available</p>;
+    return <p className="text-gray-600 italic">No utterances available</p>;
   }
 
   return (
@@ -117,7 +117,7 @@ const UtterancesList: React.FC<{ utterances: Utterance[] }> = ({ utterances }) =
           >
             <div className="flex justify-between mb-1">
               <span className="font-medium text-gray-800">{utterance.speaker}</span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-600">
                 {formatTime(utterance.start)} - {formatTime(utterance.end)}
               </span>
             </div>
@@ -253,7 +253,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       <>
         {parts.map((part, i) => 
           part.toLowerCase() === term.toLowerCase() ? 
-            <mark key={i} className="bg-[#ffec99] text-gray-900 px-1 rounded">{part}</mark> : 
+            <mark key={i} className="bg-warning-100 text-gray-900 px-1 rounded">{part}</mark> : 
             part
         )}
       </>
@@ -340,7 +340,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         );
       case 'processing':
         return (
-          <span className="inline-flex items-center bg-[#f0eafb] text-[#7a5cf0] px-2 py-1 rounded-full text-xs">
+          <span className="inline-flex items-center bg-primary-50 text-primary-500 px-2 py-1 rounded-full text-xs">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
@@ -349,7 +349,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         );
       case 'completed':
         return (
-          <span className="inline-flex items-center bg-[#e6f7f5] text-[#38b2ac] px-2 py-1 rounded-full text-xs">
+          <span className="inline-flex items-center bg-success-50 text-success-500 px-2 py-1 rounded-full text-xs">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
@@ -366,7 +366,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           </span>
         );
       default:
-        return <span className="text-gray-500 text-xs">Unknown</span>;
+        return <span className="text-gray-600 text-xs">Unknown</span>;
     }
   }
   
@@ -394,13 +394,9 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         return current;
       });
       
-      // Handle completion notifications and state updates
-      if (transcript.status === 'completed') {
+      // Handle state updates but NOT notifications (handled by App.tsx)
+      if (transcript.status === 'completed' || transcript.status === 'error') {
         setIsTranscribing(false);
-        toast.success('Transcription completed successfully');
-      } else if (transcript.status === 'error') {
-        setIsTranscribing(false);
-        toast.error('Error during transcription');
       }
     }
   };
@@ -412,7 +408,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         <div className="flex items-center">
           <button 
             onClick={onBack}
-            className="mr-4 text-gray-400 hover:text-gray-600 transition-colors"
+            className="mr-4 text-gray-600 hover:text-gray-600 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -423,7 +419,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               {meeting ? meeting.title : 'Loading...'}
             </h2>
             {meeting && (
-              <p className="text-gray-500 text-sm">{meeting.date}</p>
+              <p className="text-gray-600 text-sm">{meeting.date}</p>
             )}
           </div>
         </div>
@@ -434,7 +430,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               onClick={startTranscription}
               disabled={isTranscribing || transcripts.some(t => t.status === 'processing' || t.status === 'queued')}
               className={`px-4 py-2 text-white rounded-md shadow-sm text-sm font-medium ${
-                isTranscribing ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#7a5cf0] hover:bg-[#6146d9] transition-colors'
+                isTranscribing ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary-500 hover:bg-primary-600 transition-colors'
               }`}
             >
               {isTranscribing && (
@@ -451,8 +447,8 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0]"></div>
-          <p className="text-gray-500 ml-3">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+          <p className="text-gray-600 ml-3">Loading...</p>
         </div>
       ) : (
         <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-auto">
@@ -463,9 +459,9 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               {audioFile && (
                 <div className="mb-4 pb-4 border-b border-gray-100">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Audio File</h4>
-                  <div className="flex items-center space-x-2 bg-[#f0eafb] p-3 rounded-md">
-                    <div className="rounded-full bg-[#e0d8f5] p-2 flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#7a5cf0]" viewBox="0 0 20 20" fill="currentColor">
+                  <div className="flex items-center space-x-2 bg-primary-50 p-3 rounded-md">
+                    <div className="rounded-full bg-primary-100 p-2 flex-shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                       </svg>
                     </div>
@@ -473,7 +469,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                       <p className="text-sm font-medium text-gray-800 truncate" title={audioFile.fileName}>
                         {audioFile.fileName}
                       </p>
-                      <p className="text-xs text-gray-500">{formatFileSize(audioFile.fileSize)}</p>
+                      <p className="text-xs text-gray-600">{formatFileSize(audioFile.fileSize)}</p>
                     </div>
                   </div>
                 </div>
@@ -482,7 +478,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Available transcripts</h4>
                 {transcripts.length === 0 ? (
-                  <p className="text-sm text-gray-500">No transcripts available</p>
+                  <p className="text-sm text-gray-600">No transcripts available</p>
                 ) : (
                   <div className="space-y-3">
                     {transcripts.map(transcript => (
@@ -491,7 +487,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                         onClick={() => setActiveTranscript(transcript)}
                         className={`p-3 rounded-md cursor-pointer transition-colors ${
                           activeTranscript?.id === transcript.id 
-                            ? 'bg-[#f0eafb] border-l-4 border-[#7a5cf0]' 
+                            ? 'bg-primary-50 border-l-4 border-primary-500' 
                             : 'bg-gray-50 hover:bg-gray-100'
                         }`}
                       >
@@ -501,11 +497,11 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                           </span>
                           {getTranscriptionStatus(transcript.status)}
                         </div>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-600">
                           Created at {formatDate(transcript.createdAt)}
                         </p>
                         {transcript.completedAt && (
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-600">
                             Completed at {formatDate(transcript.completedAt)}
                           </p>
                         )}
@@ -534,11 +530,11 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyDown={handleSearchKeyDown}
                         placeholder="Search in text..."
-                        className="px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7a5cf0] focus:border-[#7a5cf0] text-sm"
+                        className="px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
                       />
                       <button
                         onClick={searchInTranscript}
-                        className="px-3 py-2 bg-[#7a5cf0] text-white rounded-md hover:bg-[#6146d9] transition-colors"
+                        className="px-3 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -558,7 +554,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                           <span className="text-sm font-medium text-yellow-800">Search result:</span>
                           <button 
                             onClick={() => setHighlightedText(null)}
-                            className="text-gray-400 hover:text-gray-600"
+                            className="text-gray-600 hover:text-gray-600"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -574,13 +570,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                         <div className="mb-4 border-b border-gray-200 pb-2">
                           <button
                             onClick={() => setViewMode('utterances')}
-                            className="px-4 py-2 border-b-2 border-[#7a5cf0] text-[#7a5cf0] font-medium"
+                            className="px-4 py-2 border-b-2 border-primary-500 text-primary-500 font-medium"
                           >
                             Transcript with speakers
                           </button>
                           <button
                             onClick={() => setIsFullTextModalOpen(true)}
-                            className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                            className="px-4 py-2 text-gray-600 hover:text-gray-700"
                           >
                             Full text
                           </button>
@@ -598,25 +594,25 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                       </>
                     ) : activeTranscript.status === 'processing' ? (
                       <>
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7a5cf0] mb-4"></div>
-                        <p className="text-gray-500 text-center">Transcription in progress...</p>
-                        <p className="text-gray-400 text-sm text-center mt-2">This process may take a few minutes</p>
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500 mb-4"></div>
+                        <p className="text-gray-600 text-center">Transcription in progress...</p>
+                        <p className="text-gray-600 text-sm text-center mt-2">This process may take a few minutes</p>
                       </>
                     ) : activeTranscript.status === 'queued' ? (
                       <>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <p className="text-gray-500 text-center">Transcription in queue</p>
-                        <p className="text-gray-400 text-sm text-center mt-2">The transcription will be processed soon</p>
+                        <p className="text-gray-600 text-center">Transcription in queue</p>
+                        <p className="text-gray-600 text-sm text-center mt-2">The transcription will be processed soon</p>
                       </>
                     ) : (
                       <>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-red-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <p className="text-gray-500 text-center">An error occurred during transcription</p>
-                        <p className="text-gray-400 text-sm text-center mt-2">Try again later or contact support</p>
+                        <p className="text-gray-600 text-center">An error occurred during transcription</p>
+                        <p className="text-gray-600 text-sm text-center mt-2">Try again later or contact support</p>
                       </>
                     )}
                   </>
@@ -628,12 +624,12 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                     
                     {audioFile ? (
                       <>
-                        <p className="text-gray-500 text-center">No transcription available</p>
+                        <p className="text-gray-600 text-center">No transcription available</p>
                         <button
                           onClick={startTranscription}
                           disabled={isTranscribing}
                           className={`mt-4 px-4 py-2 text-white rounded-md shadow-sm text-sm font-medium ${
-                            isTranscribing ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#7a5cf0] hover:bg-[#6146d9] transition-colors'
+                            isTranscribing ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary-500 hover:bg-primary-600 transition-colors'
                           }`}
                         >
                           {isTranscribing && (
@@ -647,8 +643,8 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                       </>
                     ) : (
                       <>
-                        <p className="text-gray-500 text-center">No audio file available</p>
-                        <p className="text-gray-400 text-sm text-center mt-2">Import an audio file to perform transcription</p>
+                        <p className="text-gray-600 text-center">No audio file available</p>
+                        <p className="text-gray-600 text-sm text-center mt-2">Import an audio file to perform transcription</p>
                       </>
                     )}
                   </div>
@@ -670,7 +666,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           <h2 className="text-xl font-semibold text-gray-800">Full transcription</h2>
           <button 
             onClick={() => setIsFullTextModalOpen(false)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-600 hover:text-gray-600 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -682,13 +678,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           <div className="flex space-x-4">
             <button
               onClick={() => setViewMode('utterances')}
-              className={`px-4 py-2 ${viewMode === 'utterances' ? 'border-b-2 border-[#7a5cf0] text-[#7a5cf0] font-medium' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-4 py-2 ${viewMode === 'utterances' ? 'border-b-2 border-primary-500 text-primary-500 font-medium' : 'text-gray-600 hover:text-gray-700'}`}
             >
               Transcript with speakers
             </button>
             <button
               onClick={() => setViewMode('fulltext')}
-              className={`px-4 py-2 ${viewMode === 'fulltext' ? 'border-b-2 border-[#7a5cf0] text-[#7a5cf0] font-medium' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-4 py-2 ${viewMode === 'fulltext' ? 'border-b-2 border-primary-500 text-primary-500 font-medium' : 'text-gray-600 hover:text-gray-700'}`}
             >
               Full text
             </button>

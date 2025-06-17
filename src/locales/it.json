@@ -15,7 +15,8 @@
     "export": "Esporta",
     "create": "Crea",
     "edit": "Modifica",
-    "retry": "Riprova"
+    "retry": "Riprova",
+    "add": "Aggiungi"
   },
   "meetings": {
     "title": "Riunioni",

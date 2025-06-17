@@ -52,6 +52,23 @@ const SavedContentView: React.FC<SavedContentViewProps> = ({ onBack }) => {
     loadContent();
   }, [activeTab]);
 
+  // Keyboard shortcut for going back (Esc key)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        // Don't trigger if user is in a modal
+        if (!showMinutesDetail && !showKnowledgeDetail) {
+          onBack();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onBack, showMinutesDetail, showKnowledgeDetail]);
+
   async function loadAllContent() {
     try {
       const [allMinutes, allKnowledge] = await Promise.all([
@@ -171,18 +188,37 @@ const SavedContentView: React.FC<SavedContentViewProps> = ({ onBack }) => {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 pt-2 pb-4 border-b border-gray-200">
-        <div className="flex items-center">
+        <div className="flex items-center flex-1">
           <button 
             onClick={onBack}
-            className="mr-4 text-gray-600 hover:text-gray-600 transition-colors"
+            className="mr-4 flex items-center px-3 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200 hover:shadow-sm border border-gray-300 group"
+            title="Torna al monitoraggio (Esc)"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 group-hover:transform group-hover:-translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
+            <span className="text-sm font-medium">Indietro</span>
           </button>
-          <h2 className="text-xl font-semibold text-gray-800">
-            📚 Contenuti Salvati
-          </h2>
+          
+          <div className="flex-1">
+            {/* Breadcrumb */}
+            <nav className="flex items-center text-sm text-gray-500 mb-2">
+              <button 
+                onClick={onBack}
+                className="hover:text-gray-700 transition-colors"
+              >
+                Monitoraggio
+              </button>
+              <svg className="mx-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+              <span className="font-medium text-gray-700">Minutes & Knowledge Base</span>
+            </nav>
+            
+            <h2 className="text-xl font-semibold text-gray-800">
+              📚 Minutes & Knowledge Base
+            </h2>
+          </div>
         </div>
       </div>
 

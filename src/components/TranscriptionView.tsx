@@ -218,6 +218,23 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       }
     };
   }, [meetingId]);
+
+  // Keyboard shortcut for going back (Esc key)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        // Don't trigger if user is editing title or in a modal
+        if (!isEditingTitle && !showMinutesModal && !showKnowledgeModal && !isFullTextModalOpen && !showSavedMinutesDetail && !showSavedKnowledgeDetail) {
+          onBack();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onBack, isEditingTitle, showMinutesModal, showKnowledgeModal, isFullTextModalOpen, showSavedMinutesDetail, showSavedKnowledgeDetail]);
   
   // Load necessary data
   async function loadData() {
@@ -825,13 +842,40 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         <div className="flex items-center flex-1">
           <button 
             onClick={onBack}
-            className="mr-4 text-gray-600 hover:text-gray-600 transition-colors"
+            className="mr-4 flex items-center px-3 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200 hover:shadow-sm border border-gray-300 group"
+            title="Torna alla lista riunioni (Esc)"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 group-hover:transform group-hover:-translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
+            <span className="text-sm font-medium">Indietro</span>
           </button>
           <div className="flex-1">
+            {/* Breadcrumb */}
+            <nav className="flex items-center text-sm text-gray-500 mb-2">
+              <button 
+                onClick={onBack}
+                className="hover:text-gray-700 transition-colors"
+              >
+                Monitoraggio
+              </button>
+              <svg className="mx-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+              <button 
+                onClick={onBack}
+                className="hover:text-gray-700 transition-colors"
+              >
+                Riunioni
+              </button>
+              <svg className="mx-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+              <span className="font-medium text-gray-700">
+                {meeting ? meeting.title : 'Riunione'}
+              </span>
+            </nav>
+            
             <div className="flex items-center gap-3">
               {isEditingTitle ? (
                 <div className="flex items-center gap-2">

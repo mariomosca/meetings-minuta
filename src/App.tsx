@@ -550,7 +550,7 @@ const App: React.FC = () => {
                       onClick={() => setIsCreating(true)}
                       disabled={isLoading}
                       variant="outline"
-                      className="border-primary-500 text-primary-600 hover:bg-primary-50 focus:ring-primary-500"
+                      className="shadow-none hover:shadow-none !bg-orange-100 !text-gray-900 hover:!bg-orange-200 border border-orange-400"
                       leftIcon={
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -563,7 +563,7 @@ const App: React.FC = () => {
                       onClick={handleImportAudio}
                       disabled={isLoading}
                       variant="outline"
-                      className="border-teal-500 text-teal-600 hover:bg-teal-50 focus:ring-teal-500"
+                      className="shadow-none hover:shadow-none !bg-orange-100 !text-gray-900 hover:!bg-orange-200 border border-orange-400"
                     >
                       {t('audio.import')}
                     </Button>
@@ -769,20 +769,28 @@ const App: React.FC = () => {
         
         {/* Vista trascrizione */}
         {view === 'transcription' && selectedMeetingId && (
-          <TranscriptionView meetingId={selectedMeetingId} onBack={handleBackToList} />
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="p-6 h-full">
+              <TranscriptionView meetingId={selectedMeetingId} onBack={handleBackToList} />
+            </div>
+          </main>
         )}
         
         {/* Vista impostazioni */}
         {view === 'settings' && (
           <main className="flex-1 flex flex-col overflow-hidden">
-            <SettingsView onBack={handleBackToList} />
+            <div className="p-6 h-full">
+              <SettingsView onBack={handleBackToList} />
+            </div>
           </main>
         )}
         
         {/* Vista di monitoraggio */}
         {view === 'monitoring' && (
           <main className="flex-1 flex flex-col overflow-hidden">
-            <MonitoringView onBack={handleBackToList} />
+            <div className="p-6 h-full">
+              <MonitoringView onBack={handleBackToList} />
+            </div>
           </main>
         )}
       </div>

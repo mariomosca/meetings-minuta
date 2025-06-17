@@ -40,6 +40,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Save a meeting
     save: (meeting: any) => ipcRenderer.invoke('meetings:save', meeting),
     
+    // Update a meeting (alias for save)
+    updateMeeting: (meeting: any) => ipcRenderer.invoke('meetings:update', meeting),
+    
     // Delete a meeting
     delete: (id: string) => ipcRenderer.invoke('meetings:delete', id),
   },
@@ -63,6 +66,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     
     // Start a transcription with AssemblyAI
     startTranscription: (audioFileId: string) => ipcRenderer.invoke('transcripts:startTranscription', audioFileId),
+    
+    // Update a transcript
+    update: (transcript: any) => ipcRenderer.invoke('transcripts:update', transcript),
   },
   
   // APIs for audio files
@@ -230,6 +236,125 @@ contextBridge.exposeInMainWorld('electronAPI', {
       } catch (error) {
         console.error('preload: error in saveLanguage:', error);
         return { success: false };
+      }
+    },
+
+    // ========== AI PROVIDER METHODS ==========
+
+    // Get Gemini API key
+    getGeminiApiKey: async () => {
+      console.log('preload: call to getGeminiApiKey');
+      try {
+        return await ipcRenderer.invoke('config:getGeminiApiKey');
+      } catch (error) {
+        console.error('preload: error in getGeminiApiKey:', error);
+        return '';
+      }
+    },
+
+    // Save Gemini API key
+    saveGeminiApiKey: async (apiKey: string) => {
+      console.log('preload: call to saveGeminiApiKey');
+      try {
+        const result = await ipcRenderer.invoke('config:setGeminiApiKey', apiKey);
+        return { success: !!result };
+      } catch (error) {
+        console.error('preload: error in saveGeminiApiKey:', error);
+        return { success: false };
+      }
+    },
+
+    // Get Claude API key
+    getClaudeApiKey: async () => {
+      console.log('preload: call to getClaudeApiKey');
+      try {
+        return await ipcRenderer.invoke('config:getClaudeApiKey');
+      } catch (error) {
+        console.error('preload: error in getClaudeApiKey:', error);
+        return '';
+      }
+    },
+
+    // Save Claude API key
+    saveClaudeApiKey: async (apiKey: string) => {
+      console.log('preload: call to saveClaudeApiKey');
+      try {
+        const result = await ipcRenderer.invoke('config:setClaudeApiKey', apiKey);
+        return { success: !!result };
+      } catch (error) {
+        console.error('preload: error in saveClaudeApiKey:', error);
+        return { success: false };
+      }
+    },
+
+    // Get ChatGPT API key
+    getChatGPTApiKey: async () => {
+      console.log('preload: call to getChatGPTApiKey');
+      try {
+        return await ipcRenderer.invoke('config:getChatGPTApiKey');
+      } catch (error) {
+        console.error('preload: error in getChatGPTApiKey:', error);
+        return '';
+      }
+    },
+
+    // Save ChatGPT API key
+    saveChatGPTApiKey: async (apiKey: string) => {
+      console.log('preload: call to saveChatGPTApiKey');
+      try {
+        const result = await ipcRenderer.invoke('config:setChatGPTApiKey', apiKey);
+        return { success: !!result };
+      } catch (error) {
+        console.error('preload: error in saveChatGPTApiKey:', error);
+        return { success: false };
+      }
+    },
+
+    // Get AI provider
+    getAIProvider: async () => {
+      console.log('preload: call to getAIProvider');
+      try {
+        return await ipcRenderer.invoke('config:getAIProvider');
+      } catch (error) {
+        console.error('preload: error in getAIProvider:', error);
+        return null;
+      }
+    },
+
+    // Save AI provider
+    saveAIProvider: async (provider: 'gemini' | 'claude' | 'chatgpt') => {
+      console.log('preload: call to saveAIProvider');
+      try {
+        const result = await ipcRenderer.invoke('config:setAIProvider', provider);
+        return { success: !!result };
+      } catch (error) {
+        console.error('preload: error in saveAIProvider:', error);
+        return { success: false };
+      }
+    }
+  },
+
+  // APIs for AI services
+  ai: {
+    // Generate meeting title
+    generateTitle: async (transcriptText: string) => {
+      console.log('preload: call to ai:generateTitle');
+      try {
+        return await ipcRenderer.invoke('ai:generateTitle', transcriptText);
+      } catch (error) {
+        console.error('preload: error in ai:generateTitle:', error);
+        throw error;
+      }
+    },
+
+    // Identify speakers
+    identifySpeakers: async (transcriptText: string, utterances: any[]) => {
+      console.log('preload: call to ai:identifySpeakers');
+      try {
+        return await ipcRenderer.invoke('ai:identifySpeakers', transcriptText, utterances);
+      } catch (error) {
+        console.error('preload: error in ai:identifySpeakers:', error);
+        throw error;
       }
     }
   },

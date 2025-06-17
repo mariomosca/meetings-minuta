@@ -73,6 +73,11 @@ interface StoreSchema {
     watchDirectories: string[];
     assemblyAiKey?: string;
     language?: string; // 'it' o 'en'
+    // AI Provider settings
+    geminiApiKey?: string;
+    claudeApiKey?: string;
+    chatgptApiKey?: string;
+    aiProvider?: 'gemini' | 'claude' | 'chatgpt'; // Provider attivo
   };
 }
 
@@ -447,6 +452,28 @@ export class Database {
       throw error;
     }
   }
+
+  // Aggiornare una trascrizione
+  async updateTranscript(transcript: Transcript): Promise<Transcript> {
+    try {
+      const transcripts = this.store.get('transcripts', {});
+      
+      // Verifica che la trascrizione esista
+      if (!transcripts[transcript.id]) {
+        throw new Error(`Transcript with ID ${transcript.id} not found`);
+      }
+      
+      // Aggiorna la trascrizione
+      transcripts[transcript.id] = transcript;
+      this.store.set('transcripts', transcripts);
+      
+      console.log(`Trascrizione ${transcript.id} aggiornata`);
+      return transcript;
+    } catch (error) {
+      console.error(`Error while updating transcript ${transcript.id}:`, error);
+      throw error;
+    }
+  }
   
   // ========== AUDIO FILE METHODS ==========
   
@@ -638,6 +665,44 @@ export class Database {
   // Impostare la lingua dell'interfaccia
   setLanguage(language: string): void {
     this.store.set('config.language', language);
+  }
+
+  // ========== AI PROVIDER METHODS ==========
+
+  getGeminiApiKey(): string {
+    return this.store.get('config.geminiApiKey', '');
+  }
+
+  setGeminiApiKey(apiKey: string): void {
+    this.store.set('config.geminiApiKey', apiKey);
+    console.log('Gemini API key updated');
+  }
+
+  getClaudeApiKey(): string {
+    return this.store.get('config.claudeApiKey', '');
+  }
+
+  setClaudeApiKey(apiKey: string): void {
+    this.store.set('config.claudeApiKey', apiKey);
+    console.log('Claude API key updated');
+  }
+
+  getChatGPTApiKey(): string {
+    return this.store.get('config.chatgptApiKey', '');
+  }
+
+  setChatGPTApiKey(apiKey: string): void {
+    this.store.set('config.chatgptApiKey', apiKey);
+    console.log('ChatGPT API key updated');
+  }
+
+  getAIProvider(): 'gemini' | 'claude' | 'chatgpt' | null {
+    return this.store.get('config.aiProvider', 'gemini'); // Default: Gemini
+  }
+
+  setAIProvider(provider: 'gemini' | 'claude' | 'chatgpt'): void {
+    this.store.set('config.aiProvider', provider);
+    console.log(`AI provider set to: ${provider}`);
   }
 }
 

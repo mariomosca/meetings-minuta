@@ -96,6 +96,17 @@ function setupIPCHandlers() {
     }
   });
   
+  // Aggiornare una riunione
+  ipcMain.handle('meetings:update', async (_event, meeting) => {
+    try {
+      const updatedMeeting = await database.saveMeeting(meeting);
+      return updatedMeeting;
+    } catch (error) {
+      console.error('Error in handler meetings:update:', error);
+      throw error;
+    }
+  });
+
   // Eliminare una riunione
   ipcMain.handle('meetings:delete', async (_event, id) => {
     try {
@@ -343,6 +354,158 @@ function setupIPCHandlers() {
     }
   });
 
+  // ==================== AI PROVIDER HANDLERS ====================
+
+  // Ottenere la chiave API Gemini
+  ipcMain.handle('config:getGeminiApiKey', () => {
+    try {
+      return database.getGeminiApiKey();
+    } catch (error) {
+      console.error('Error in handler config:getGeminiApiKey:', error);
+      return '';
+    }
+  });
+
+  // Impostare la chiave API Gemini
+  ipcMain.handle('config:setGeminiApiKey', (_event, apiKey) => {
+    try {
+      database.setGeminiApiKey(apiKey);
+      return true;
+    } catch (error) {
+      console.error('Error in handler config:setGeminiApiKey:', error);
+      return false;
+    }
+  });
+
+  // Ottenere la chiave API Claude
+  ipcMain.handle('config:getClaudeApiKey', () => {
+    try {
+      return database.getClaudeApiKey();
+    } catch (error) {
+      console.error('Error in handler config:getClaudeApiKey:', error);
+      return '';
+    }
+  });
+
+  // Impostare la chiave API Claude
+  ipcMain.handle('config:setClaudeApiKey', (_event, apiKey) => {
+    try {
+      database.setClaudeApiKey(apiKey);
+      return true;
+    } catch (error) {
+      console.error('Error in handler config:setClaudeApiKey:', error);
+      return false;
+    }
+  });
+
+  // Ottenere la chiave API ChatGPT
+  ipcMain.handle('config:getChatGPTApiKey', () => {
+    try {
+      return database.getChatGPTApiKey();
+    } catch (error) {
+      console.error('Error in handler config:getChatGPTApiKey:', error);
+      return '';
+    }
+  });
+
+  // Impostare la chiave API ChatGPT
+  ipcMain.handle('config:setChatGPTApiKey', (_event, apiKey) => {
+    try {
+      database.setChatGPTApiKey(apiKey);
+      return true;
+    } catch (error) {
+      console.error('Error in handler config:setChatGPTApiKey:', error);
+      return false;
+    }
+  });
+
+  // Ottenere il provider AI attivo
+  ipcMain.handle('config:getAIProvider', () => {
+    try {
+      return database.getAIProvider();
+    } catch (error) {
+      console.error('Error in handler config:getAIProvider:', error);
+      return null;
+    }
+  });
+
+  // Impostare il provider AI attivo
+  ipcMain.handle('config:setAIProvider', (_event, provider) => {
+    try {
+      database.setAIProvider(provider);
+      return true;
+    } catch (error) {
+      console.error('Error in handler config:setAIProvider:', error);
+      return false;
+    }
+  });
+
+  // Generare titolo per riunione
+  ipcMain.handle('ai:generateTitle', async (_event, transcriptText) => {
+    try {
+      const { aiService } = await import('./services/aiService');
+      
+      // Configura il provider se necessario
+      const provider = database.getAIProvider() || 'gemini'; // Default fallback
+      
+      let apiKey = '';
+      switch (provider) {
+        case 'gemini':
+          apiKey = database.getGeminiApiKey();
+          break;
+        case 'claude':
+          apiKey = database.getClaudeApiKey();
+          break;
+        case 'chatgpt':
+          apiKey = database.getChatGPTApiKey();
+          break;
+      }
+
+      if (!apiKey) {
+        throw new Error(`AI_CONFIG_MISSING:${provider}:Per utilizzare la funzionalità AI, configura prima l'API key di ${provider.charAt(0).toUpperCase() + provider.slice(1)} nelle Impostazioni.`);
+      }
+
+      aiService.setProvider(provider, apiKey);
+      return await aiService.generateMeetingTitle(transcriptText);
+    } catch (error) {
+      console.error('Error in handler ai:generateTitle:', error);
+      throw error;
+    }
+  });
+
+  // Identificare speaker
+  ipcMain.handle('ai:identifySpeakers', async (_event, transcriptText, utterances) => {
+    try {
+      const { aiService } = await import('./services/aiService');
+      
+      // Configura il provider se necessario
+      const provider = database.getAIProvider() || 'gemini'; // Default fallback
+
+      let apiKey = '';
+      switch (provider) {
+        case 'gemini':
+          apiKey = database.getGeminiApiKey();
+          break;
+        case 'claude':
+          apiKey = database.getClaudeApiKey();
+          break;
+        case 'chatgpt':
+          apiKey = database.getChatGPTApiKey();
+          break;
+      }
+
+      if (!apiKey) {
+        throw new Error(`AI_CONFIG_MISSING:${provider}:Per utilizzare la funzionalità AI, configura prima l'API key di ${provider.charAt(0).toUpperCase() + provider.slice(1)} nelle Impostazioni.`);
+      }
+
+      aiService.setProvider(provider, apiKey);
+      return await aiService.identifySpeakers(transcriptText, utterances);
+    } catch (error) {
+      console.error('Error in handler ai:identifySpeakers:', error);
+      throw error;
+    }
+  });
+
   // ==================== FILE WATCHER HANDLERS ====================
 
   // Avviare il monitoraggio di una directory
@@ -414,6 +577,16 @@ function setupIPCHandlers() {
       return await assemblyAIService.startTranscription(audioFileId);
     } catch (error) {
       console.error(`Error in handler transcripts:startTranscription (${audioFileId}):`, error);
+      throw error;
+    }
+  });
+
+  // Aggiornare un transcript
+  ipcMain.handle('transcripts:update', async (_event, transcript) => {
+    try {
+      return await database.updateTranscript(transcript);
+    } catch (error) {
+      console.error('Error in handler transcripts:update:', error);
       throw error;
     }
   });

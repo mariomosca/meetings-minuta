@@ -7,6 +7,7 @@ import { Button } from './ui';
 interface ElectronAPI {
   meetings?: {
     getById: (id: string) => Promise<Meeting>;
+    updateMeeting: (meeting: Meeting) => Promise<Meeting>;
   };
   audioFiles?: {
     getByMeetingId: (meetingId: string) => Promise<AudioFile | null>;
@@ -14,10 +15,22 @@ interface ElectronAPI {
   transcripts?: {
     getByMeetingId: (meetingId: string) => Promise<Transcript[]>;
     startTranscription: (audioFileId: string) => Promise<Transcript>;
+    update: (transcript: Transcript) => Promise<Transcript>;
   };
   events?: {
     on: (event: string, listener: (...args: any[]) => void) => void;
     off: (event: string, listener: (...args: any[]) => void) => void;
+  };
+  ai?: {
+    generateTitle: (transcriptText: string) => Promise<{ title: string; confidence: number }>;
+    identifySpeakers: (transcriptText: string, utterances: any[]) => Promise<{
+      speakers: Array<{
+        originalName: string;
+        suggestedName: string;
+        confidence: number;
+        reasoning: string;
+      }>;
+    }>;
   };
 }
 
@@ -146,6 +159,12 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   const [searchTerm, setSearchTerm] = useState('');
   const [isFullTextModalOpen, setIsFullTextModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'utterances' | 'fulltext'>('utterances');
+  
+  // AI states
+  const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
+  const [isIdentifyingSpeakers, setIsIdentifyingSpeakers] = useState(false);
+  const [speakerSuggestions, setSpeakerSuggestions] = useState<any[]>([]);
+  const [showSpeakerSuggestions, setShowSpeakerSuggestions] = useState(false);
   
   const transcriptTextRef = useRef<HTMLDivElement>(null);
   
@@ -401,7 +420,153 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       }
     }
   };
-  
+
+  // AI Functions
+  async function generateMeetingTitle() {
+    if (!activeTranscript?.text || !electronAPI.ai) {
+      toast.error('Nessuna trascrizione disponibile per generare il titolo');
+      return;
+    }
+
+    try {
+      setIsGeneratingTitle(true);
+      const result = await electronAPI.ai.generateTitle(activeTranscript.text);
+      
+      if (meeting && electronAPI.meetings?.updateMeeting) {
+        const updatedMeeting: Meeting = {
+          ...meeting,
+          title: result.title
+        };
+        
+        await electronAPI.meetings.updateMeeting(updatedMeeting);
+        setMeeting(updatedMeeting);
+        
+        toast.success(`Titolo generato: "${result.title}" (${Math.round(result.confidence * 100)}% confidence)`);
+      }
+    } catch (error) {
+      console.error('Error generating title:', error);
+      
+      const errorMessage = (error as Error).message;
+      
+      // Gestione errori specifici per configurazione AI
+      if (errorMessage.includes('AI_CONFIG_MISSING')) {
+        const parts = errorMessage.split(':');
+        const provider = parts[1];
+        const message = parts[2];
+        
+        toast.error(
+          <div>
+            <div className="font-medium">⚙️ Configurazione AI Richiesta</div>
+            <div className="text-sm mt-1">{message}</div>
+            <div className="text-xs mt-2 opacity-75">Vai in Impostazioni → AI Provider → {provider}</div>
+          </div>, 
+          { duration: 6000 }
+        );
+      } else {
+        toast.error('Errore durante la generazione del titolo: ' + errorMessage);
+      }
+    } finally {
+      setIsGeneratingTitle(false);
+    }
+  }
+
+  async function identifySpeakers() {
+    if (!activeTranscript?.utterances || !activeTranscript?.text || !electronAPI.ai) {
+      toast.error('Nessuna trascrizione disponibile per identificare gli speaker');
+      return;
+    }
+
+    try {
+      setIsIdentifyingSpeakers(true);
+      const result = await electronAPI.ai.identifySpeakers(activeTranscript.text, activeTranscript.utterances);
+      
+      setSpeakerSuggestions(result.speakers);
+      setShowSpeakerSuggestions(true);
+      
+      toast.success(`Identificati ${result.speakers.length} speaker potenziali`);
+    } catch (error) {
+      console.error('Error identifying speakers:', error);
+      
+      const errorMessage = (error as Error).message;
+      
+      // Gestione errori specifici per configurazione AI
+      if (errorMessage.includes('AI_CONFIG_MISSING')) {
+        const parts = errorMessage.split(':');
+        const provider = parts[1];
+        const message = parts[2];
+        
+        toast.error(
+          <div>
+            <div className="font-medium">⚙️ Configurazione AI Richiesta</div>
+            <div className="text-sm mt-1">{message}</div>
+            <div className="text-xs mt-2 opacity-75">Vai in Impostazioni → AI Provider → {provider}</div>
+          </div>, 
+          { duration: 6000 }
+        );
+      } else {
+        toast.error('Errore durante l\'identificazione degli speaker: ' + errorMessage);
+      }
+    } finally {
+            setIsIdentifyingSpeakers(false);
+    }
+  }
+
+  // Applica i suggerimenti degli speaker
+  async function applySpeakerSuggestion(originalName: string, suggestedName: string) {
+    if (!activeTranscript?.utterances || !electronAPI.transcripts?.update) {
+      toast.error('Impossibile applicare il suggerimento');
+      return;
+    }
+
+    try {
+      // Aggiorna le utterances sostituendo il nome dello speaker
+      const updatedUtterances = activeTranscript.utterances.map(utterance => ({
+        ...utterance,
+        speaker: utterance.speaker === originalName ? suggestedName : utterance.speaker
+      }));
+
+      // Aggiorna il transcript nel database
+      const updatedTranscript = {
+        ...activeTranscript,
+        utterances: updatedUtterances
+      };
+
+      await electronAPI.transcripts.update(updatedTranscript);
+      
+      // Aggiorna lo stato locale
+      setActiveTranscript(updatedTranscript);
+      setTranscripts(prev => prev.map(t => t.id === updatedTranscript.id ? updatedTranscript : t));
+      
+      // Rimuovi il suggerimento applicato dalla lista
+      setSpeakerSuggestions(prev => prev.filter(s => s.originalName !== originalName));
+      
+      toast.success(`Speaker "${originalName}" rinominato in "${suggestedName}"`);
+    } catch (error) {
+      console.error('Error applying speaker suggestion:', error);
+      toast.error('Errore durante l\'applicazione del suggerimento');
+    }
+  }
+
+  // Applica tutti i suggerimenti speaker con confidence alta
+  async function applyAllHighConfidenceSuggestions() {
+    const highConfidenceSuggestions = speakerSuggestions.filter(s => s.confidence > 0.7);
+    
+    if (highConfidenceSuggestions.length === 0) {
+      toast.error('Nessun suggerimento con confidence sufficiente (>70%)');
+      return;
+    }
+
+    try {
+      for (const suggestion of highConfidenceSuggestions) {
+        await applySpeakerSuggestion(suggestion.originalName, suggestion.suggestedName);
+      }
+      toast.success(`Applicati ${highConfidenceSuggestions.length} suggerimenti con alta confidence`);
+    } catch (error) {
+      console.error('Error applying all suggestions:', error);
+      toast.error('Errore durante l\'applicazione dei suggerimenti');
+    }
+  }
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -425,19 +590,47 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           </div>
         </div>
         
-        {audioFile && (
-          <div>
+        <div className="flex items-center gap-3">
+          {/* AI Actions */}
+          {activeTranscript?.status === 'completed' && (
+            <>
+              <Button
+                onClick={generateMeetingTitle}
+                disabled={isGeneratingTitle}
+                variant="primary"
+                size="sm"
+                isLoading={isGeneratingTitle}
+                className="shadow-none hover:shadow-none !bg-blue-100 !text-gray-900 hover:!bg-blue-200 border border-blue-400"
+              >
+                🤖 Genera titolo
+              </Button>
+              
+              <Button
+                onClick={identifySpeakers}
+                disabled={isIdentifyingSpeakers}
+                variant="primary"
+                size="sm"
+                isLoading={isIdentifyingSpeakers}
+                className="shadow-none hover:shadow-none !bg-purple-100 !text-gray-900 hover:!bg-purple-200 border border-purple-400"
+              >
+                👥 Identifica speaker
+              </Button>
+            </>
+          )}
+          
+          {audioFile && (
             <Button
               onClick={startTranscription}
               disabled={isTranscribing || transcripts.some(t => t.status === 'processing' || t.status === 'queued')}
               variant="primary"
               size="md"
               isLoading={isTranscribing}
+              className="shadow-none hover:shadow-none !bg-orange-100 !text-gray-900 hover:!bg-orange-200 border border-orange-400"
             >
               {isTranscribing ? 'Transcribing...' : 'Transcribe Audio'}
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       
       {isLoading ? (
@@ -531,6 +724,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                         onClick={searchInTranscript}
                         variant="primary"
                         size="sm"
+                        className="shadow-none hover:shadow-none !bg-orange-100 !text-gray-900 hover:!bg-orange-200 border border-orange-400"
                         leftIcon={
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -565,22 +759,44 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                     {activeTranscript.status === 'completed' ? (
                       <>
                         <div className="mb-4 border-b border-gray-200 pb-2">
-                          <button
-                            onClick={() => setViewMode('utterances')}
-                            className="px-4 py-2 border-b-2 border-primary-500 text-primary-500 font-medium"
-                          >
-                            Transcript with speakers
-                          </button>
-                          <button
-                            onClick={() => setIsFullTextModalOpen(true)}
-                            className="px-4 py-2 text-gray-600 hover:text-gray-700"
-                          >
-                            Full text
-                          </button>
+                          <div className="flex justify-between items-center">
+                            <div className="flex space-x-4">
+                              <button
+                                onClick={() => setViewMode('utterances')}
+                                className={`px-4 py-2 ${viewMode === 'utterances' ? 'border-b-2 border-primary-500 text-primary-500 font-medium' : 'text-gray-600 hover:text-gray-700'}`}
+                              >
+                                Transcript with speakers
+                              </button>
+                              <button
+                                onClick={() => setViewMode('fulltext')}
+                                className={`px-4 py-2 ${viewMode === 'fulltext' ? 'border-b-2 border-primary-500 text-primary-500 font-medium' : 'text-gray-600 hover:text-gray-700'}`}
+                              >
+                                Full text
+                              </button>
+                            </div>
+                            <button
+                              onClick={() => setIsFullTextModalOpen(true)}
+                              className="text-sm text-gray-600 hover:text-gray-700 flex items-center"
+                              title="View in modal"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                              </svg>
+                              Expand
+                            </button>
+                          </div>
                         </div>
                         
-                        {activeTranscript.utterances && activeTranscript.utterances.length > 0 ? (
-                          <UtterancesList utterances={activeTranscript.utterances} />
+                        {viewMode === 'utterances' ? (
+                          activeTranscript.utterances && activeTranscript.utterances.length > 0 ? (
+                            <UtterancesList utterances={activeTranscript.utterances} />
+                          ) : (
+                            <div className="prose prose-sm max-w-none text-gray-700">
+                              {activeTranscript.text?.split('\n').map((paragraph, idx) => (
+                                <p key={idx}>{paragraph}</p>
+                              ))}
+                            </div>
+                          )
                         ) : (
                           <div className="prose prose-sm max-w-none text-gray-700">
                             {activeTranscript.text?.split('\n').map((paragraph, idx) => (
@@ -628,7 +844,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                           variant="primary"
                           size="md"
                           isLoading={isTranscribing}
-                          className="mt-4"
+                          className="mt-4 shadow-none hover:shadow-none !bg-orange-100 !text-gray-900 hover:!bg-orange-200 border border-orange-400"
                         >
                           {isTranscribing ? 'Transcribing...' : 'Transcribe Audio'}
                         </Button>
@@ -655,7 +871,9 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         contentLabel="Full transcription text"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Full transcription</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            {viewMode === 'utterances' ? 'Transcript with speakers' : 'Full transcription text'}
+          </h2>
           <button 
             onClick={() => setIsFullTextModalOpen(false)}
             className="text-gray-600 hover:text-gray-600 transition-colors"
@@ -701,6 +919,115 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         >
           Close
         </button>
+      </Modal>
+
+      {/* Modal per le suggerimenti degli speaker */}
+      <Modal
+        isOpen={showSpeakerSuggestions}
+        onRequestClose={() => setShowSpeakerSuggestions(false)}
+        style={customModalStyles}
+        contentLabel="Speaker suggestions"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">🤖 Suggerimenti Speaker AI</h2>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={applyAllHighConfidenceSuggestions}
+              variant="primary"
+              size="sm"
+              disabled={speakerSuggestions.filter(s => s.confidence > 0.7).length === 0}
+              className="shadow-none hover:shadow-none !bg-green-100 !text-gray-900 hover:!bg-green-200 border border-green-400"
+            >
+                              ✅ Applica Tutti (&gt;70%)
+            </Button>
+            <button 
+              onClick={() => setShowSpeakerSuggestions(false)}
+              className="text-gray-600 hover:text-gray-600 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <div className="mb-4">
+          <p className="text-gray-600 text-sm mb-4">
+            L'AI ha analizzato la trascrizione e suggerisce questi nomi per gli speaker:
+          </p>
+          
+          {speakerSuggestions.length > 0 ? (
+            <div className="space-y-4 max-h-[400px] overflow-y-auto">
+              {speakerSuggestions.map((suggestion, index) => (
+                <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                        {suggestion.originalName}
+                      </span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                        {suggestion.suggestedName}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center">
+                        <div className={`h-2 w-2 rounded-full mr-2 ${
+                          suggestion.confidence > 0.7 ? 'bg-green-400' : 
+                          suggestion.confidence > 0.4 ? 'bg-yellow-400' : 'bg-red-400'
+                        }`}></div>
+                        <span className="text-xs text-gray-500">
+                          {Math.round(suggestion.confidence * 100)}%
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => applySpeakerSuggestion(suggestion.originalName, suggestion.suggestedName)}
+                          variant="primary"
+                          size="sm"
+                          className="shadow-none hover:shadow-none !bg-green-100 !text-gray-900 hover:!bg-green-200 border border-green-400"
+                        >
+                          ✅ Applica
+                        </Button>
+                        <Button
+                          onClick={() => setSpeakerSuggestions(prev => prev.filter(s => s.originalName !== suggestion.originalName))}
+                          variant="secondary"
+                          size="sm"
+                          className="shadow-none hover:shadow-none !bg-red-100 !text-gray-900 hover:!bg-red-200 border border-red-400"
+                        >
+                          ❌ Rifiuta
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+                    <span className="font-medium text-gray-700">Ragionamento:</span> {suggestion.reasoning}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-3">✅</div>
+              <p className="text-gray-500 font-medium">Tutti i suggerimenti sono stati gestiti!</p>
+              <p className="text-gray-400 text-sm mt-1">Puoi chiudere questa finestra</p>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex justify-between">
+          <button 
+            onClick={() => setShowSpeakerSuggestions(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors shadow-sm"
+          >
+            Chiudi
+          </button>
+          <div className="text-xs text-gray-500 flex items-center">
+            💡 Questi sono solo suggerimenti basati sull'analisi del contenuto
+          </div>
+        </div>
       </Modal>
     </div>
   );

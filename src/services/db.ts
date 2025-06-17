@@ -558,6 +558,28 @@ export class Database {
       throw error;
     }
   }
+
+  // Ottenere trascrizioni per un file audio specifico
+  async getTranscriptsByAudioFileId(audioFileId: string): Promise<Transcript[]> {
+    try {
+      const transcripts = this.store.get('transcripts', {});
+      const transcriptIds = this.store.get('transcriptIds', []);
+      
+      // Filtra le trascrizioni per l'audioFileId
+      const filteredTranscripts = transcriptIds
+        .filter(id => transcripts[id] && transcripts[id].audioFileId === audioFileId)
+        .map(id => transcripts[id])
+        .sort((a, b) => {
+          // Ordina per data di creazione (dalla più recente)
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+      
+      return filteredTranscripts;
+    } catch (error) {
+      console.error(`Error while retrieving transcripts for audio file ${audioFileId}:`, error);
+      throw error;
+    }
+  }
   
   // Eliminare una trascrizione
   async deleteTranscript(id: string): Promise<void> {

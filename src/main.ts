@@ -6,9 +6,22 @@ import { FileWatcher } from './services/fileWatcher';
 import { AssemblyAIService } from './services/assemblyAI';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
-  app.quit();
-}
+const handleSquirrelStartup = async () => {
+  try {
+    const squirrelStartup = await import('electron-squirrel-startup');
+    if (squirrelStartup.default) {
+      app.quit();
+      return true;
+    }
+  } catch (error) {
+    // electron-squirrel-startup not available, continue normally
+    console.log('electron-squirrel-startup not available, skipping...');
+  }
+  return false;
+};
+
+// Check for squirrel startup
+handleSquirrelStartup();
 
 // Variabili globali per i servizi
 let mainWindow: BrowserWindow | null = null;
@@ -891,7 +904,7 @@ const createWindow = (): void => {
     webPreferences: {
       preload: MAIN_WINDOW_VITE_DEV_SERVER_URL
         ? path.join(__dirname, 'preload.js')
-        : path.join(__dirname, '../renderer/preload.js'),
+        : path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -907,8 +920,10 @@ const createWindow = (): void => {
     mainWindow.loadFile(indexPath);
   }
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // Open the DevTools only in development.
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    mainWindow.webContents.openDevTools();
+  }
   
   // Inizializza i servizi
   initializeServices();

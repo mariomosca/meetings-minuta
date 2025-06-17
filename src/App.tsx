@@ -142,7 +142,7 @@ const App: React.FC = () => {
     meetingId: undefined
   });
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
-  const [view, setView] = useState<'list' | 'transcription' | 'settings' | 'monitoring' | 'saved'>('list');
+  const [view, setView] = useState<'list' | 'transcription' | 'settings' | 'monitoring' | 'saved'>('monitoring');
   const [meetingContents, setMeetingContents] = useState<Record<string, { minutes: number; knowledge: number }>>({});
   
   // Load meetings on startup
@@ -477,7 +477,7 @@ const App: React.FC = () => {
         },
         {
           id: 'saved',
-          label: 'Minutes & Knowledge Base',
+          label: 'Minutes & Knowledge',
           icon: (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />

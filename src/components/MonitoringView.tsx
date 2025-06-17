@@ -97,11 +97,27 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
   
   // Handle file change event
   const handleFileChanged = (data: any) => {
-    addLog(`File ${data.type === 'add' ? 'detected' : 'error'}: ${data.file?.fileName || data.error || ''}`);
-    
-    // Reload audio files if a new file was added
     if (data.type === 'add') {
+      addLog(`File detected: ${data.file?.fileName || ''}`);
       loadAudioFiles();
+    } else if (data.type === 'remove') {
+      addLog(`File removed: ${data.file?.fileName || ''}`);
+      // Remove from local state immediately for better UX
+      setAudioFiles(prev => prev.filter(file => file.id !== data.file?.id));
+      // Also remove related transcripts
+      setTranscripts(prev => prev.filter(transcript => transcript.audioFileId !== data.file?.id));
+      // Show notification
+      toast.success(`File removed: ${data.file?.fileName || ''}`);
+    } else if (data.type === 'cleanup') {
+      addLog(`Database cleanup: ${data.removedCount || 0} orphaned files removed`);
+      // Reload data after cleanup
+      loadAudioFiles();
+      loadTranscripts();
+      if (data.removedCount > 0) {
+        toast.success(`Cleanup completed: ${data.removedCount} orphaned files removed`);
+      }
+    } else if (data.type === 'error') {
+      addLog(`Error: ${data.error || ''}`);
     }
   };
   

@@ -155,7 +155,7 @@ export class FileWatcher {
    * @param isExistingFile Whether this is an existing file found during startup scan
    * @returns AudioFile object
    */
-  private async processAudioFile(filePath: string, isExistingFile: boolean = false): Promise<AudioFile> {
+  private async processAudioFile(filePath: string, isExistingFile = false): Promise<AudioFile> {
     try {
       // For existing files during startup, skip stability check since they're likely stable
       // For new files, check stability to ensure they're not being written

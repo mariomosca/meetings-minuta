@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, GenerativeModel } from '@google/generative-ai';
 import { promptTemplateService, TitlePromptParams, SpeakerPromptParams, MinutesPromptParams, KnowledgePromptParams } from './promptTemplateService';
 
 // Interface for utterance
@@ -202,61 +203,109 @@ export interface AIProviderInterface {
   generateKnowledge(transcriptText: string, templateName?: string): Promise<KnowledgeBase>;
 }
 
-// Provider Gemini
+// Provider Gemini aggiornato con SDK ufficiale
 export class GeminiProvider implements AIProviderInterface {
+  private googleAI: GoogleGenerativeAI;
+  private model: GenerativeModel;
   private apiKey: string;
-  private baseURL = 'https://generativelanguage.googleapis.com/v1beta';
+  
+  // Configurazione modelli disponibili
+  private static readonly MODELS = {
+    FLASH_EXPERIMENTAL: 'gemini-2.0-flash-exp',      // Ultimo modello sperimentale
+    PRO_LATEST: 'gemini-1.5-pro-002',                // Versione stabile più recente  
+    FLASH_LATEST: 'gemini-1.5-flash-002',            // Veloce e aggiornato
+    FLASH_STANDARD: 'gemini-1.5-flash'               // Fallback standard
+  };
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+    this.googleAI = new GoogleGenerativeAI(apiKey);
+    
+    // Usa il modello più performante disponibile
+    this.model = this.googleAI.getGenerativeModel({ 
+      model: GeminiProvider.MODELS.FLASH_EXPERIMENTAL,
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      },
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+      ],
+    });
+
+    console.log('🤖 GEMINI: Inizializzato con SDK ufficiale');
+    console.log('📦 Modello:', GeminiProvider.MODELS.FLASH_EXPERIMENTAL);
   }
 
   async generateTitle(transcriptText: string, templateName?: string): Promise<TitleGenerationResponse> {
     try {
-      // Usa il servizio di templating per generare il prompt
+      console.log('🤖 GEMINI: Generazione titolo con SDK ufficiale...');
+      
       const prompt = promptTemplateService.generateTitlePrompt({
         transcriptText,
         templateName
       });
-
-      const response = await axios.post(
-        `${this.baseURL}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
-        {
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-
-      const generatedText = response.data.candidates[0].content.parts[0].text;
+      console.log('📝 GEMINI: Prompt titolo:', prompt.substring(0, 200) + '...');
+      
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      console.log('🤖 GEMINI: Risposta raw titolo:', text);
       
       // Estrai il JSON dalla risposta
-      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
+      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+      
       if (jsonMatch) {
-        const result = JSON.parse(jsonMatch[0]);
+        const parsed = JSON.parse(jsonMatch[0]);
+        console.log('✅ GEMINI: Titolo generato:', parsed.title);
         return {
-          title: result.title,
-          confidence: result.confidence || 0.8
+          title: parsed.title,
+          confidence: parsed.confidence || 0.8
         };
       }
-
-      throw new Error('Invalid response format from Gemini');
-    } catch (error) {
-      console.error('Error generating title with Gemini:', error);
-      throw new Error(`Gemini title generation failed: ${error.message}`);
+      
+      // Fallback se non trova JSON
+      return {
+        title: text.trim(),
+        confidence: 0.7
+      };
+    } catch (error: any) {
+      console.error('❌ GEMINI: Errore generazione titolo:', error);
+      
+      // Fallback automatico a modello standard se sperimentale fallisce
+      if (error?.message?.includes('404') || error?.message?.includes('model')) {
+        console.log('🔄 GEMINI: Tentativo fallback a modello standard...');
+        return this.fallbackToStandardModel('generateTitle', transcriptText, templateName);
+      }
+      
+      throw new Error(`Errore durante la generazione del titolo: ${error?.message}`);
     }
   }
 
   async identifySpeakers(transcriptText: string, utterances: Utterance[], templateName?: string): Promise<SpeakerIdentificationResponse> {
     try {
-      // Usa il servizio di templating per generare il prompt
+      console.log('🤖 GEMINI: Identificazione speaker con SDK ufficiale...');
+      console.log('📊 GEMINI: Utterances da analizzare:', utterances.length);
+      
       const settings = promptTemplateService.getSettings();
       const sampleUtterances = utterances
         .slice(0, settings.maxSampleUtterances)
@@ -264,160 +313,185 @@ export class GeminiProvider implements AIProviderInterface {
         .join('\n');
 
       const currentSpeakers = Array.from(new Set(utterances.map(u => u.speaker)));
+      console.log('🗣️ GEMINI: Speaker attuali:', currentSpeakers);
 
       const prompt = promptTemplateService.generateSpeakerPrompt({
         currentSpeakers,
         sampleUtterances,
         templateName
       });
-
-      // 🚀 LOG: Informazioni di input
-      console.log('🎯 SPEAKER IDENTIFICATION - INPUT DATA:');
-      console.log('📝 Template utilizzato:', templateName || 'default');
-      console.log('👥 Speaker attuali da AssemblyAI:', currentSpeakers);
-      console.log('📄 Numero utterances totali:', utterances.length);
-      console.log('📄 Numero utterances campione:', sampleUtterances.split('\n').length);
-      console.log('🤖 Prompt generato:\n', prompt);
-      console.log('═'.repeat(80));
-
-      const response = await axios.post(
-        `${this.baseURL}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
-        {
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-
-      const generatedText = response.data.candidates[0].content.parts[0].text;
       
-      // 🚀 LOG: Risposta raw dall'AI
-      console.log('🤖 GEMINI RAW RESPONSE:');
-      console.log(generatedText);
-      console.log('═'.repeat(80));
+      console.log('📝 GEMINI: Prompt speaker:', prompt.substring(0, 300) + '...');
 
-      // Estrai il JSON dalla risposta
-      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const result = JSON.parse(jsonMatch[0]);
-        
-        // 🚀 LOG: Oggetto parsato dall'AI
-        console.log('✅ SPEAKER IDENTIFICATION - PARSED RESULT:');
-        console.log('📊 Oggetto JSON parsato:', JSON.stringify(result, null, 2));
-        
-        if (result.speakers && Array.isArray(result.speakers)) {
-          console.log('👥 Speaker identificati:', result.speakers.length);
-          result.speakers.forEach((speaker: any, index: number) => {
-            console.log(`   ${index + 1}. ${speaker.originalName} → ${speaker.suggestedName} (confidence: ${Math.round(speaker.confidence * 100)}%)`);
-            console.log(`      Reasoning: ${speaker.reasoning}`);
-            if (speaker.evidence) {
-              console.log(`      Evidenze: ${speaker.evidence.mentions} menzioni, tipo: ${speaker.evidence.type}`);
-            }
-          });
-        }
-
-        if (result.analysis_summary) {
-          console.log('📈 Summary analisi:', result.analysis_summary);
-        }
-
-        console.log('═'.repeat(80));
-        return result;
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      console.log('🤖 GEMINI: Risposta raw:', text);
+      
+      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const parsed = JSON.parse(cleanText) as SpeakerIdentificationResponse;
+      
+      console.log('✅ GEMINI: Speaker identificati:', parsed.speakers?.length || 0);
+      console.log('📋 GEMINI: Dettagli speaker:', parsed.speakers);
+      
+      return parsed;
+    } catch (error: any) {
+      console.error('❌ GEMINI: Errore identificazione speaker:', error);
+      
+      // Fallback automatico
+      if (error?.message?.includes('404') || error?.message?.includes('model')) {
+        return this.fallbackToStandardModel('identifySpeakers', transcriptText, utterances, templateName);
       }
-
-      throw new Error('Invalid response format from Gemini');
-    } catch (error) {
-      console.error('❌ Error identifying speakers with Gemini:', error);
-      throw new Error(`Gemini speaker identification failed: ${error.message}`);
+      
+      throw new Error(`Errore durante l'identificazione degli speaker: ${error?.message}`);
     }
   }
 
   async generateMinutes(transcriptText: string, participants: string[], meetingDate: string, templateName?: string): Promise<MeetingMinutes> {
     try {
-      // Usa il servizio di templating per generare il prompt
+      console.log('🤖 GEMINI: Generazione minute con SDK ufficiale...');
+      console.log('📄 GEMINI: Lunghezza trascrizione:', transcriptText.length);
+      
       const prompt = promptTemplateService.generateMinutesPrompt({
         transcriptText,
         participants,
         meetingDate,
         templateName
       });
+      console.log('📝 GEMINI: Prompt minute:', prompt.substring(0, 400) + '...');
 
-      const response = await axios.post(
-        `${this.baseURL}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
-        {
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-
-      const generatedText = response.data.candidates[0].content.parts[0].text;
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
       
-      // Estrai il JSON dalla risposta
-      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const result = JSON.parse(jsonMatch[0]);
-        return result;
+      console.log('🤖 GEMINI: Risposta raw minute:', text.substring(0, 500) + '...');
+      
+      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const parsed = JSON.parse(cleanText) as MeetingMinutes;
+      
+      console.log('✅ GEMINI: Minute generate con successo');
+      console.log('📋 GEMINI: Titolo:', parsed.title);
+      console.log('📅 GEMINI: Data:', parsed.date);
+      console.log('👥 GEMINI: Partecipanti:', parsed.participants?.length || 0);
+      console.log('✅ GEMINI: Action items:', parsed.actionItems?.length || 0);
+      console.log('📝 GEMINI: Ha riassunto:', !!parsed.meetingSummary);
+      
+      return parsed;
+    } catch (error: any) {
+      console.error('❌ GEMINI: Errore generazione minute:', error);
+      
+      // Fallback automatico
+      if (error?.message?.includes('404') || error?.message?.includes('model')) {
+        return this.fallbackToStandardModel('generateMinutes', transcriptText, participants, meetingDate, templateName);
       }
-
-      throw new Error('Invalid response format from Gemini');
-    } catch (error) {
-      console.error('Error generating minutes with Gemini:', error);
-      throw new Error(`Gemini minutes generation failed: ${error.message}`);
+      
+      throw new Error(`Errore durante la generazione delle minute: ${error?.message}`);
     }
   }
 
   async generateKnowledge(transcriptText: string, templateName?: string): Promise<KnowledgeBase> {
     try {
-      // Usa il servizio di templating per generare il prompt
+      console.log('🤖 GEMINI: Generazione knowledge con SDK ufficiale...');
+      
       const prompt = promptTemplateService.generateKnowledgePrompt({
         transcriptText,
         templateName
       });
+      console.log('📝 GEMINI: Prompt knowledge:', prompt.substring(0, 300) + '...');
 
-      const response = await axios.post(
-        `${this.baseURL}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
-        {
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-
-      const generatedText = response.data.candidates[0].content.parts[0].text;
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
       
-      // Estrai il JSON dalla risposta
-      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const result = JSON.parse(jsonMatch[0]);
-        return result;
+      console.log('🤖 GEMINI: Risposta raw knowledge:', text.substring(0, 300) + '...');
+      
+      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const parsed = JSON.parse(cleanText) as KnowledgeBase;
+      
+      console.log('✅ GEMINI: Knowledge generato con successo');
+      
+      return parsed;
+    } catch (error: any) {
+      console.error('❌ GEMINI: Errore generazione knowledge:', error);
+      
+      // Fallback automatico
+      if (error?.message?.includes('404') || error?.message?.includes('model')) {
+        return this.fallbackToStandardModel('generateKnowledge', transcriptText, templateName);
       }
-
-      throw new Error('Invalid response format from Gemini');
-    } catch (error) {
-      console.error('Error generating knowledge with Gemini:', error);
-      throw new Error(`Gemini knowledge generation failed: ${error.message}`);
+      
+      throw new Error(`Errore durante la generazione della knowledge: ${error?.message}`);
     }
+  }
+
+  // Metodo di fallback per modelli standard
+  private async fallbackToStandardModel(method: string, ...args: any[]): Promise<any> {
+    console.log(`🔄 GEMINI: Fallback al modello ${GeminiProvider.MODELS.FLASH_LATEST}`);
+    
+    // Crea temporaneamente modello con versione stabile
+    const fallbackModel = this.googleAI.getGenerativeModel({ 
+      model: GeminiProvider.MODELS.FLASH_LATEST,
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      }
+    });
+    
+    // Sostituisci temporaneamente il modello
+    const originalModel = this.model;
+    this.model = fallbackModel;
+    
+    try {
+      // Richiama il metodo originale con il modello di fallback
+      switch (method) {
+        case 'generateTitle':
+          return await this.generateTitle(args[0], args[1]);
+        case 'identifySpeakers':
+          return await this.identifySpeakers(args[0], args[1], args[2]);
+        case 'generateMinutes':
+          return await this.generateMinutes(args[0], args[1], args[2], args[3]);
+        case 'generateKnowledge':
+          return await this.generateKnowledge(args[0], args[1]);
+        default:
+          throw new Error(`Metodo ${method} non supportato per fallback`);
+      }
+    } finally {
+      // Ripristina il modello originale
+      this.model = originalModel;
+    }
+  }
+
+  // Metodo per cambiare modello dinamicamente
+  public switchModel(modelType: 'experimental' | 'latest' | 'standard' = 'experimental') {
+    let modelName: string;
+    
+    switch (modelType) {
+      case 'experimental':
+        modelName = GeminiProvider.MODELS.FLASH_EXPERIMENTAL;
+        break;
+      case 'latest':
+        modelName = GeminiProvider.MODELS.PRO_LATEST;
+        break;
+      case 'standard':
+        modelName = GeminiProvider.MODELS.FLASH_STANDARD;
+        break;
+      default:
+        modelName = GeminiProvider.MODELS.FLASH_EXPERIMENTAL;
+    }
+    
+    this.model = this.googleAI.getGenerativeModel({ 
+      model: modelName,
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      }
+    });
+    
+    console.log(`🔄 GEMINI: Modello cambiato a ${modelName}`);
   }
 }
 

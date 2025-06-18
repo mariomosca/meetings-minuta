@@ -25,25 +25,43 @@ export interface SpeakerIdentificationResponse {
     suggestedName: string; // Nome suggerito dall'AI
     confidence: number;
     reasoning: string; // Spiegazione del perché
+    // Opzionale: per analisi avanzata basata su conversazione
+    evidence?: {
+      mentions: number;
+      positions: number[];
+      type: 'direct_address' | 'self_introduction' | 'response_pattern' | 'contextual';
+      response_pattern?: 'immediate' | 'delayed' | 'unclear';
+    };
   }>;
+  // Opzionale: summary dell'analisi per template avanzato
+  analysis_summary?: {
+    total_names_found: number;
+    participants_identified: number;
+    excluded_mentions: string[];
+  };
 }
 
 // Interfaccia per le minute del meeting
 export interface MeetingMinutes {
   title: string;
   date: string;
+  // Campo principale aggiunto: riassunto dell'incontro
+  meetingSummary?: string;
   participants: Array<{
     name: string;
     role?: string;
     attendance?: string;
+    contribution?: string; // Per template dettagliato
   }>;
   agenda?: string[];
   keyDiscussions?: Array<{
     topic: string;
     summary: string;
+    timeSpent?: string; // Per template dettagliato
     keyPoints?: string[];
     decisions?: string[];
     concerns?: string[];
+    alternatives?: string[]; // Per template dettagliato
   }>;
   actionItems: Array<{
     id?: string;
@@ -53,6 +71,8 @@ export interface MeetingMinutes {
     priority: 'High' | 'Medium' | 'Low';
     status?: string;
     dependencies?: string[];
+    effort?: string; // Per template dettagliato
+    acceptanceCriteria?: string; // Per template dettagliato
   }>;
   nextMeeting?: {
     date?: string;
@@ -60,22 +80,49 @@ export interface MeetingMinutes {
   };
   metadata?: {
     duration?: string;
+    startTime?: string; // Per template dettagliato
     location?: string;
     type?: string;
+    attendeesCount?: string; // Per template dettagliato
   };
+  // Campi per template executive
+  meetingPurpose?: string;
+  keyOutcomes?: string[];
+  businessImpact?: string;
+  // Campi comuni
   executiveSummary?: string;
-  keyDecisions?: string[];
+  keyDecisions?: string[] | Array<{
+    decision: string;
+    rationale: string;
+    impact: string;
+    alternatives: string;
+  }>;
   criticalActions?: Array<{
     action: string;
     owner: string;
     dueDate: string;
     impact: string;
+    priority?: string;
   }>;
-  risks?: string[];
+  risks?: string[] | Array<{
+    risk: string;
+    impact: string;
+    likelihood: string;
+    mitigation: string;
+  }>;
   nextSteps?: string[];
+  // Campi per template dettagliato
+  openIssues?: Array<{
+    issue: string;
+    owner: string;
+    targetDate: string;
+  }>;
   followUp?: {
     nextMeeting?: string;
+    nextReview?: string; // Per template executive
+    escalation?: string; // Per template executive
     preparationNeeded?: string[];
+    communicationPlan?: string; // Per template dettagliato
   };
 }
 
@@ -224,6 +271,15 @@ export class GeminiProvider implements AIProviderInterface {
         templateName
       });
 
+      // 🚀 LOG: Informazioni di input
+      console.log('🎯 SPEAKER IDENTIFICATION - INPUT DATA:');
+      console.log('📝 Template utilizzato:', templateName || 'default');
+      console.log('👥 Speaker attuali da AssemblyAI:', currentSpeakers);
+      console.log('📄 Numero utterances totali:', utterances.length);
+      console.log('📄 Numero utterances campione:', sampleUtterances.split('\n').length);
+      console.log('🤖 Prompt generato:\n', prompt);
+      console.log('═'.repeat(80));
+
       const response = await axios.post(
         `${this.baseURL}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
         {
@@ -242,16 +298,42 @@ export class GeminiProvider implements AIProviderInterface {
 
       const generatedText = response.data.candidates[0].content.parts[0].text;
       
+      // 🚀 LOG: Risposta raw dall'AI
+      console.log('🤖 GEMINI RAW RESPONSE:');
+      console.log(generatedText);
+      console.log('═'.repeat(80));
+
       // Estrai il JSON dalla risposta
       const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const result = JSON.parse(jsonMatch[0]);
+        
+        // 🚀 LOG: Oggetto parsato dall'AI
+        console.log('✅ SPEAKER IDENTIFICATION - PARSED RESULT:');
+        console.log('📊 Oggetto JSON parsato:', JSON.stringify(result, null, 2));
+        
+        if (result.speakers && Array.isArray(result.speakers)) {
+          console.log('👥 Speaker identificati:', result.speakers.length);
+          result.speakers.forEach((speaker: any, index: number) => {
+            console.log(`   ${index + 1}. ${speaker.originalName} → ${speaker.suggestedName} (confidence: ${Math.round(speaker.confidence * 100)}%)`);
+            console.log(`      Reasoning: ${speaker.reasoning}`);
+            if (speaker.evidence) {
+              console.log(`      Evidenze: ${speaker.evidence.mentions} menzioni, tipo: ${speaker.evidence.type}`);
+            }
+          });
+        }
+
+        if (result.analysis_summary) {
+          console.log('📈 Summary analisi:', result.analysis_summary);
+        }
+
+        console.log('═'.repeat(80));
         return result;
       }
 
       throw new Error('Invalid response format from Gemini');
     } catch (error) {
-      console.error('Error identifying speakers with Gemini:', error);
+      console.error('❌ Error identifying speakers with Gemini:', error);
       throw new Error(`Gemini speaker identification failed: ${error.message}`);
     }
   }

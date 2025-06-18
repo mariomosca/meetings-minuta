@@ -489,6 +489,12 @@ function setupIPCHandlers() {
   // Identificare speaker
   ipcMain.handle('ai:identifySpeakers', async (_event, transcriptText, utterances) => {
     try {
+      // 🚀 LOG: Richiesta ricevuta nell'IPC handler
+      console.log('🔥 IPC HANDLER: ai:identifySpeakers - Richiesta ricevuta');
+      console.log('📝 Lunghezza testo trascrizione:', transcriptText ? transcriptText.length : 0);
+      console.log('👥 Numero utterances ricevute:', utterances ? utterances.length : 0);
+      console.log('═'.repeat(50));
+
       const { aiService } = await import('./services/aiService');
       
       // Configura il provider se necessario
@@ -511,10 +517,19 @@ function setupIPCHandlers() {
         throw new Error(`AI_CONFIG_MISSING:${provider}:Per utilizzare la funzionalità AI, configura prima l'API key di ${provider.charAt(0).toUpperCase() + provider.slice(1)} nelle Impostazioni.`);
       }
 
+      console.log('🤖 Provider AI configurato:', provider);
+
       aiService.setProvider(provider, apiKey);
-      return await aiService.identifySpeakers(transcriptText, utterances);
+      const result = await aiService.identifySpeakers(transcriptText, utterances);
+      
+      // 🚀 LOG: Risposta dell'AI service
+      console.log('🔥 IPC HANDLER: ai:identifySpeakers - Risposta AI ricevuta');
+      console.log('📊 Risultato finale da restituire al frontend:', JSON.stringify(result, null, 2));
+      console.log('═'.repeat(50));
+      
+      return result;
     } catch (error) {
-      console.error('Error in handler ai:identifySpeakers:', error);
+      console.error('❌ Error in handler ai:identifySpeakers:', error);
       throw error;
     }
   });
@@ -899,8 +914,11 @@ function setupIPCHandlers() {
 const createWindow = (): void => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1000,
+    width: 1200,
     height: 800,
+    minWidth: 800,
+    minHeight: 600,
+    icon: path.join(__dirname, '../assets/icons/app-icon.png'),
     webPreferences: {
       preload: MAIN_WINDOW_VITE_DEV_SERVER_URL
         ? path.join(__dirname, 'preload.js')
@@ -908,6 +926,8 @@ const createWindow = (): void => {
       contextIsolation: true,
       nodeIntegration: false,
     },
+    titleBarStyle: 'default',
+    show: false, // Non mostrare finché non è pronta
   });
 
   // and load the index.html of the app.
@@ -919,6 +939,11 @@ const createWindow = (): void => {
     console.log('Caricamento da file:', indexPath);
     mainWindow.loadFile(indexPath);
   }
+
+  // Mostra finestra quando è pronta
+  mainWindow.once('ready-to-show', () => {
+    mainWindow?.show();
+  });
 
   // Open the DevTools only in development.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {

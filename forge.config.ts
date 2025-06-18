@@ -10,9 +10,37 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    name: 'Meetings Minuta',
+    executableName: 'meetings-minuta',
+    icon: './src/assets/icons/app-icon', // Senza estensione - Electron sceglie automaticamente
+    appBundleId: 'com.mariomosca.meetings-minuta',
+    appCategoryType: 'public.app-category.productivity',
+    appCopyright: 'Copyright © 2025 Mario Mosca',
   },
   rebuildConfig: {},
-  makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
+  makers: [
+    new MakerSquirrel({
+      name: 'meetings-minuta',
+      setupIcon: './src/assets/icons/app-icon.ico',
+      iconUrl: './src/assets/icons/app-icon.ico'
+    }), 
+    new MakerZIP({}, ['darwin']), 
+    new MakerRpm({
+      options: {
+        name: 'meetings-minuta',
+        productName: 'Meetings Minuta',
+        icon: './src/assets/icons/app-icon.png'
+      }
+    }), 
+    new MakerDeb({
+      options: {
+        name: 'meetings-minuta',
+        productName: 'Meetings Minuta',
+        icon: './src/assets/icons/app-icon.png',
+        categories: ['Office', 'AudioVideo']
+      }
+    })
+  ],
   plugins: [
     new VitePlugin({
       // `build` can specify multiple entry builds, which can be Main process, Preload scripts, Worker process, etc.

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- AI Neural Pattern -->
+    <pattern id="aiPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="10" cy="10" r="1" fill="#60a5fa" opacity="0.3"/>
+      <circle cx="5" cy="5" r="0.5" fill="#93c5fd" opacity="0.5"/>
+      <circle cx="15" cy="15" r="0.5" fill="#93c5fd" opacity="0.5"/>
+    </pattern>
+    
+    <!-- Microphone Gradient -->
+    <linearGradient id="micGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#374151;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1f2937;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Document Gradient -->
+    <linearGradient id="docGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f8fafc;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- AI Accent Gradient -->
+    <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main circular background -->
+  <circle cx="128" cy="128" r="120" fill="url(#backgroundGradient)" stroke="#1e40af" stroke-width="2"/>
+  
+  <!-- AI Neural Network Background Pattern -->
+  <circle cx="128" cy="128" r="115" fill="url(#aiPattern)" opacity="0.4"/>
+  
+  <!-- Document Base -->
+  <rect x="70" y="80" width="116" height="140" rx="8" ry="8" fill="url(#docGradient)" stroke="#e2e8f0" stroke-width="2"/>
+  
+  <!-- Document Header -->
+  <rect x="70" y="80" width="116" height="25" rx="8" ry="8" fill="#f1f5f9"/>
+  <rect x="70" y="105" width="116" height="115" fill="url(#docGradient)"/>
+  
+  <!-- Document Lines (representing transcription text) -->
+  <rect x="82" y="120" width="92" height="3" rx="1.5" fill="#cbd5e1"/>
+  <rect x="82" y="130" width="80" height="3" rx="1.5" fill="#cbd5e1"/>
+  <rect x="82" y="140" width="88" height="3" rx="1.5" fill="#cbd5e1"/>
+  <rect x="82" y="150" width="75" height="3" rx="1.5" fill="#cbd5e1"/>
+  <rect x="82" y="160" width="90" height="3" rx="1.5" fill="#cbd5e1"/>
+  <rect x="82" y="170" width="85" height="3" rx="1.5" fill="#cbd5e1"/>
+  <rect x="82" y="180" width="78" height="3" rx="1.5" fill="#cbd5e1"/>
+  <rect x="82" y="190" width="82" height="3" rx="1.5" fill="#cbd5e1"/>
+  
+  <!-- Microphone Base -->
+  <ellipse cx="128" cy="45" rx="18" ry="25" fill="url(#micGradient)" stroke="#111827" stroke-width="1"/>
+  
+  <!-- Microphone Grille -->
+  <rect x="115" y="35" width="26" height="20" rx="13" fill="#4b5563"/>
+  <rect x="117" y="37" width="2" height="16" fill="#6b7280"/>
+  <rect x="121" y="37" width="2" height="16" fill="#6b7280"/>
+  <rect x="125" y="37" width="2" height="16" fill="#6b7280"/>
+  <rect x="129" y="37" width="2" height="16" fill="#6b7280"/>
+  <rect x="133" y="37" width="2" height="16" fill="#6b7280"/>
+  <rect x="137" y="37" width="2" height="16" fill="#6b7280"/>
+  
+  <!-- Microphone Stand -->
+  <rect x="125" y="70" width="6" height="15" fill="url(#micGradient)"/>
+  
+  <!-- Sound Waves (indicating audio processing) -->
+  <path d="M 35 128 Q 50 118 35 138" stroke="#60a5fa" stroke-width="3" fill="none" opacity="0.7"/>
+  <path d="M 25 128 Q 45 115 25 141" stroke="#60a5fa" stroke-width="2" fill="none" opacity="0.5"/>
+  <path d="M 15 128 Q 40 112 15 144" stroke="#60a5fa" stroke-width="2" fill="none" opacity="0.3"/>
+  
+  <!-- AI Processing Indicator (Brain/Gear Hybrid) -->
+  <circle cx="200" cy="100" r="12" fill="url(#aiGradient)"/>
+  <circle cx="200" cy="100" r="8" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+  
+  <!-- AI Nodes -->
+  <circle cx="195" cy="95" r="1.5" fill="#ffffff"/>
+  <circle cx="205" cy="95" r="1.5" fill="#ffffff"/>
+  <circle cx="195" cy="105" r="1.5" fill="#ffffff"/>
+  <circle cx="205" cy="105" r="1.5" fill="#ffffff"/>
+  <circle cx="200" cy="100" r="1.5" fill="#ffffff"/>
+  
+  <!-- AI Connection Lines -->
+  <line x1="195" y1="95" x2="200" y2="100" stroke="#ffffff" stroke-width="0.5"/>
+  <line x1="205" y1="95" x2="200" y2="100" stroke="#ffffff" stroke-width="0.5"/>
+  <line x1="195" y1="105" x2="200" y2="100" stroke="#ffffff" stroke-width="0.5"/>
+  <line x1="205" y1="105" x2="200" y2="100" stroke="#ffffff" stroke-width="0.5"/>
+  
+  <!-- Meeting/People Indicator -->
+  <circle cx="60" cy="200" r="8" fill="#10b981"/>
+  <circle cx="75" cy="195" r="6" fill="#059669"/>
+  <circle cx="50" cy="195" r="6" fill="#059669"/>
+  
+  <!-- Data Flow Lines (connecting mic to document to AI) -->
+  <path d="M 128 75 Q 140 85 140 115" stroke="#60a5fa" stroke-width="2" fill="none" opacity="0.6" stroke-dasharray="5,3"/>
+  <path d="M 186 130 Q 195 120 195 110" stroke="#8b5cf6" stroke-width="2" fill="none" opacity="0.6" stroke-dasharray="5,3"/>
+  
+  <!-- App Title Area -->
+  <text x="128" y="245" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1e40af">
+    MEETINGS MINUTA
+  </text>
+</svg> 

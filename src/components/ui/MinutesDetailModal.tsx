@@ -81,6 +81,12 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
     markdown += `**Data riunione:** ${formatDate(minutes.date)}\n`;
     markdown += `**Creata:** ${formatDateTime(minutes.createdAt)}\n\n`;
     
+    // Riassunto della riunione
+    if (minutes.meetingSummary) {
+      markdown += `## 📋 Riassunto della Riunione\n\n`;
+      markdown += `${minutes.meetingSummary}\n\n`;
+    }
+    
     // Partecipanti
     if (minutes.participants && minutes.participants.length > 0) {
       markdown += `## Partecipanti\n\n`;
@@ -189,6 +195,19 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
 
         {/* Content */}
         <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+          {/* Meeting Summary - Riassunto Riunione */}
+          {minutes.meetingSummary && (
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+              <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Riassunto della Riunione
+              </h3>
+              <p className="text-blue-800 leading-relaxed">{minutes.meetingSummary}</p>
+            </div>
+          )}
+
           {/* Participants */}
           {minutes.participants && minutes.participants.length > 0 && (
             <div>

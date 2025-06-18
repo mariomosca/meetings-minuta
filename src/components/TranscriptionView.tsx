@@ -534,14 +534,47 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
 
     try {
       setIsIdentifyingSpeakers(true);
+      
+      // 🚀 LOG: Dati inviati al backend
+      console.log('🎯 FRONTEND: Invio richiesta identificazione speaker');
+      console.log('📝 Trascrizione da analizzare (lunghezza):', activeTranscript.text.length);
+      console.log('👥 Utterances da analizzare:', activeTranscript.utterances.length);
+      console.log('🗣️ Speaker attuali:', Array.from(new Set(activeTranscript.utterances.map(u => u.speaker))));
+      console.log('📄 Sample utterances (primi 5):');
+      activeTranscript.utterances.slice(0, 5).forEach((u, i) => {
+        console.log(`   ${i + 1}. ${u.speaker}: "${u.text.substring(0, 100)}..."`);
+      });
+      console.log('═'.repeat(60));
+
       const result = await electronAPI.ai.identifySpeakers(activeTranscript.text, activeTranscript.utterances);
+      
+      // 🚀 LOG: Risposta ricevuta dal backend
+      console.log('🎯 FRONTEND: Risposta identificazione speaker ricevuta');
+      console.log('📊 Oggetto risultato completo:', JSON.stringify(result, null, 2));
+      
+      if (result.speakers) {
+        console.log('👥 Speaker identificati nel frontend:');
+        result.speakers.forEach((speaker: any, index: number) => {
+          console.log(`   ${index + 1}. ${speaker.originalName} → ${speaker.suggestedName}`);
+          console.log(`      Confidence: ${Math.round(speaker.confidence * 100)}%`);
+          console.log(`      Reasoning: ${speaker.reasoning}`);
+          if (speaker.evidence) {
+            console.log(`      Evidence: ${speaker.evidence.mentions} menzioni, tipo: ${speaker.evidence.type}`);
+          }
+        });
+      }
+      
+      if (result.analysis_summary) {
+        console.log('📈 Analysis Summary:', result.analysis_summary);
+      }
+      console.log('═'.repeat(60));
       
       setSpeakerSuggestions(result.speakers);
       setShowSpeakerSuggestions(true);
       
       toast.success(`Identificati ${result.speakers.length} speaker potenziali`);
     } catch (error) {
-      console.error('Error identifying speakers:', error);
+      console.error('❌ FRONTEND Error identifying speakers:', error);
       
       const errorMessage = (error as Error).message;
       
@@ -1401,6 +1434,19 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               <h3 className="text-lg font-semibold text-gray-900">{generatedMinutes.title}</h3>
               <p className="text-sm text-gray-600">Data: {generatedMinutes.date}</p>
             </div>
+
+            {/* Meeting Summary - Riassunto Riunione */}
+            {generatedMinutes.meetingSummary && (
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+                <h4 className="font-medium text-blue-900 mb-2 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Riassunto della Riunione
+                </h4>
+                <p className="text-blue-800 leading-relaxed">{generatedMinutes.meetingSummary}</p>
+              </div>
+            )}
 
             {generatedMinutes.participants && generatedMinutes.participants.length > 0 && (
               <div>

@@ -159,7 +159,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
       ]);
     } catch (error) {
       console.error('Error loading data:', error);
-      toast.error('Unable to load data');
+      toast.error(t('monitoring.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -209,10 +209,10 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
   // Start/stop monitoring
   const toggleWatching = async () => {
     try {
-      if (!electronAPI.fileWatcher) {
-        toast.error('FileWatcher API not available');
-        return;
-      }
+          if (!electronAPI.fileWatcher) {
+      toast.error(t('monitoring.fileWatcherNotAvailable'));
+      return;
+    }
       
       if (isWatching) {
         // Stop monitoring
@@ -220,15 +220,15 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
         
         if (result.success) {
           setIsWatching(false);
-          addLog('Monitoring stopped');
-          toast.success('Monitoring stopped');
+                  addLog(t('monitoring.stopped'));
+        toast.success(t('monitoring.stopSuccess'));
         } else if (result.error) {
           toast.error(result.error);
         }
       } else {
         // Check if there's a directory to monitor
         if (!watchDirectory) {
-          toast.error('Select a directory before enabling monitoring');
+          toast.error(t('monitoring.selectDirectoryFirst'));
           return;
         }
         
@@ -237,15 +237,15 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
         
         if (result.success) {
           setIsWatching(true);
-          addLog(`Monitoring started: ${result.directory}`);
-          toast.success('Monitoring started');
+          addLog(`${t('monitoring.started')}: ${result.directory}`);
+          toast.success(t('monitoring.startSuccess'));
         } else if (result.error) {
           toast.error(result.error);
         }
       }
     } catch (error) {
       console.error('Error toggling monitoring:', error);
-      toast.error('Error changing monitoring status');
+      toast.error(t('monitoring.statusChangeError'));
     }
   };
   
@@ -253,14 +253,14 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
   const startTranscription = async (audioFileId: string) => {
     try {
       if (!electronAPI.transcripts) {
-        toast.error('Transcripts API not available');
+        toast.error(t('transcription.apiNotAvailable'));
         return;
       }
       
       // Check if transcription already exists
       const existingTranscript = transcripts.find(t => t.audioFileId === audioFileId);
       if (existingTranscript && existingTranscript.status !== 'error') {
-        toast.error('Transcription already in progress or completed');
+        toast.error(t('transcription.alreadyInProgress'));
         return;
       }
       
@@ -280,10 +280,10 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
       });
       
       addLog(`Transcription started for file ${audioFileId}`);
-      toast.success('Transcription started');
+      toast.success(t('transcription.started'));
     } catch (error) {
       console.error('Error starting transcription:', error);
-      toast.error('Unable to start transcription');
+      toast.error(t('transcription.startError'));
     }
   };
   
@@ -441,7 +441,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                     <div className="text-xs font-medium text-primary-800">{t('monitoring.detectedFiles')}</div>
                     <div className="flex items-center">
                       <div className="text-2xl font-bold text-primary-700">{audioFiles.length}</div>
-                      <div className="text-primary-500 ml-1 text-xs">files</div>
+                      <div className="text-primary-500 ml-1 text-xs">{audioFiles.length === 1 ? t('common.file') : t('common.files')}</div>
                     </div>
                   </div>
                 </div>
@@ -451,7 +451,7 @@ const MonitoringView: React.FC<MonitoringViewProps> = ({ onBack }) => {
                     <div className="text-xs font-medium text-success-800">{t('transcription.title')}</div>
                     <div className="flex items-center">
                       <div className="text-2xl font-bold text-success-700">{transcripts.length}</div>
-                      <div className="text-success-500 ml-1 text-xs">transcripts</div>
+                      <div className="text-success-500 ml-1 text-xs">{t('common.transcripts')}</div>
                     </div>
                   </div>
                 </div>

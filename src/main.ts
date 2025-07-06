@@ -621,7 +621,13 @@ function setupIPCHandlers() {
       }
       
       const result = fileWatcher.startWatching(dirToWatch);
-      return result;
+      
+      // Il metodo startWatching restituisce un boolean, ma il frontend si aspetta un oggetto
+      if (result) {
+        return { success: true, directory: dirToWatch };
+      } else {
+        return { success: false, error: `Failed to start monitoring directory: ${dirToWatch}` };
+      }
     } catch (error) {
       console.error('Error in handler fileWatcher:startWatching:', error);
       return { success: false, error: error.message };
@@ -877,7 +883,13 @@ function setupIPCHandlers() {
         }
         
         const result = fileWatcher.startWatching(watchDirs[0]);
-        return result;
+        
+        // Il metodo startWatching restituisce un boolean, ma il frontend si aspetta un oggetto
+        if (result) {
+          return { success: true, directory: watchDirs[0] };
+        } else {
+          return { success: false, error: `Failed to start monitoring directory: ${watchDirs[0]}` };
+        }
       } else {
         fileWatcher.stopWatching();
         return { success: true };

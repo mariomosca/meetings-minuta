@@ -31,7 +31,7 @@ const defaultConfig = {
   knowledgeEntries: {},
   knowledgeEntryIds: [],
   config: {
-    watchDirectories: ["/Users/mariomosca/Movies/EaseUS RecExperts"],
+    watchDirectories: [], // Inizia vuoto, l'utente può configurarlo dalle preferenze
     language: "en", // Default inglese per screenshot portfolio
     assemblyAiKey: "8096fb81aee54cccabdcdaf27bf9b720",
     geminiApiKey: "AIzaSyBDGTIu5c1uxwxXty3CExukm8s7FZ0LaAo"

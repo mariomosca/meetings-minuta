@@ -174,7 +174,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading meetings:', error);
-      toast.error('Unable to load meetings');
+      toast.error(t('errors.loadingMeetings'));
     } finally {
       setIsLoading(false);
     }
@@ -213,7 +213,7 @@ const App: React.FC = () => {
   // Handle creating a new meeting
   async function handleCreateMeeting() {
     if (!newMeeting.title || !newMeeting.date) {
-      toast.error('Title and date are required');
+      toast.error(t('errors.requiredFields'));
       return;
     }
     
@@ -241,10 +241,10 @@ const App: React.FC = () => {
       await loadMeetings();
       
       // Success notification
-      toast.success('Meeting created successfully');
+      toast.success(t('meetings.created'));
     } catch (error) {
       console.error('Error creating meeting:', error);
-      toast.error('Unable to create meeting');
+              toast.error(t('errors.creatingMeeting'));
     } finally {
       setIsLoading(false);
     }
@@ -273,10 +273,10 @@ const App: React.FC = () => {
       await loadMeetings();
       
       // Success notification
-      toast.success('Meeting deleted successfully');
+              toast.success(t('meetings.deleted'));
     } catch (error) {
       console.error('Error deleting meeting:', error);
-      toast.error('Unable to delete meeting');
+              toast.error(t('errors.deletingMeeting'));
     } finally {
       setIsLoading(false);
     }
@@ -312,7 +312,7 @@ const App: React.FC = () => {
       const audioFile = await electronAPI.audioFiles?.import();
       
       if (!audioFile) {
-        toast.error('No audio file selected');
+        toast.error(t('audio.noFileSelected'));
         setIsLoading(false);
         return;
       }
@@ -353,10 +353,10 @@ const App: React.FC = () => {
       }
       
       // Success notification
-      toast.success('Audio file imported successfully');
+              toast.success(t('audio.imported'));
     } catch (error) {
       console.error('Error importing audio file:', error);
-      toast.error('Unable to import audio file');
+              toast.error(t('audio.importError'));
     } finally {
       setIsLoading(false);
     }
@@ -385,7 +385,7 @@ const App: React.FC = () => {
       });
       
       // Notify user
-      toast.success('New meeting created from monitored audio file', {
+      toast.success(t('meetings.newFromAudio'), {
         duration: 5000,
         icon: '🎙️'
       });
@@ -477,7 +477,7 @@ const App: React.FC = () => {
         },
         {
           id: 'saved',
-          label: 'Minutes & Knowledge',
+          label: t('savedContent.title'),
           icon: (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />

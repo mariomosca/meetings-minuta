@@ -254,12 +254,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
         const result = await electronAPI.settings.saveAIProvider(aiProvider);
         
         if (result.success) {
-          toast.success('AI Provider saved successfully');
+          toast.success(t('settings.aiProvider.saved'));
         }
       }
     } catch (error) {
       console.error('Error saving AI provider:', error);
-      toast.error('Error saving AI provider');
+      toast.error(t('settings.aiProvider.saveError'));
     } finally {
       setIsSaving(false);
     }
@@ -274,12 +274,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
         const result = await electronAPI.settings.saveGeminiApiKey(geminiApiKey);
         
         if (result.success) {
-          toast.success('Gemini API key saved successfully');
+          toast.success(t('settings.aiProvider.geminiSaved'));
         }
       }
     } catch (error) {
       console.error('Error saving Gemini API key:', error);
-      toast.error('Error saving Gemini API key');
+      toast.error(t('settings.aiProvider.geminiSaveError'));
     } finally {
       setIsSaving(false);
     }
@@ -294,12 +294,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
         const result = await electronAPI.settings.saveClaudeApiKey(claudeApiKey);
         
         if (result.success) {
-          toast.success('Claude API key saved successfully');
+          toast.success(t('settings.aiProvider.claudeSaved'));
         }
       }
     } catch (error) {
       console.error('Error saving Claude API key:', error);
-      toast.error('Error saving Claude API key');
+      toast.error(t('settings.aiProvider.claudeSaveError'));
     } finally {
       setIsSaving(false);
     }
@@ -314,12 +314,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
         const result = await electronAPI.settings.saveChatGPTApiKey(chatgptApiKey);
         
         if (result.success) {
-          toast.success('ChatGPT API key saved successfully');
+          toast.success(t('settings.aiProvider.chatgptSaved'));
         }
       }
     } catch (error) {
       console.error('Error saving ChatGPT API key:', error);
-      toast.error('Error saving ChatGPT API key');
+      toast.error(t('settings.aiProvider.chatgptSaveError'));
     } finally {
       setIsSaving(false);
     }
@@ -436,18 +436,18 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
           {/* Sezione AI Provider */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-800">AI Provider</h3>
+              <h3 className="text-lg font-medium text-gray-800">{t('settings.aiProvider.title')}</h3>
               {(!geminiApiKey && aiProvider === 'gemini') && (
                 <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
-                  ⚠️ Configurazione Richiesta
+                  ⚠️ {t('common.configurationRequired')}
                 </span>
               )}
             </div>
             <p className="text-gray-600 text-sm mb-6">
-              Configura il provider AI per generazione titoli e identificazione speaker.
+              {t('settings.aiProvider.description')}
               {(!geminiApiKey && aiProvider === 'gemini') && (
                 <span className="block mt-2 text-yellow-600 text-sm font-medium">
-                  💡 Per utilizzare le funzionalità AI, è necessario configurare una API key di Gemini.
+                  💡 {t('settings.aiProvider.configurationTip')}
                 </span>
               )}
             </p>
@@ -456,7 +456,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
               {/* Selezione Provider */}
               <div>
                 <label htmlFor="aiProvider" className="block text-sm font-medium text-gray-700 mb-2">
-                  Provider attivo
+                  {t('settings.aiProvider.activeProvider')}
                 </label>
                 <div className="flex gap-2">
                   <select
@@ -485,9 +485,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
               {/* Gemini API Key */}
               <div>
                 <label htmlFor="geminiApiKey" className="block text-sm font-medium text-gray-700 mb-1">
-                  Gemini API Key
+                  {t('settings.aiProvider.geminiApiKey')}
                   <span className={`ml-2 px-2 py-1 text-xs rounded-full ${aiProvider === 'gemini' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {aiProvider === 'gemini' ? 'Attivo' : 'Inattivo'}
+                    {aiProvider === 'gemini' ? t('common.active') : t('common.inactive')}
                   </span>
                 </label>
                 <div className="flex gap-2">
@@ -497,7 +497,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     value={geminiApiKey}
                     onChange={(e) => setGeminiApiKey(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Inserisci la tua API key Gemini"
+                    placeholder={t('settings.aiProvider.geminiPlaceholder')}
                   />
                   <Button
                     onClick={handleSaveGeminiKey}
@@ -512,7 +512,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline">
-                    Ottieni la tua API key qui →
+                    {t('settings.aiProvider.getGeminiKey')} →
                   </a>
                 </p>
               </div>
@@ -520,12 +520,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
               {/* Claude API Key */}
               <div>
                 <label htmlFor="claudeApiKey" className="block text-sm font-medium text-gray-700 mb-1">
-                  Claude API Key
+                  {t('settings.aiProvider.claudeApiKey')}
                   <span className={`ml-2 px-2 py-1 text-xs rounded-full ${aiProvider === 'claude' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {aiProvider === 'claude' ? 'Attivo' : 'Inattivo'}
+                    {aiProvider === 'claude' ? t('common.active') : t('common.inactive')}
                   </span>
                   <span className="ml-2 px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">
-                    In sviluppo
+                    {t('common.inDevelopment')}
                   </span>
                 </label>
                 <div className="flex gap-2">
@@ -535,7 +535,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     value={claudeApiKey}
                     onChange={(e) => setClaudeApiKey(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 opacity-50"
-                    placeholder="Inserisci la tua API key Claude"
+                    placeholder={t('settings.aiProvider.claudePlaceholder')}
                     disabled
                   />
                   <Button
@@ -548,18 +548,18 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     {t('common.save')}
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Claude support coming soon</p>
+                <p className="text-xs text-gray-500 mt-1">{t('settings.aiProvider.claudeSupport')}</p>
               </div>
               
               {/* ChatGPT API Key */}
               <div>
                 <label htmlFor="chatgptApiKey" className="block text-sm font-medium text-gray-700 mb-1">
-                  ChatGPT API Key
+                  {t('settings.aiProvider.chatgptApiKey')}
                   <span className={`ml-2 px-2 py-1 text-xs rounded-full ${aiProvider === 'chatgpt' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {aiProvider === 'chatgpt' ? 'Attivo' : 'Inattivo'}
+                    {aiProvider === 'chatgpt' ? t('common.active') : t('common.inactive')}
                   </span>
                   <span className="ml-2 px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">
-                    In sviluppo
+                    {t('common.inDevelopment')}
                   </span>
                 </label>
                 <div className="flex gap-2">
@@ -569,7 +569,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     value={chatgptApiKey}
                     onChange={(e) => setChatgptApiKey(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 opacity-50"
-                    placeholder="Inserisci la tua API key OpenAI"
+                    placeholder={t('settings.aiProvider.chatgptPlaceholder')}
                     disabled
                   />
                   <Button
@@ -582,7 +582,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     {t('common.save')}
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">OpenAI support coming soon</p>
+                <p className="text-xs text-gray-500 mt-1">{t('settings.aiProvider.chatgptSupport')}</p>
               </div>
             </div>
           </div>

@@ -788,18 +788,17 @@ export class Database {
     return this.store.get('config.watchDirectories', []);
   }
   
-  // Aggiungere una directory monitorata
+  // Aggiungere una directory monitorata (per compatibilità - ora imposta una sola directory)
   addWatchDirectory(dirPath: string): string[] {
-    const watchDirs = this.store.get('config.watchDirectories', []);
-    
-    // Aggiungi solo se non esiste già
-    if (!watchDirs.includes(dirPath)) {
-      const newWatchDirs = [...watchDirs, dirPath];
-      this.store.set('config.watchDirectories', newWatchDirs);
-      return newWatchDirs;
-    }
-    
-    return watchDirs;
+    // Per la UI delle preferenze, sostituiamo la directory invece di aggiungere
+    return this.setWatchDirectory(dirPath);
+  }
+  
+  // Impostare la directory monitorata (sostituisce quella esistente)
+  setWatchDirectory(dirPath: string): string[] {
+    const newWatchDirs = [dirPath]; // Una sola directory
+    this.store.set('config.watchDirectories', newWatchDirs);
+    return newWatchDirs;
   }
   
   // Rimuovere una directory monitorata

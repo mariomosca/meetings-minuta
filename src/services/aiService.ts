@@ -291,6 +291,11 @@ export class GeminiProvider implements AIProviderInterface {
     } catch (error: any) {
       console.error('❌ GEMINI: Errore generazione titolo:', error);
       
+      // Gestione errori specifici API key
+      if (error?.message?.includes('API key not valid') || error?.message?.includes('API_KEY_INVALID') || error?.status === 400) {
+        throw new Error('AI_CONFIG_INVALID:gemini:La chiave API di Gemini non è valida. Verifica che la chiave sia corretta nelle Impostazioni.');
+      }
+      
       // Fallback automatico a modello standard se sperimentale fallisce
       if (error?.message?.includes('404') || error?.message?.includes('model')) {
         console.log('🔄 GEMINI: Tentativo fallback a modello standard...');
@@ -339,6 +344,11 @@ export class GeminiProvider implements AIProviderInterface {
     } catch (error: any) {
       console.error('❌ GEMINI: Errore identificazione speaker:', error);
       
+      // Gestione errori specifici API key
+      if (error?.message?.includes('API key not valid') || error?.message?.includes('API_KEY_INVALID') || error?.status === 400) {
+        throw new Error('AI_CONFIG_INVALID:gemini:La chiave API di Gemini non è valida. Verifica che la chiave sia corretta nelle Impostazioni.');
+      }
+      
       // Fallback automatico
       if (error?.message?.includes('404') || error?.message?.includes('model')) {
         return this.fallbackToStandardModel('identifySpeakers', transcriptText, utterances, templateName);
@@ -381,7 +391,12 @@ export class GeminiProvider implements AIProviderInterface {
     } catch (error: any) {
       console.error('❌ GEMINI: Errore generazione minute:', error);
       
-      // Fallback automatico
+      // Gestione errori specifici API key
+      if (error?.message?.includes('API key not valid') || error?.message?.includes('API_KEY_INVALID') || error?.status === 400) {
+        throw new Error('AI_CONFIG_INVALID:gemini:La chiave API di Gemini non è valida. Verifica che la chiave sia corretta nelle Impostazioni.');
+      }
+      
+      // Fallback automatico per errori di modello
       if (error?.message?.includes('404') || error?.message?.includes('model')) {
         return this.fallbackToStandardModel('generateMinutes', transcriptText, participants, meetingDate, templateName);
       }
@@ -414,6 +429,11 @@ export class GeminiProvider implements AIProviderInterface {
       return parsed;
     } catch (error: any) {
       console.error('❌ GEMINI: Errore generazione knowledge:', error);
+      
+      // Gestione errori specifici API key
+      if (error?.message?.includes('API key not valid') || error?.message?.includes('API_KEY_INVALID') || error?.status === 400) {
+        throw new Error('AI_CONFIG_INVALID:gemini:La chiave API di Gemini non è valida. Verifica che la chiave sia corretta nelle Impostazioni.');
+      }
       
       // Fallback automatico
       if (error?.message?.includes('404') || error?.message?.includes('model')) {

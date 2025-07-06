@@ -27,7 +27,19 @@
     "next": "Next",
     "files": "files",
     "file": "file",
-    "transcripts": "transcripts"
+    "transcripts": "transcripts",
+    "close": "Close",
+    "confirm": "Confirm",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "navigation": {
+    "monitoring": "Monitoring",
+    "minutesAndKnowledge": "Minutes & Knowledge"
   },
   "meetings": {
     "title": "Meetings",
@@ -90,6 +102,20 @@
     "startError": "Unable to start transcription",
     "apiNotAvailable": "Transcripts API not available",
     "loadError": "Unable to load transcription data",
+    "noTranscriptSelected": "No transcript selected",
+    "noTranscriptAvailable": "No transcription available",
+    "transcriptionInProgress": "Transcription in progress...",
+    "transcriptionInQueue": "Transcription in queue",
+    "transcriptionError": "An error occurred during transcription",
+    "processMayTakeMinutes": "This process may take a few minutes",
+    "transcriptionWillBeProcessed": "The transcription will be processed soon",
+    "tryAgainOrContact": "Try again later or contact support",
+    "expandModal": "View in modal",
+    "expand": "Expand",
+    "editTitle": "Edit title",
+    "cancelEdit": "Cancel",
+    "viewInModal": "View in modal",
+    "fullTranscriptionText": "Full transcription text",
     "status": {
       "queued": "Queued",
       "processing": "Processing",
@@ -98,6 +124,27 @@
       "title": "Status",
       "unknown": "Unknown"
     }
+  },
+  "ai": {
+    "title": "AI Actions",
+    "generateTitle": "Generate title",
+    "identifySpeakers": "Identify speakers",
+    "generateMinutes": "Generate minutes",
+    "generateNotes": "Generate notes",
+    "speakerSuggestions": "AI Speaker Suggestions",
+    "applyAllHighConfidence": "Apply All (>70%)",
+    "minutesGenerated": "Generated Meeting Minutes",
+    "notesGenerated": "Generated Knowledge Base Notes",
+    "savedContent": "Saved Content",
+    "insights": "Insights",
+    "actionableItems": "Action Items",
+    "context": "Context",
+    "applicability": "Applicability",
+    "category": "Category",
+    "priority": "Priority",
+    "configurationRequired": "AI Configuration Required",
+    "configurationMessage": "To use AI features, configure the API key first.",
+    "goToSettings": "Go to Settings → AI Provider →"
   },
   "audio": {
     "title": "Audio Files",
@@ -222,5 +269,123 @@
     "loadingSettings": "Unable to load settings",
     "savingSettings": "Unable to save settings",
     "requiredFields": "Title and date are required"
+  },
+  "minutesDetail": {
+    "title": "Minute Details",
+    "meetingDate": "Meeting date",
+    "created": "Created",
+    "sections": {
+      "meetingSummary": "Meeting Summary",
+      "participants": "Participants",
+      "agenda": "Agenda",
+      "keyDiscussions": "Key Discussions",
+      "actionItems": "Actions to Take",
+      "nextMeeting": "Next Meeting"
+    },
+    "actionItem": {
+      "responsible": "Responsible",
+      "dueDate": "Due date"
+    },
+    "nextMeeting": {
+      "date": "Date",
+      "plannedAgenda": "Planned agenda"
+    },
+    "metadata": {
+      "title": "Information",
+      "template": "Template",
+      "aiProvider": "AI Provider"
+    },
+    "copyMarkdown": "Copy Markdown",
+    "close": "Close",
+    "copySuccess": "Minute copied to clipboard in Markdown format",
+    "copyError": "Error copying to clipboard"
+  },
+  "knowledgeDetail": {
+    "title": "Note Details",
+    "category": "Category",
+    "created": "Created",
+    "sections": {
+      "summary": "Summary",
+      "keyTopics": "Key Topics",
+      "insights": "Insights",
+      "actionableItems": "Actionable Items",
+      "concepts": "Concepts",
+      "learnings": "Learnings",
+      "resources": "Resources"
+    },
+    "actionableItem": {
+      "category": "Category",
+      "timeframe": "Timeframe",
+      "defaultTitle": "Actionable item"
+    },
+    "concept": {
+      "defaultTitle": "Concept"
+    },
+    "learning": {
+      "defaultTitle": "Learning"
+    },
+    "resource": {
+      "defaultTitle": "Resource"
+    },
+    "metadata": {
+      "title": "Information",
+      "template": "Template",
+      "aiProvider": "AI Provider"
+    },
+    "copyMarkdown": "Copy Markdown",
+    "close": "Close",
+    "copySuccess": "Notes copied to clipboard in Markdown format",
+    "copyError": "Error copying to clipboard"
+  },
+  "transcription": {
+    "title": "Transcription",
+    "backTooltip": "Back to meeting list (Esc)",
+    "start": "Start Transcription",
+    "inProgress": "Transcription in progress...",
+    "completed": "Transcription completed",
+    "failed": "Transcription failed",
+    "noTranscript": "No transcript available",
+    "transcriptNotFound": "Transcript not found for this meeting",
+    "audioNotFound": "Audio file not found for this meeting",
+    "loadError": "Unable to load transcription data",
+    "searchPlaceholder": "Search in transcript...",
+    "noResults": "No results found",
+    "status": {
+      "queued": "Queued",
+      "processing": "Processing",
+      "completed": "Completed",
+      "error": "Error",
+      "unknown": "Unknown"
+    },
+    "withSpeakers": "With Speakers",
+    "fullText": "Full Text",
+    "expand": "Expand",
+    "viewInModal": "View in modal",
+    "fullTranscriptionText": "Full Transcription Text",
+    "transcriptionInProgress": "Transcription in progress...",
+    "processMayTakeMinutes": "This process may take several minutes",
+    "transcriptionInQueue": "Transcription in queue",
+    "transcriptionWillBeProcessed": "Your transcription will be processed shortly",
+    "transcriptionError": "Transcription error",
+    "tryAgainOrContact": "Please try again or contact support",
+    "noTranscriptAvailable": "No transcript available",
+    "importAudio": "Import an audio file to start transcription",
+    "viewModes": {
+      "utterances": "Utterances",
+      "fullText": "Full Text"
+    },
+    "fullTextModal": {
+      "title": "Full Text",
+      "close": "Close"
+    },
+    "editTitle": "Edit title",
+    "saveTitle": "Save title",
+    "cancelEdit": "Cancel edit",
+    "titleSaved": "Title saved successfully",
+    "titleSaveError": "Error saving title",
+    "minutesSaved": "Minutes saved successfully",
+    "minutesSaveError": "Error saving minutes",
+    "knowledgeSaved": "Notes saved successfully",
+    "knowledgeSaveError": "Error saving notes"
   }
 } 

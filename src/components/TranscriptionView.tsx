@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import Modal from 'react-modal';
+import { useTranslation } from 'react-i18next';
 import { Button, MinutesDetailModal, KnowledgeDetailModal } from './ui';
 
 // Interface for Electron APIs
@@ -159,6 +160,7 @@ interface TranscriptionViewProps {
 }
 
 const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack }) => {
+  const { t } = useTranslation();
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [audioFile, setAudioFile] = useState<AudioFile | null>(null);
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
@@ -480,7 +482,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   // AI Functions
   async function generateMeetingTitle() {
     if (!activeTranscript?.text || !electronAPI.ai) {
-      toast.error('Nessuna trascrizione disponibile per generare il titolo');
+      toast.error(t('transcription.noTranscriptForTitle'));
       return;
     }
 
@@ -505,21 +507,24 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       const errorMessage = (error as Error).message;
       
       // Gestione errori specifici per configurazione AI
-      if (errorMessage.includes('AI_CONFIG_MISSING')) {
+      if (errorMessage.includes('AI_CONFIG_MISSING') || errorMessage.includes('AI_CONFIG_INVALID')) {
         const parts = errorMessage.split(':');
+        const errorType = parts[0];
         const provider = parts[1];
         const message = parts[2];
         
+        const isInvalid = errorType === 'AI_CONFIG_INVALID';
+        
         toast.error(
           <div>
-            <div className="font-medium">⚙️ Configurazione AI Richiesta</div>
+            <div className="font-medium">{isInvalid ? '🔑' : '⚙️'} {isInvalid ? t('ai.invalidConfiguration') : t('ai.configurationRequired')}</div>
             <div className="text-sm mt-1">{message}</div>
-            <div className="text-xs mt-2 opacity-75">Vai in Impostazioni → AI Provider → {provider}</div>
+            <div className="text-xs mt-2 opacity-75">{t('ai.goToSettings')} {provider}</div>
           </div>, 
-          { duration: 6000 }
+          { duration: 8000 }
         );
       } else {
-        toast.error('Errore durante la generazione del titolo: ' + errorMessage);
+        toast.error(t('transcription.titleGenerationError') + ': ' + errorMessage);
       }
     } finally {
       setIsGeneratingTitle(false);
@@ -528,7 +533,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
 
   async function identifySpeakers() {
     if (!activeTranscript?.utterances || !activeTranscript?.text || !electronAPI.ai) {
-      toast.error('Nessuna trascrizione disponibile per identificare gli speaker');
+      toast.error(t('transcription.noTranscriptForSpeakers'));
       return;
     }
 
@@ -572,28 +577,31 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       setSpeakerSuggestions(result.speakers);
       setShowSpeakerSuggestions(true);
       
-      toast.success(`Identificati ${result.speakers.length} speaker potenziali`);
+      toast.success(`${result.speakers.length} ${t('ai.identifySpeakers').toLowerCase()} ${t('common.active').toLowerCase()}`);
     } catch (error) {
       console.error('❌ FRONTEND Error identifying speakers:', error);
       
       const errorMessage = (error as Error).message;
       
       // Gestione errori specifici per configurazione AI
-      if (errorMessage.includes('AI_CONFIG_MISSING')) {
+      if (errorMessage.includes('AI_CONFIG_MISSING') || errorMessage.includes('AI_CONFIG_INVALID')) {
         const parts = errorMessage.split(':');
+        const errorType = parts[0];
         const provider = parts[1];
         const message = parts[2];
         
+        const isInvalid = errorType === 'AI_CONFIG_INVALID';
+        
         toast.error(
           <div>
-            <div className="font-medium">⚙️ Configurazione AI Richiesta</div>
+            <div className="font-medium">{isInvalid ? '🔑' : '⚙️'} {isInvalid ? t('ai.invalidConfiguration') : t('ai.configurationRequired')}</div>
             <div className="text-sm mt-1">{message}</div>
-            <div className="text-xs mt-2 opacity-75">Vai in Impostazioni → AI Provider → {provider}</div>
+            <div className="text-xs mt-2 opacity-75">{t('ai.goToSettings')} {provider}</div>
           </div>, 
-          { duration: 6000 }
+          { duration: 8000 }
         );
       } else {
-        toast.error('Errore durante l\'identificazione degli speaker: ' + errorMessage);
+        toast.error(t('transcription.speakerIdentificationError') + ': ' + errorMessage);
       }
     } finally {
             setIsIdentifyingSpeakers(false);
@@ -603,7 +611,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   // Applica i suggerimenti degli speaker
   async function applySpeakerSuggestion(originalName: string, suggestedName: string) {
     if (!activeTranscript?.utterances || !electronAPI.transcripts?.update) {
-      toast.error('Impossibile applicare il suggerimento');
+      toast.error(t('transcription.cannotApplySuggestion'));
       return;
     }
 
@@ -632,7 +640,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       toast.success(`Speaker "${originalName}" rinominato in "${suggestedName}"`);
     } catch (error) {
       console.error('Error applying speaker suggestion:', error);
-      toast.error('Errore durante l\'applicazione del suggerimento');
+      toast.error(t('transcription.suggestionApplicationError'));
     }
   }
 
@@ -641,7 +649,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
     const highConfidenceSuggestions = speakerSuggestions.filter(s => s.confidence > 0.7);
     
     if (highConfidenceSuggestions.length === 0) {
-      toast.error('Nessun suggerimento con confidence sufficiente (>70%)');
+      toast.error(t('transcription.noHighConfidenceSuggestions'));
       return;
     }
 
@@ -652,7 +660,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       toast.success(`Applicati ${highConfidenceSuggestions.length} suggerimenti con alta confidence`);
     } catch (error) {
       console.error('Error applying all suggestions:', error);
-      toast.error('Errore durante l\'applicazione dei suggerimenti');
+      toast.error(t('transcription.suggestionBatchError'));
     }
   }
 
@@ -671,12 +679,12 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
 
   async function saveEditedTitle() {
     if (!meeting || !electronAPI.meetings?.updateMeeting) {
-      toast.error('Impossibile aggiornare il titolo');
+      toast.error(t('transcription.cannotUpdateTitle'));
       return;
     }
 
     if (editedTitle.trim() === '') {
-      toast.error('Il titolo non può essere vuoto');
+      toast.error(t('transcription.titleCannotBeEmpty'));
       return;
     }
 
@@ -690,10 +698,10 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       setMeeting(updatedMeeting);
       setIsEditingTitle(false);
       setEditedTitle('');
-      toast.success('Titolo aggiornato con successo');
+      toast.success(t('transcription.titleUpdated'));
     } catch (error) {
       console.error('Error updating meeting title:', error);
-      toast.error('Errore durante l\'aggiornamento del titolo');
+      toast.error(t('transcription.titleUpdateError'));
     }
   }
 
@@ -708,7 +716,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   // Generate meeting minutes
   async function generateMeetingMinutes() {
     if (!activeTranscript?.text || activeTranscript.status !== 'completed') {
-      toast.error('Per generare le minute è necessaria una trascrizione completata');
+      toast.error(t('transcription.minutesGenerationRequiresTranscript'));
       return;
     }
 
@@ -727,23 +735,25 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       if (result) {
         setGeneratedMinutes(result);
         setShowMinutesModal(true);
-        toast.success('Minute generate con successo!');
+        toast.success(t('transcription.minutesGenerated'));
       }
     } catch (error: any) {
       console.error('Error generating minutes:', error);
       
-      if (error.message?.includes('AI_CONFIG_MISSING')) {
-        const [, provider, message] = error.message.split(':');
+      if (error.message?.includes('AI_CONFIG_MISSING') || error.message?.includes('AI_CONFIG_INVALID')) {
+        const [errorType, provider, message] = error.message.split(':');
+        const isInvalid = errorType === 'AI_CONFIG_INVALID';
+        
         toast.error(
           <div className="space-y-2">
-            <div className="font-medium">⚙️ Configurazione AI Richiesta</div>
-            <div className="text-sm">{message || `Per utilizzare la funzionalità AI, configura prima l'API key di ${provider} nelle Impostazioni.`}</div>
-            <div className="text-xs text-gray-600">Vai in Impostazioni → AI Provider → {provider}</div>
+            <div className="font-medium">{isInvalid ? '🔑' : '⚙️'} {isInvalid ? t('ai.invalidConfiguration') : t('ai.configurationRequired')}</div>
+            <div className="text-sm">{message || t('ai.configurationMessage')}</div>
+            <div className="text-xs text-gray-600">{t('ai.goToSettings')} {provider}</div>
           </div>,
-          { duration: 6000 }
+          { duration: 8000 }
         );
       } else {
-        toast.error('Errore nella generazione delle minute: ' + (error.message || 'Errore sconosciuto'));
+        toast.error(t('transcription.minutesGenerationError') + ': ' + (error.message || 'Error'));
       }
     } finally {
       setIsGeneratingMinutes(false);
@@ -753,7 +763,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
   // Generate knowledge base entry
   async function generateKnowledgeBase() {
     if (!activeTranscript?.text || activeTranscript.status !== 'completed') {
-      toast.error('Per generare la knowledge base è necessaria una trascrizione completata');
+      toast.error(t('transcription.knowledgeGenerationRequiresTranscript'));
       return;
     }
 
@@ -767,23 +777,25 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       if (result) {
         setGeneratedKnowledge(result);
         setShowKnowledgeModal(true);
-        toast.success('Knowledge base generata con successo!');
+        toast.success(t('transcription.knowledgeGenerated'));
       }
     } catch (error: any) {
       console.error('Error generating knowledge:', error);
       
-      if (error.message?.includes('AI_CONFIG_MISSING')) {
-        const [, provider, message] = error.message.split(':');
+      if (error.message?.includes('AI_CONFIG_MISSING') || error.message?.includes('AI_CONFIG_INVALID')) {
+        const [errorType, provider, message] = error.message.split(':');
+        const isInvalid = errorType === 'AI_CONFIG_INVALID';
+        
         toast.error(
           <div className="space-y-2">
-            <div className="font-medium">⚙️ Configurazione AI Richiesta</div>
-            <div className="text-sm">{message || `Per utilizzare la funzionalità AI, configura prima l'API key di ${provider} nelle Impostazioni.`}</div>
-            <div className="text-xs text-gray-600">Vai in Impostazioni → AI Provider → {provider}</div>
+            <div className="font-medium">{isInvalid ? '🔑' : '⚙️'} {isInvalid ? t('ai.invalidConfiguration') : t('ai.configurationRequired')}</div>
+            <div className="text-sm">{message || t('ai.configurationMessage')}</div>
+            <div className="text-xs text-gray-600">{t('ai.goToSettings')} {provider}</div>
           </div>,
-          { duration: 6000 }
+          { duration: 8000 }
         );
       } else {
-        toast.error('Errore nella generazione della knowledge base: ' + (error.message || 'Errore sconosciuto'));
+        toast.error(t('transcription.knowledgeGenerationError') + ': ' + (error.message || 'Error'));
       }
     } finally {
       setIsGeneratingKnowledge(false);
@@ -804,7 +816,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       };
 
       await electronAPI.minutes?.save(minutesToSave);
-      toast.success('Minute salvate con successo!');
+      toast.success(t('transcription.minutesSaved'));
       setShowMinutesModal(false);
       
       // Ricarica le minute salvate
@@ -814,7 +826,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       }
     } catch (error) {
       console.error('Error saving minutes:', error);
-      toast.error('Errore nel salvataggio delle minute');
+      toast.error(t('transcription.minutesSaveError'));
     }
   }
 
@@ -832,7 +844,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       };
 
       await electronAPI.knowledge?.save(knowledgeToSave);
-      toast.success('Knowledge base salvata con successo!');
+      toast.success(t('transcription.knowledgeSaved'));
       setShowKnowledgeModal(false);
       
       // Ricarica gli appunti salvati
@@ -843,7 +855,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
       }
     } catch (error) {
       console.error('Error saving knowledge:', error);
-      toast.error('Errore nel salvataggio della knowledge base');
+      toast.error(t('transcription.knowledgeSaveError'));
     }
   }
 
@@ -881,7 +893,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 group-hover:transform group-hover:-translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span className="text-sm font-medium">Indietro</span>
+            <span className="text-sm font-medium">{t('common.back')}</span>
           </button>
           <div className="flex-1">
             {/* Breadcrumb */}
@@ -890,7 +902,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                 onClick={onBack}
                 className="hover:text-gray-700 transition-colors"
               >
-                Monitoraggio
+{t('monitoring.title')}
               </button>
               <svg className="mx-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
@@ -899,7 +911,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                 onClick={onBack}
                 className="hover:text-gray-700 transition-colors"
               >
-                Riunioni
+{t('meetings.title')}
               </button>
               <svg className="mx-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
@@ -946,7 +958,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                   <button
                     onClick={cancelEditingTitle}
                     className="p-1 text-red-600 hover:text-red-700 transition-colors flex-shrink-0"
-                    title="Annulla"
+                    title={t('transcription.cancelEdit')}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -962,7 +974,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                     <button
                       onClick={startEditingTitle}
                       className="p-1 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-                      title="Modifica titolo"
+                      title={t('transcription.editTitle')}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -991,7 +1003,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v-.07zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold text-gray-800">Azioni AI</h3>
+              <h3 className="text-sm font-semibold text-gray-800">{t('ai.title')}</h3>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -1002,7 +1014,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                 isLoading={isGeneratingTitle}
                 className="shadow-none hover:shadow-none !bg-blue-100 !text-gray-900 hover:!bg-blue-200 border border-blue-400"
               >
-                🤖 Genera titolo
+                🤖 {t('ai.generateTitle')}
               </Button>
               
               <Button
@@ -1013,7 +1025,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                 isLoading={isIdentifyingSpeakers}
                 className="shadow-none hover:shadow-none !bg-purple-100 !text-gray-900 hover:!bg-purple-200 border border-purple-400"
               >
-                👥 Identifica speaker
+                👥 {t('ai.identifySpeakers')}
               </Button>
 
               <Button
@@ -1024,7 +1036,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                 isLoading={isGeneratingMinutes}
                 className="shadow-none hover:shadow-none !bg-green-100 !text-gray-900 hover:!bg-green-200 border border-green-400"
               >
-                📋 Genera minuta
+                📋 {t('ai.generateMinutes')}
               </Button>
 
               <Button
@@ -1035,7 +1047,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                 isLoading={isGeneratingKnowledge}
                 className="shadow-none hover:shadow-none !bg-yellow-100 !text-gray-900 hover:!bg-yellow-200 border border-yellow-400"
               >
-                🧠 Genera appunti
+                🧠 {t('ai.generateNotes')}
               </Button>
             </div>
           </div>
@@ -1077,7 +1089,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                     isLoading={isTranscribing}
                     className="w-full shadow-none hover:shadow-none !bg-orange-100 !text-gray-900 hover:!bg-orange-200 border border-orange-400"
                   >
-                    {isTranscribing ? 'Transcribing...' : 'Transcribe Audio'}
+                                              {isTranscribing ? t('transcription.inProgress') : t('transcription.start')}
                   </Button>
                 </div>
               )}
@@ -1085,7 +1097,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               {/* Saved Content Section */}
               {(savedMinutes.length > 0 || savedKnowledge.length > 0) && (
                 <div className="mb-4 pb-4 border-b border-gray-100">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Contenuti Salvati</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">{t('ai.savedContent')}</h4>
                   
                   <div className="space-y-3">
                     {/* Saved Minutes */}
@@ -1194,7 +1206,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 h-full">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-800">
-                  {activeTranscript ? 'Transcript' : 'No transcript selected'}
+                  {activeTranscript ? t('transcription.title') : t('transcription.noTranscriptSelected')}
                 </h3>
                 
                 {activeTranscript?.status === 'completed' && (
@@ -1205,7 +1217,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyDown={handleSearchKeyDown}
-                        placeholder="Search in text..."
+                        placeholder={t('transcription.searchPlaceholder')}
                         className="px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
                       />
                       <Button
@@ -1253,24 +1265,24 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                                 onClick={() => setViewMode('utterances')}
                                 className={`px-4 py-2 ${viewMode === 'utterances' ? 'border-b-2 border-primary-500 text-primary-500 font-medium' : 'text-gray-600 hover:text-gray-700'}`}
                               >
-                                Transcript with speakers
+{t('transcription.withSpeakers')}
                               </button>
                               <button
                                 onClick={() => setViewMode('fulltext')}
                                 className={`px-4 py-2 ${viewMode === 'fulltext' ? 'border-b-2 border-primary-500 text-primary-500 font-medium' : 'text-gray-600 hover:text-gray-700'}`}
                               >
-                                Full text
+{t('transcription.fullText')}
                               </button>
                             </div>
                             <button
                               onClick={() => setIsFullTextModalOpen(true)}
                               className="text-sm text-gray-600 hover:text-gray-700 flex items-center"
-                              title="View in modal"
+                              title={t('transcription.viewInModal')}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                               </svg>
-                              Expand
+                              {t('transcription.expand')}
                             </button>
                           </div>
                         </div>
@@ -1296,24 +1308,24 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                     ) : activeTranscript.status === 'processing' ? (
                       <>
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500 mb-4"></div>
-                        <p className="text-gray-600 text-center">Transcription in progress...</p>
-                        <p className="text-gray-600 text-sm text-center mt-2">This process may take a few minutes</p>
+                        <p className="text-gray-600 text-center">{t('transcription.transcriptionInProgress')}</p>
+                        <p className="text-gray-600 text-sm text-center mt-2">{t('transcription.processMayTakeMinutes')}</p>
                       </>
                     ) : activeTranscript.status === 'queued' ? (
                       <>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <p className="text-gray-600 text-center">Transcription in queue</p>
-                        <p className="text-gray-600 text-sm text-center mt-2">The transcription will be processed soon</p>
+                        <p className="text-gray-600 text-center">{t('transcription.transcriptionInQueue')}</p>
+                        <p className="text-gray-600 text-sm text-center mt-2">{t('transcription.transcriptionWillBeProcessed')}</p>
                       </>
                     ) : (
                       <>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-red-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <p className="text-gray-600 text-center">An error occurred during transcription</p>
-                        <p className="text-gray-600 text-sm text-center mt-2">Try again later or contact support</p>
+                        <p className="text-gray-600 text-center">{t('transcription.transcriptionError')}</p>
+                        <p className="text-gray-600 text-sm text-center mt-2">{t('transcription.tryAgainOrContact')}</p>
                       </>
                     )}
                   </>
@@ -1325,7 +1337,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                     
                     {audioFile ? (
                       <>
-                        <p className="text-gray-600 text-center">No transcription available</p>
+                        <p className="text-gray-600 text-center">{t('transcription.noTranscriptAvailable')}</p>
                         <Button
                           onClick={startTranscription}
                           disabled={isTranscribing}
@@ -1334,13 +1346,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
                           isLoading={isTranscribing}
                           className="mt-4 shadow-none hover:shadow-none !bg-orange-100 !text-gray-900 hover:!bg-orange-200 border border-orange-400"
                         >
-                          {isTranscribing ? 'Transcribing...' : 'Transcribe Audio'}
+                          {isTranscribing ? t('transcription.inProgress') : t('transcription.start')}
                         </Button>
                       </>
                     ) : (
                       <>
-                        <p className="text-gray-600 text-center">No audio file available</p>
-                        <p className="text-gray-600 text-sm text-center mt-2">Import an audio file to perform transcription</p>
+                        <p className="text-gray-600 text-center">{t('audio.noFile')}</p>
+                        <p className="text-gray-600 text-sm text-center mt-2">{t('transcription.importAudio')}</p>
                       </>
                     )}
                   </div>
@@ -1356,11 +1368,11 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         isOpen={isFullTextModalOpen}
         onRequestClose={() => setIsFullTextModalOpen(false)}
         style={customModalStyles}
-        contentLabel="Full transcription text"
+        contentLabel={t('transcription.fullTranscriptionText')}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-800">
-            {viewMode === 'utterances' ? 'Transcript with speakers' : 'Full transcription text'}
+            {viewMode === 'utterances' ? t('transcription.withSpeakers') : t('transcription.fullTranscriptionText')}
           </h2>
           <button 
             onClick={() => setIsFullTextModalOpen(false)}
@@ -1567,7 +1579,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
           contentLabel="Knowledge Base"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">🧠 Appunti Knowledge Base Generati</h2>
+            <h2 className="text-xl font-semibold text-gray-800">🧠 {t('ai.notesGenerated')}</h2>
             <button 
               onClick={() => setShowKnowledgeModal(false)}
               className="text-gray-600 hover:text-gray-600 transition-colors"
@@ -1617,13 +1629,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
 
             {generatedKnowledge.insights && generatedKnowledge.insights.length > 0 && (
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Insights</h4>
+                <h4 className="font-medium text-gray-900 mb-3">{t('ai.insights')}</h4>
                 <div className="space-y-3">
                   {generatedKnowledge.insights.map((insight: any, index: number) => (
                     <div key={index} className="bg-yellow-50 p-3 rounded-lg">
                       <p className="text-sm font-medium text-gray-900">{insight.insight}</p>
-                      <p className="text-xs text-gray-600 mt-1">Contesto: {insight.context}</p>
-                      <p className="text-xs text-gray-600">Applicabilità: {insight.applicability}</p>
+                      <p className="text-xs text-gray-600 mt-1">{t('ai.context')}: {insight.context}</p>
+                      <p className="text-xs text-gray-600">{t('ai.applicability')}: {insight.applicability}</p>
                     </div>
                   ))}
                 </div>
@@ -1632,13 +1644,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
 
             {generatedKnowledge.actionableItems && generatedKnowledge.actionableItems.length > 0 && (
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Azioni da Intraprendere</h4>
+                <h4 className="font-medium text-gray-900 mb-3">{t('ai.actionableItems')}</h4>
                 <div className="space-y-2">
                   {generatedKnowledge.actionableItems.map((item: any, index: number) => (
                     <div key={index} className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
                       <div>
                         <p className="text-sm font-medium text-gray-900">{item.item}</p>
-                        <p className="text-xs text-gray-600">Categoria: {item.category}</p>
+                        <p className="text-xs text-gray-600">{t('ai.category')}: {item.category}</p>
                       </div>
                       <span className={`inline-block px-2 py-1 text-xs rounded-full ${
                         item.priority === 'high' ? 'bg-red-100 text-red-700' :
@@ -1715,7 +1727,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
         contentLabel="Speaker suggestions"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">🤖 Suggerimenti Speaker AI</h2>
+          <h2 className="text-xl font-semibold text-gray-800">🤖 {t('ai.speakerSuggestions')}</h2>
           <div className="flex items-center gap-3">
             <Button
               onClick={applyAllHighConfidenceSuggestions}
@@ -1724,7 +1736,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ meetingId, onBack
               disabled={speakerSuggestions.filter(s => s.confidence > 0.7).length === 0}
               className="shadow-none hover:shadow-none !bg-green-100 !text-gray-900 hover:!bg-green-200 border border-green-400"
             >
-                              ✅ Applica Tutti (&gt;70%)
+                              ✅ {t('ai.applyAllHighConfidence')}
             </Button>
             <button 
               onClick={() => setShowSpeakerSuggestions(false)}

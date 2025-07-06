@@ -27,7 +27,122 @@
     "next": "Prossima",
     "files": "file",
     "file": "file",
-    "transcripts": "trascrizioni"
+    "transcripts": "trascrizioni",
+    "close": "Chiudi",
+    "confirm": "Conferma",
+    "error": "Errore",
+    "success": "Successo",
+    "warning": "Attenzione",
+    "info": "Informazioni",
+    "yes": "Sì",
+    "no": "No"
+  },
+  "navigation": {
+    "monitoring": "Monitoraggio",
+    "minutesAndKnowledge": "Minutes & Knowledge"
+  },
+  "savedContent": {
+    "title": "Minutes & Knowledge",
+    "backTooltip": "Torna al monitoraggio (Esc)",
+    "tabs": {
+      "minutes": "Minute",
+      "knowledge": "Appunti"
+    },
+    "search": {
+      "minutesPlaceholder": "Cerca nelle minute...",
+      "knowledgePlaceholder": "Cerca negli appunti..."
+    },
+    "empty": {
+      "noMinutes": "Nessuna minuta salvata",
+      "noMinutesSubtext": "Le minute che generi verranno mostrate qui",
+      "noKnowledge": "Nessun appunto salvato",
+      "noKnowledgeSubtext": "Gli appunti che generi verranno mostrati qui"
+    },
+    "minuteCard": {
+      "participants": "partecipanti",
+      "actions": "azioni",
+      "decisions": "decisioni",
+      "next": "Prossima",
+      "viewDetail": "Visualizza dettaglio",
+      "expandCollapse": "Espandi/Comprimi",
+      "delete": "Elimina",
+      "participantsSection": "Partecipanti",
+      "actionsSection": "Azioni da Intraprendere",
+      "responsible": "Responsabile",
+      "moreActions": "altre azioni..."
+    },
+    "knowledgeCard": {
+      "insights": "insights",
+      "actions": "azioni",
+      "moreTags": "altri tag",
+      "viewDetail": "Visualizza dettaglio",
+      "expandCollapse": "Espandi/Comprimi",
+      "delete": "Elimina",
+      "keyTopics": "Argomenti Principali",
+      "moreTopics": "altri argomenti...",
+      "moreInsights": "altri insights..."
+    },
+    "deleteConfirm": "Sei sicuro di voler eliminare questo elemento?",
+    "deleteSuccess": {
+      "minute": "Minuta eliminata con successo",
+      "knowledge": "Appunto eliminato con successo"
+    },
+    "errors": {
+      "loadContent": "Errore nel caricamento dei contenuti",
+      "search": "Errore nella ricerca",
+      "delete": "Errore nell'eliminazione"
+    }
+  },
+  "minutesDetail": {
+    "title": "Dettaglio Minuta",
+    "meetingDate": "Data riunione",
+    "created": "Creata",
+    "sections": {
+      "meetingSummary": "Riassunto della Riunione",
+      "participants": "Partecipanti",
+      "agenda": "Agenda",
+      "keyDiscussions": "Discussioni Principali",
+      "actionItems": "Azioni da Intraprendere",
+      "nextMeeting": "Prossima Riunione"
+    },
+    "actionItem": {
+      "responsible": "Responsabile",
+      "dueDate": "Scadenza"
+    },
+    "nextMeeting": {
+      "date": "Data",
+      "plannedAgenda": "Agenda prevista"
+    },
+    "metadata": {
+      "title": "Informazioni",
+      "template": "Template",
+      "aiProvider": "AI Provider"
+    },
+    "copyMarkdown": "Copia Markdown",
+    "close": "Chiudi"
+  },
+  "knowledgeDetail": {
+    "title": "Dettaglio Appunti",
+    "sections": {
+      "summary": "Riassunto",
+      "keyTopics": "Argomenti Principali",
+      "insights": "Intuizioni e Analisi",
+      "actionableItems": "Elementi Azionabili",
+      "concepts": "Concetti",
+      "learnings": "Apprendimenti",
+      "resources": "Risorse"
+    },
+    "actionableItem": {
+      "category": "Categoria",
+      "timeframe": "Tempistica"
+    },
+    "metadata": {
+      "title": "Informazioni",
+      "template": "Template",
+      "aiProvider": "AI Provider"
+    },
+    "copyMarkdown": "Copia Markdown",
+    "close": "Chiudi"
   },
   "meetings": {
     "title": "Riunioni",
@@ -56,24 +171,24 @@
     "start": "Trascrivi Audio",
     "inProgress": "Trascrivendo...",
     "completed": "Trascrizione completata",
-    "error": "Errore di trascrizione",
+    "error": "Errore trascrizione",
     "noAudio": "Nessun file audio disponibile",
     "importAudio": "Importa file audio",
-    "fullText": "Testo completo",
-    "withSpeakers": "Trascrizione con parlanti",
+    "fullText": "Testo Completo",
+    "withSpeakers": "Trascrizione con speaker",
     "searchPlaceholder": "Cerca nel testo...",
     "noTranscriptForTitle": "Nessuna trascrizione disponibile per generare il titolo",
     "titleGenerationError": "Errore durante la generazione del titolo",
     "noTranscriptForSpeakers": "Nessuna trascrizione disponibile per identificare gli speaker",
     "speakerIdentificationError": "Errore durante l'identificazione degli speaker",
     "cannotApplySuggestion": "Impossibile applicare il suggerimento",
-    "suggestionApplicationError": "Errore durante l'applicazione del suggerimento",
-    "noHighConfidenceSuggestions": "Nessun suggerimento con confidence sufficiente (>70%)",
-    "suggestionBatchError": "Errore durante l'applicazione dei suggerimenti",
+    "suggestionApplicationError": "Errore nell'applicazione del suggerimento",
+    "noHighConfidenceSuggestions": "Nessun suggerimento con confidenza sufficiente (>70%)",
+    "suggestionBatchError": "Errore nell'applicazione dei suggerimenti",
     "cannotUpdateTitle": "Impossibile aggiornare il titolo",
     "titleCannotBeEmpty": "Il titolo non può essere vuoto",
     "titleUpdated": "Titolo aggiornato con successo",
-    "titleUpdateError": "Errore durante l'aggiornamento del titolo",
+    "titleUpdateError": "Errore nell'aggiornamento del titolo",
     "minutesGenerationRequiresTranscript": "Per generare le minute è necessaria una trascrizione completata",
     "minutesGenerated": "Minute generate con successo!",
     "minutesGenerationError": "Errore nella generazione delle minute",
@@ -90,14 +205,50 @@
     "startError": "Impossibile avviare la trascrizione",
     "apiNotAvailable": "API trascrizioni non disponibile",
     "loadError": "Impossibile caricare i dati della trascrizione",
+    "noTranscriptSelected": "Nessuna trascrizione selezionata",
+    "noTranscriptAvailable": "Nessuna trascrizione disponibile",
+    "transcriptionInProgress": "Trascrizione in corso...",
+    "transcriptionInQueue": "Trascrizione in coda",
+    "transcriptionError": "Si è verificato un errore durante la trascrizione",
+    "processMayTakeMinutes": "Questo processo potrebbe richiedere alcuni minuti",
+    "transcriptionWillBeProcessed": "La trascrizione verrà elaborata a breve",
+    "tryAgainOrContact": "Riprova più tardi o contatta il supporto",
+    "expandModal": "Visualizza in modale",
+    "expand": "Espandi",
+    "editTitle": "Modifica titolo",
+    "cancelEdit": "Annulla",
+    "viewInModal": "Visualizza in modale",
+    "fullTranscriptionText": "Testo completo della trascrizione",
     "status": {
       "queued": "In coda",
-      "processing": "In elaborazione",
-      "completed": "Completata",
+      "processing": "Elaborazione",
+      "completed": "Completato",
       "error": "Errore",
       "title": "Stato",
       "unknown": "Sconosciuto"
     }
+  },
+  "ai": {
+    "title": "Azioni AI",
+    "generateTitle": "Genera titolo",
+    "identifySpeakers": "Identifica speaker",
+    "generateMinutes": "Genera minuta",
+    "generateNotes": "Genera appunti",
+    "speakerSuggestions": "Suggerimenti Speaker AI",
+    "applyAllHighConfidence": "Applica Tutti (>70%)",
+    "minutesGenerated": "Minute Generate",
+    "notesGenerated": "Appunti Knowledge Base Generati",
+    "savedContent": "Contenuti Salvati",
+    "insights": "Insights",
+    "actionableItems": "Azioni da Intraprendere",
+    "context": "Contesto",
+    "applicability": "Applicabilità",
+    "category": "Categoria",
+    "priority": "Priorità",
+    "configurationRequired": "Configurazione AI Richiesta",
+    "invalidConfiguration": "Configurazione AI Non Valida",
+    "configurationMessage": "Per utilizzare le funzionalità AI, configura prima l'API key.",
+    "goToSettings": "Vai in Impostazioni → AI Provider →"
   },
   "audio": {
     "title": "File Audio",
@@ -222,5 +373,123 @@
     "loadingSettings": "Impossibile caricare le impostazioni",
     "savingSettings": "Impossibile salvare le impostazioni",
     "requiredFields": "Titolo e data sono obbligatori"
+  },
+  "minutesDetail": {
+    "title": "Dettaglio Minuta",
+    "meetingDate": "Data riunione",
+    "created": "Creata",
+    "sections": {
+      "meetingSummary": "Riassunto della Riunione",
+      "participants": "Partecipanti",
+      "agenda": "Agenda",
+      "keyDiscussions": "Discussioni Principali",
+      "actionItems": "Azioni da Intraprendere",
+      "nextMeeting": "Prossima Riunione"
+    },
+    "actionItem": {
+      "responsible": "Responsabile",
+      "dueDate": "Scadenza"
+    },
+    "nextMeeting": {
+      "date": "Data",
+      "plannedAgenda": "Agenda prevista"
+    },
+    "metadata": {
+      "title": "Informazioni",
+      "template": "Template",
+      "aiProvider": "AI Provider"
+    },
+    "copyMarkdown": "Copia Markdown",
+    "close": "Chiudi",
+    "copySuccess": "Minuta copiata negli appunti in formato Markdown",
+    "copyError": "Errore nel copiare negli appunti"
+  },
+  "knowledgeDetail": {
+    "title": "Dettaglio Appunti",
+    "category": "Categoria",
+    "created": "Creata",
+    "sections": {
+      "summary": "Riassunto",
+      "keyTopics": "Argomenti Principali",
+      "insights": "Insights",
+      "actionableItems": "Elementi Azionabili",
+      "concepts": "Concetti",
+      "learnings": "Apprendimenti",
+      "resources": "Risorse"
+    },
+    "actionableItem": {
+      "category": "Categoria",
+      "timeframe": "Tempistica",
+      "defaultTitle": "Elemento azionabile"
+    },
+    "concept": {
+      "defaultTitle": "Concetto"
+    },
+    "learning": {
+      "defaultTitle": "Apprendimento"
+    },
+    "resource": {
+      "defaultTitle": "Risorsa"
+    },
+    "metadata": {
+      "title": "Informazioni",
+      "template": "Template",
+      "aiProvider": "AI Provider"
+    },
+    "copyMarkdown": "Copia Markdown",
+    "close": "Chiudi",
+    "copySuccess": "Appunti copiati negli appunti in formato Markdown",
+    "copyError": "Errore nel copiare negli appunti"
+  },
+  "transcription": {
+    "title": "Trascrizione",
+    "backTooltip": "Torna alla lista riunioni (Esc)",
+    "start": "Avvia Trascrizione",
+    "inProgress": "Trascrizione in corso...",
+    "completed": "Trascrizione completata",
+    "failed": "Trascrizione fallita",
+    "noTranscript": "Nessuna trascrizione disponibile",
+    "transcriptNotFound": "Trascrizione non trovata per questa riunione",
+    "audioNotFound": "File audio non trovato per questa riunione",
+    "loadError": "Impossibile caricare i dati di trascrizione",
+    "searchPlaceholder": "Cerca nella trascrizione...",
+    "noResults": "Nessun risultato trovato",
+    "status": {
+      "queued": "In coda",
+      "processing": "In elaborazione",
+      "completed": "Completato",
+      "error": "Errore",
+      "unknown": "Sconosciuto"
+    },
+    "withSpeakers": "Con Speaker",
+    "fullText": "Testo Completo",
+    "expand": "Espandi",
+    "viewInModal": "Visualizza in modale",
+    "fullTranscriptionText": "Testo Completo Trascrizione",
+    "transcriptionInProgress": "Trascrizione in corso...",
+    "processMayTakeMinutes": "Questo processo potrebbe richiedere diversi minuti",
+    "transcriptionInQueue": "Trascrizione in coda",
+    "transcriptionWillBeProcessed": "La tua trascrizione verrà elaborata a breve",
+    "transcriptionError": "Errore trascrizione",
+    "tryAgainOrContact": "Riprova o contatta il supporto",
+    "noTranscriptAvailable": "Nessuna trascrizione disponibile",
+    "importAudio": "Importa un file audio per iniziare la trascrizione",
+    "viewModes": {
+      "utterances": "Interventi",
+      "fullText": "Testo Completo"
+    },
+    "fullTextModal": {
+      "title": "Testo Completo",
+      "close": "Chiudi"
+    },
+    "editTitle": "Modifica titolo",
+    "saveTitle": "Salva titolo",
+    "cancelEdit": "Annulla modifica",
+    "titleSaved": "Titolo salvato con successo",
+    "titleSaveError": "Errore nel salvare il titolo",
+    "minutesSaved": "Minuta salvata con successo",
+    "minutesSaveError": "Errore nel salvare la minuta",
+    "knowledgeSaved": "Appunti salvati con successo",
+    "knowledgeSaveError": "Errore nel salvare gli appunti"
   }
 } 

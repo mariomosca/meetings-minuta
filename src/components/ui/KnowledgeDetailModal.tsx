@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Modal from 'react-modal';
 
 interface KnowledgeDetailModalProps {
@@ -31,6 +32,7 @@ const customModalStyles = {
 };
 
 const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onRequestClose, knowledge }) => {
+  const { t } = useTranslation();
   if (!knowledge) return null;
 
   const formatDateTime = (dateString: string) => {
@@ -230,7 +232,7 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
           {/* Summary */}
           {knowledge.summary && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Riassunto</h3>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('knowledgeDetail.sections.summary')}</h3>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-gray-800 leading-relaxed">{knowledge.summary}</p>
               </div>
@@ -240,7 +242,7 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
           {/* Tags */}
           {knowledge.tags && knowledge.tags.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Tag</h3>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-3">Tags</h3>
               <div className="flex flex-wrap gap-2">
                 {knowledge.tags.map((tag: string, index: number) => (
                   <span key={index} className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -254,7 +256,7 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
           {/* Key Topics */}
           {knowledge.keyTopics && knowledge.keyTopics.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Argomenti Principali</h3>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('knowledgeDetail.sections.keyTopics')}</h3>
               <div className="space-y-3">
                 {knowledge.keyTopics.map((topic: any, index: number) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-4">
@@ -281,7 +283,7 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
           {/* Insights */}
           {knowledge.insights && knowledge.insights.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Intuizioni e Analisi</h3>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('knowledgeDetail.sections.insights')}</h3>
               <div className="space-y-3">
                 {knowledge.insights.map((insight: any, index: number) => (
                   <div key={index} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
@@ -309,7 +311,7 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
           {/* Actionable Items */}
           {knowledge.actionableItems && knowledge.actionableItems.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Elementi Azionabili</h3>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('knowledgeDetail.sections.actionableItems')}</h3>
               <div className="space-y-3">
                 {knowledge.actionableItems.map((item: any, index: number) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-4">
@@ -331,13 +333,13 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {item.category && (
                         <div>
-                          <span className="text-sm font-medium text-gray-600">Categoria:</span>
+                                                      <span className="text-sm font-medium text-gray-600">{t('knowledgeDetail.actionableItem.category')}:</span>
                           <span className="ml-2 text-sm text-gray-900">{item.category}</span>
                         </div>
                       )}
                       {item.timeframe && (
                         <div>
-                          <span className="text-sm font-medium text-gray-600">Tempistica:</span>
+                                                      <span className="text-sm font-medium text-gray-600">{t('knowledgeDetail.actionableItem.timeframe')}:</span>
                           <span className="ml-2 text-sm text-gray-900">{item.timeframe}</span>
                         </div>
                       )}
@@ -351,7 +353,7 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
           {/* Connections */}
           {knowledge.connections && knowledge.connections.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Connessioni</h3>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-3">Connections</h3>
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                 <div className="flex flex-wrap gap-2">
                   {knowledge.connections.map((connection: string, index: number) => (
@@ -367,7 +369,7 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
           {/* Questions */}
           {knowledge.questions && knowledge.questions.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Domande Aperte</h3>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-3">Open Questions</h3>
               <div className="space-y-3">
                 {knowledge.questions.map((question: string, index: number) => (
                   <div key={index} className="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -388,7 +390,7 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {knowledge.concepts && knowledge.concepts.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Concetti</h3>
+                                     <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('knowledgeDetail.sections.concepts')}</h3>
                   <div className="space-y-2">
                     {knowledge.concepts.map((concept: any, index: number) => (
                       <div key={index} className="bg-teal-50 border border-teal-200 rounded p-3">
@@ -406,7 +408,7 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
 
               {knowledge.learnings && knowledge.learnings.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Apprendimenti</h3>
+                                     <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('knowledgeDetail.sections.learnings')}</h3>
                   <div className="space-y-2">
                     {knowledge.learnings.map((learning: any, index: number) => (
                       <div key={index} className="bg-emerald-50 border border-emerald-200 rounded p-3">
@@ -427,7 +429,7 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
           {/* Resources */}
           {knowledge.resources && knowledge.resources.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Risorse</h3>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('knowledgeDetail.sections.resources')}</h3>
               <div className="space-y-2">
                 {knowledge.resources.map((resource: any, index: number) => (
                   <div key={index} className="bg-cyan-50 border border-cyan-200 rounded-lg p-3">
@@ -457,18 +459,18 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
 
           {/* Metadata */}
           <div className="border-t border-gray-200 pt-4">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Informazioni</h3>
+                         <h3 className="text-sm font-medium text-gray-600 mb-2">{t('knowledgeDetail.metadata.title')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
               <div>
-                <span className="font-medium">Template:</span>
+                                 <span className="font-medium">{t('knowledgeDetail.metadata.template')}:</span>
                 <span className="ml-1">{knowledge.templateUsed || 'N/A'}</span>
               </div>
               <div>
-                <span className="font-medium">AI Provider:</span>
+                                 <span className="font-medium">{t('knowledgeDetail.metadata.aiProvider')}:</span>
                 <span className="ml-1">{knowledge.aiProvider || 'N/A'}</span>
               </div>
               <div>
-                <span className="font-medium">ID:</span>
+                                 <span className="font-medium">ID:</span>
                 <span className="ml-1 font-mono text-xs">{knowledge.id}</span>
               </div>
             </div>
@@ -485,13 +487,13 @@ const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({ isOpen, onR
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
-              Copia Markdown
+                             {t('knowledgeDetail.copyMarkdown')}
             </button>
             <button 
               onClick={onRequestClose}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
             >
-              Chiudi
+                             {t('knowledgeDetail.close')}
             </button>
           </div>
         </div>

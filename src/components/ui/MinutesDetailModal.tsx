@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Modal from 'react-modal';
 
 interface MinutesDetailModalProps {
@@ -31,6 +32,7 @@ const customModalStyles = {
 };
 
 const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onRequestClose, minutes }) => {
+  const { t } = useTranslation();
   if (!minutes) return null;
 
   const formatDate = (dateString: string) => {
@@ -77,19 +79,19 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
   const generateMarkdown = () => {
     let markdown = `# ${minutes.title}\n\n`;
     
-    // Informazioni generali
-    markdown += `**Data riunione:** ${formatDate(minutes.date)}\n`;
-    markdown += `**Creata:** ${formatDateTime(minutes.createdAt)}\n\n`;
+          // Informazioni generali
+      markdown += `**${t('minutesDetail.meetingDate')}:** ${formatDate(minutes.date)}\n`;
+      markdown += `**${t('minutesDetail.created')}:** ${formatDateTime(minutes.createdAt)}\n\n`;
     
-    // Riassunto della riunione
-    if (minutes.meetingSummary) {
-      markdown += `## 📋 Riassunto della Riunione\n\n`;
-      markdown += `${minutes.meetingSummary}\n\n`;
-    }
+          // Riassunto della riunione
+      if (minutes.meetingSummary) {
+        markdown += `## 📋 ${t('minutesDetail.sections.meetingSummary')}\n\n`;
+        markdown += `${minutes.meetingSummary}\n\n`;
+      }
     
-    // Partecipanti
-    if (minutes.participants && minutes.participants.length > 0) {
-      markdown += `## Partecipanti\n\n`;
+          // Partecipanti
+      if (minutes.participants && minutes.participants.length > 0) {
+        markdown += `## ${t('minutesDetail.sections.participants')}\n\n`;
       minutes.participants.forEach((participant: any) => {
         markdown += `- **${participant.name}**`;
         if (participant.role) markdown += ` - ${participant.role}`;
@@ -98,25 +100,25 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
       markdown += `\n`;
     }
     
-    // Agenda
-    if (minutes.agenda && minutes.agenda.length > 0) {
-      markdown += `## Agenda\n\n`;
+          // Agenda
+      if (minutes.agenda && minutes.agenda.length > 0) {
+        markdown += `## ${t('minutesDetail.sections.agenda')}\n\n`;
       minutes.agenda.forEach((item: string, index: number) => {
         markdown += `${index + 1}. ${item}\n`;
       });
       markdown += `\n`;
     }
     
-    // Discussioni principali
-    if (minutes.keyDiscussions && minutes.keyDiscussions.length > 0) {
-      markdown += `## Discussioni Principali\n\n`;
+          // Discussioni principali
+      if (minutes.keyDiscussions && minutes.keyDiscussions.length > 0) {
+        markdown += `## ${t('minutesDetail.sections.keyDiscussions')}\n\n`;
       minutes.keyDiscussions.forEach((discussion: any) => {
         markdown += `### ${discussion.topic}\n\n`;
         if (discussion.summary) {
           markdown += `${discussion.summary}\n\n`;
         }
-        if (discussion.decisions && discussion.decisions.length > 0) {
-          markdown += `**Decisioni:**\n`;
+                  if (discussion.decisions && discussion.decisions.length > 0) {
+            markdown += `**Decisions:**\n`;
           discussion.decisions.forEach((decision: string) => {
             markdown += `- ✓ ${decision}\n`;
           });
@@ -125,27 +127,27 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
       });
     }
     
-    // Action items
-    if (minutes.actionItems && minutes.actionItems.length > 0) {
-      markdown += `## Azioni da Intraprendere\n\n`;
+          // Action items
+      if (minutes.actionItems && minutes.actionItems.length > 0) {
+        markdown += `## ${t('minutesDetail.sections.actionItems')}\n\n`;
       minutes.actionItems.forEach((action: any, index: number) => {
         markdown += `${index + 1}. **${action.action}**\n`;
-        if (action.owner) markdown += `   - Responsabile: ${action.owner}\n`;
-        if (action.priority) markdown += `   - Priorità: ${action.priority}\n`;
-        if (action.status) markdown += `   - Stato: ${action.status}\n`;
-        if (action.dueDate) markdown += `   - Scadenza: ${formatDate(action.dueDate)}\n`;
+                  if (action.owner) markdown += `   - ${t('minutesDetail.actionItem.responsible')}: ${action.owner}\n`;
+          if (action.priority) markdown += `   - Priority: ${action.priority}\n`;
+          if (action.status) markdown += `   - Status: ${action.status}\n`;
+          if (action.dueDate) markdown += `   - ${t('minutesDetail.actionItem.dueDate')}: ${formatDate(action.dueDate)}\n`;
         markdown += `\n`;
       });
     }
     
-    // Prossima riunione
-    if (minutes.nextMeeting) {
-      markdown += `## Prossima Riunione\n\n`;
-      if (minutes.nextMeeting.date) {
-        markdown += `**Data:** ${formatDate(minutes.nextMeeting.date)}\n`;
-      }
-      if (minutes.nextMeeting.agenda && minutes.nextMeeting.agenda.length > 0) {
-        markdown += `**Agenda pianificata:**\n`;
+          // Prossima riunione
+      if (minutes.nextMeeting) {
+        markdown += `## ${t('minutesDetail.sections.nextMeeting')}\n\n`;
+        if (minutes.nextMeeting.date) {
+          markdown += `**${t('minutesDetail.nextMeeting.date')}:** ${formatDate(minutes.nextMeeting.date)}\n`;
+        }
+        if (minutes.nextMeeting.agenda && minutes.nextMeeting.agenda.length > 0) {
+          markdown += `**${t('minutesDetail.nextMeeting.plannedAgenda')}:**\n`;
         minutes.nextMeeting.agenda.forEach((item: string, index: number) => {
           markdown += `${index + 1}. ${item}\n`;
         });
@@ -153,10 +155,10 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
       markdown += `\n`;
     }
     
-    // Metadata
-    markdown += `---\n`;
-    markdown += `*Generato con ${minutes.templateUsed || 'N/A'} tramite ${minutes.aiProvider || 'N/A'}*\n`;
-    markdown += `*ID: ${minutes.id}*\n`;
+          // Metadata
+      markdown += `---\n`;
+      markdown += `*Generated with ${minutes.templateUsed || 'N/A'} via ${minutes.aiProvider || 'N/A'}*\n`;
+      markdown += `*ID: ${minutes.id}*\n`;
     
     return markdown;
   };
@@ -166,7 +168,7 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
       isOpen={isOpen}
       onRequestClose={onRequestClose}
       style={customModalStyles}
-      contentLabel="Dettaglio Minuta"
+              contentLabel={t('minutesDetail.title')}
     >
       <div className="bg-white">
         {/* Header */}
@@ -176,10 +178,10 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
               <span className="text-green-600 text-2xl mr-3">📋</span>
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">{minutes.title}</h2>
-                <p className="text-sm text-gray-600">
-                  Data riunione: {formatDate(minutes.date)} • 
-                  Creata: {formatDateTime(minutes.createdAt)}
-                </p>
+                                  <p className="text-sm text-gray-600">
+                    {t('minutesDetail.meetingDate')}: {formatDate(minutes.date)} • 
+                    {t('minutesDetail.created')}: {formatDateTime(minutes.createdAt)}
+                  </p>
               </div>
             </div>
             <button 
@@ -202,7 +204,7 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Riassunto della Riunione
+                {t('minutesDetail.sections.meetingSummary')}
               </h3>
               <p className="text-blue-800 leading-relaxed">{minutes.meetingSummary}</p>
             </div>
@@ -211,7 +213,7 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
           {/* Participants */}
           {minutes.participants && minutes.participants.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Partecipanti</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('minutesDetail.sections.participants')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {minutes.participants.map((participant: any, index: number) => (
                   <div key={index} className="bg-gray-50 rounded-lg p-3">
@@ -237,7 +239,7 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
           {/* Agenda */}
           {minutes.agenda && minutes.agenda.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Agenda</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('minutesDetail.sections.agenda')}</h3>
               <div className="bg-blue-50 rounded-lg p-4">
                 <ul className="space-y-2">
                   {minutes.agenda.map((item: string, index: number) => (
@@ -254,7 +256,7 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
           {/* Key Discussions */}
           {minutes.keyDiscussions && minutes.keyDiscussions.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Discussioni Principali</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('minutesDetail.sections.keyDiscussions')}</h3>
               <div className="space-y-4">
                 {minutes.keyDiscussions.map((discussion: any, index: number) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-4">
@@ -263,7 +265,7 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
                     
                     {discussion.decisions && discussion.decisions.length > 0 && (
                       <div>
-                        <h5 className="font-medium text-gray-800 mb-2">Decisioni:</h5>
+                        <h5 className="font-medium text-gray-800 mb-2">Decisions:</h5>
                         <ul className="space-y-1">
                           {discussion.decisions.map((decision: string, idx: number) => (
                             <li key={idx} className="flex items-start">
@@ -283,7 +285,7 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
           {/* Action Items */}
           {minutes.actionItems && minutes.actionItems.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Azioni da Intraprendere</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('minutesDetail.sections.actionItems')}</h3>
               <div className="space-y-3">
                 {minutes.actionItems.map((action: any, index: number) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-4">
@@ -306,13 +308,13 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                       {action.owner && (
                         <div>
-                          <span className="text-sm font-medium text-gray-600">Responsabile:</span>
+                          <span className="text-sm font-medium text-gray-600">{t('minutesDetail.actionItem.responsible')}:</span>
                           <span className="ml-2 text-sm text-gray-900">{action.owner}</span>
                         </div>
                       )}
                       {action.dueDate && (
                         <div>
-                          <span className="text-sm font-medium text-gray-600">Scadenza:</span>
+                          <span className="text-sm font-medium text-gray-600">{t('minutesDetail.actionItem.dueDate')}:</span>
                           <span className="ml-2 text-sm text-gray-900">{formatDate(action.dueDate)}</span>
                         </div>
                       )}
@@ -326,20 +328,20 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
           {/* Next Meeting */}
           {minutes.nextMeeting && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Prossima Riunione</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('minutesDetail.sections.nextMeeting')}</h3>
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                 <div className="flex items-center mb-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <span className="font-medium text-purple-900">
-                    Data: {formatDate(minutes.nextMeeting.date)}
+                    {t('minutesDetail.nextMeeting.date')}: {formatDate(minutes.nextMeeting.date)}
                   </span>
                 </div>
                 
                 {minutes.nextMeeting.agenda && minutes.nextMeeting.agenda.length > 0 && (
                   <div>
-                    <h4 className="font-medium text-purple-800 mb-2">Agenda prevista:</h4>
+                    <h4 className="font-medium text-purple-800 mb-2">{t('minutesDetail.nextMeeting.plannedAgenda')}:</h4>
                     <ul className="space-y-1">
                       {minutes.nextMeeting.agenda.map((item: string, index: number) => (
                         <li key={index} className="flex items-start">
@@ -356,14 +358,14 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
 
           {/* Metadata */}
           <div className="border-t border-gray-200 pt-4">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Informazioni</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-2">{t('minutesDetail.metadata.title')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
               <div>
-                <span className="font-medium">Template:</span>
+                <span className="font-medium">{t('minutesDetail.metadata.template')}:</span>
                 <span className="ml-1">{minutes.templateUsed || 'N/A'}</span>
               </div>
               <div>
-                <span className="font-medium">AI Provider:</span>
+                <span className="font-medium">{t('minutesDetail.metadata.aiProvider')}:</span>
                 <span className="ml-1">{minutes.aiProvider || 'N/A'}</span>
               </div>
               <div>
@@ -384,13 +386,13 @@ const MinutesDetailModal: React.FC<MinutesDetailModalProps> = ({ isOpen, onReque
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
-              Copia Markdown
+              {t('minutesDetail.copyMarkdown')}
             </button>
             <button 
               onClick={onRequestClose}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
             >
-              Chiudi
+              {t('minutesDetail.close')}
             </button>
           </div>
         </div>

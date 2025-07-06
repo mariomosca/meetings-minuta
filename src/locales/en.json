@@ -143,6 +143,7 @@
     "category": "Category",
     "priority": "Priority",
     "configurationRequired": "AI Configuration Required",
+    "invalidConfiguration": "Invalid AI Configuration",
     "configurationMessage": "To use AI features, configure the API key first.",
     "goToSettings": "Go to Settings → AI Provider →"
   },
@@ -241,14 +242,20 @@
   "savedContent": {
     "title": "Minutes & Knowledge",
     "backToMonitoring": "Back to monitoring",
-    "minutes": "Minutes",
-    "knowledge": "Notes",
-    "searchMinutes": "Search in minutes...",
-    "searchKnowledge": "Search in notes...",
-    "noMinutes": "No minutes saved",
-    "noMinutesDescription": "Generated minutes will appear here",
-    "noKnowledge": "No notes saved",
-    "noKnowledgeDescription": "Generated notes will appear here",
+    "tabs": {
+      "minutes": "Minutes",
+      "knowledge": "Notes"
+    },
+    "search": {
+      "minutesPlaceholder": "Search in minutes...",
+      "knowledgePlaceholder": "Search in notes..."
+    },
+    "empty": {
+      "noMinutes": "No minutes saved",
+      "noMinutesSubtext": "Generated minutes will appear here",
+      "noKnowledge": "No notes saved",
+      "noKnowledgeSubtext": "Generated notes will appear here"
+    },
     "viewDetail": "View detail",
     "expandCollapse": "Expand/Collapse",
     "delete": "Delete",

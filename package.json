@@ -13,7 +13,8 @@
     "publish": "npm run build && electron-forge publish",
     "reset-db": "node src/admin-reset.js",
     "start": "electron-forge start",
-    "lint": "eslint --ext .ts,.tsx ."
+    "lint": "eslint --ext .ts,.tsx .",
+    "validate-translations": "node scripts/validate-translations.js"
   },
   "keywords": [],
   "author": {

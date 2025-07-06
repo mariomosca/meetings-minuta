@@ -345,14 +345,20 @@
   "savedContent": {
     "title": "Minutes & Knowledge",
     "backToMonitoring": "Torna al monitoraggio",
-    "minutes": "Minute",
-    "knowledge": "Appunti",
-    "searchMinutes": "Cerca nelle minute...",
-    "searchKnowledge": "Cerca negli appunti...",
-    "noMinutes": "Nessuna minuta salvata",
-    "noMinutesDescription": "Le minute che generi verranno mostrate qui",
-    "noKnowledge": "Nessun appunto salvato",
-    "noKnowledgeDescription": "Gli appunti che generi verranno mostrati qui",
+    "tabs": {
+      "minutes": "Minute",
+      "knowledge": "Appunti"
+    },
+    "search": {
+      "minutesPlaceholder": "Cerca nelle minute...",
+      "knowledgePlaceholder": "Cerca negli appunti..."
+    },
+    "empty": {
+      "noMinutes": "Nessuna minuta salvata",
+      "noMinutesSubtext": "Le minute che generi verranno mostrate qui",
+      "noKnowledge": "Nessun appunto salvato",
+      "noKnowledgeSubtext": "Gli appunti che generi verranno mostrati qui"
+    },
     "viewDetail": "Visualizza dettaglio",
     "expandCollapse": "Espandi/Comprimi",
     "delete": "Elimina",

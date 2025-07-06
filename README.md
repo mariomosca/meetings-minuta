@@ -85,27 +85,27 @@ Meetings Minuta is a professional desktop application designed to streamline mee
 
 ### **Installation**
 1. Clone the repository:
-   ```bash
+```bash
    git clone https://github.com/yourusername/meetings-minuta-electron-app.git
-   cd meetings-minuta-electron-app
+cd meetings-minuta-electron-app
    ```
 
 2. Install dependencies:
    ```bash
-   npm install
-   ```
+npm install
+```
 
 3. Set up environment variables:
-   ```bash
+```bash
    # Create a .env file with your API keys
    GEMINI_API_KEY=your_gemini_api_key_here
    ASSEMBLYAI_API_KEY=your_assemblyai_key_here
-   ```
+```
 
 4. Run the application:
-   ```bash
+```bash
    npm run dev
-   ```
+```
 
 ## 🔧 **Development Approach**
 

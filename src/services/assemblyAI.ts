@@ -143,7 +143,7 @@ export class AssemblyAIService {
         {
           audio_url: uploadUrl,
           speaker_labels: true, // Abilita il riconoscimento dei parlanti
-          language_code: 'it' // Imposta l'italiano come lingua
+          language_code: 'en' // Set English as default language
         },
         {
           headers: {

@@ -49,7 +49,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
   const [apiKey, setApiKey] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [language, setLanguage] = useState<string>('it');
+  const [language, setLanguage] = useState<string>('en');
   
   // AI Provider states
   const [geminiApiKey, setGeminiApiKey] = useState<string>('');
@@ -82,7 +82,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
       setApiKey(savedApiKey);
       
       // Load current language
-      const savedLanguage = await electronAPI.settings?.getLanguage() || 'it';
+      const savedLanguage = await electronAPI.settings?.getLanguage() || 'en';
       setLanguage(savedLanguage);
       
       // Apply loaded language

@@ -822,7 +822,7 @@ export class Database {
   
   // Ottenere la lingua dell'interfaccia
   getLanguage(): string {
-    return this.store.get('config.language', 'it'); // Default: italiano
+    return this.store.get('config.language', 'en'); // Default: English
   }
   
   // Impostare la lingua dell'interfaccia

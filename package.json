@@ -5,11 +5,14 @@
   "description": "AI-powered meeting transcription and minutes generation",
   "main": ".vite/build/main.js",
   "scripts": {
+    "build": "npm run build:main && npm run build:renderer",
+    "build:main": "vite build --config vite.main.config.ts",
+    "build:renderer": "vite build --config vite.renderer.config.ts",
+    "package": "npm run build && electron-forge package",
+    "make": "npm run build && electron-forge make",
+    "publish": "npm run build && electron-forge publish",
+    "reset-db": "node src/admin-reset.js",
     "start": "electron-forge start",
-    "dev": "npx tailwindcss -i ./src/index.css -o ./src/output.css --watch & electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx ."
   },
   "keywords": [],

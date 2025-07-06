@@ -77,140 +77,54 @@ Meetings Minuta is a professional desktop application designed to streamline mee
 
 ---
 
-## 🚀 **Quick Start**
+## 🚀 **Getting Started**
 
 ### **Prerequisites**
-- Node.js ≥ 16.4.0
+- Node.js (v16 or higher)
 - npm or yarn package manager
-- API keys for chosen AI services (optional for development)
 
 ### **Installation**
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/meetings-minuta-electron-app.git
+   cd meetings-minuta-electron-app
+   ```
 
-```bash
-# Clone the repository
-git clone https://github.com/mariomosca/meetings-minuta-electron-app.git
-cd meetings-minuta-electron-app
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-# Install dependencies
-npm install
+3. Set up environment variables:
+   ```bash
+   # Create a .env file with your API keys
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ASSEMBLYAI_API_KEY=your_assemblyai_key_here
+   ```
 
-# Start development server
-npm run dev
-```
+4. Run the application:
+   ```bash
+   npm run dev
+   ```
 
-### **Configuration**
+## 🔧 **Development Approach**
 
-1. **Launch the application**
-2. **Navigate to Settings** to configure API keys:
-   - AssemblyAI (for transcription)
-   - Google Gemini / Claude / ChatGPT (for AI features)
-3. **Set monitoring directories** for automatic audio file detection
-4. **Customize AI prompt templates** for specific use cases
+This project showcases a modern **AI Pair Programming** methodology, where artificial intelligence serves as an intelligent coding partner rather than a replacement for human expertise. The development process combines:
 
----
+- **Human Engineering Expertise**: Years of software engineering experience guide architectural decisions, code quality standards, and best practices
+- **AI-Enhanced Productivity**: Leveraging AI tools for rapid prototyping, code generation, and iterative development
+- **Intelligent Collaboration**: Strategic use of AI for complex problem-solving while maintaining full technical oversight and decision-making control
 
-## 📱 **Usage**
+This approach demonstrates how experienced engineers can amplify their capabilities using AI as a sophisticated development accelerator, resulting in faster delivery without compromising code quality or architectural integrity.
 
-### **Basic Workflow**
-1. **Import Audio**: Drag & drop audio files or configure auto-monitoring
-2. **Start Transcription**: Automatic processing with real-time progress
-3. **Review Results**: Intelligent speaker identification and text accuracy
-4. **Generate Minutes**: AI-powered creation of structured meeting documents
-5. **Export & Archive**: Save in multiple formats for future reference
+## 🎯 **About the Developer**
 
-### **Advanced Features**
-- **Custom AI Prompts**: Tailor AI behavior for specific meeting types
-- **Speaker Management**: Manual override and correction of speaker identification
-- **Template System**: Multiple minute formats (executive, detailed, research-focused)
-- **Knowledge Extraction**: Convert meetings into searchable knowledge base entries
-
----
-
-## 🏗️ **Project Architecture**
-
-```
-src/
-├── main.ts                 # Electron main process
-├── preload.ts             # Secure IPC bridge
-├── renderer.tsx           # React application entry
-├── components/            # React UI components
-│   ├── ui/               # Reusable design system components
-│   ├── TranscriptionView.tsx
-│   ├── SettingsView.tsx
-│   └── ...
-├── services/             # Business logic layer
-│   ├── aiService.ts      # Multi-provider AI integration
-│   ├── assemblyAI.ts     # Audio transcription service
-│   ├── db.ts            # Local data management
-│   └── fileWatcher.ts   # File system monitoring
-├── config/              # Configuration management
-└── locales/            # Internationalization files
-```
-
----
-
-## 🎨 **Design System**
-
-The application features a comprehensive design system built with Tailwind CSS:
-
-- **Component Library**: Reusable UI components with consistent styling
-- **Accessibility**: WCAG 2.1 compliant interface elements
-- **Responsive Design**: Optimized for various screen sizes and resolutions
-- **Theme Support**: Dark and light modes with system preference detection
-- **Typography**: Carefully crafted font hierarchy and spacing system
-
----
-
-## 🔧 **Development Scripts**
-
-```bash
-# Development with hot reload
-npm run dev
-
-# Production build
-npm run build
-
-# Package for distribution
-npm run make
-
-# Type checking
-npm run type-check
-
-# Linting
-npm run lint
-```
-
----
-
-## 📦 **Building & Distribution**
-
-The application supports multi-platform distribution:
-
-- **Windows**: `.exe` installer with automatic updates
-- **macOS**: `.dmg` package with code signing support
-- **Linux**: `.deb` and `.rpm` packages for major distributions
-
-```bash
-# Build for current platform
-npm run make
-
-# Build for specific platform
-npm run make -- --platform=win32
-npm run make -- --platform=darwin
-npm run make -- --platform=linux
-```
-
----
-
-## 🤝 **Contributing**
-
-This is a portfolio project, but feedback and suggestions are welcome! Please feel free to:
-
-1. **Report Issues**: Use GitHub issues for bug reports
-2. **Suggest Features**: Open discussions for new feature ideas
-3. **Code Review**: Provide feedback on architecture and implementation
-
----
+This project serves as a portfolio piece for [mariomosca.com](https://mariomosca.com), showcasing expertise in:
+- **Desktop Application Development** with Electron.js
+- **AI Integration** and prompt engineering
+- **Real-time Audio Processing** and transcription services
+- **Modern Frontend Architecture** with React and TypeScript
+- **Cross-platform Development** strategies
 
 ## 📄 **License**
 
@@ -218,30 +132,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🌟 **About the Developer**
-
-**Mario Mosca** - Digital Product Developer  
-🌐 **Portfolio**: [mariomosca.com](https://mariomosca.com)  
-💼 **Specializing in**: Full-stack development, AI integration, and modern desktop applications
-
-This project demonstrates expertise in:
-- **Modern JavaScript/TypeScript development**
-- **Cross-platform desktop application development**
-- **AI service integration and prompt engineering**
-- **User experience design and implementation**
-- **Security-first development practices**
-
----
-
-## 🚀 **Future Roadmap**
-
-- [ ] **Real-time Collaboration**: Multi-user meeting participation
-- [ ] **Cloud Sync**: Optional cloud storage integration
-- [ ] **Advanced Analytics**: Meeting insights and statistics
-- [ ] **Mobile Companion**: Mobile app for meeting management
-- [ ] **API Integration**: Webhook support for workflow automation
-- [ ] **Advanced AI Features**: Sentiment analysis and action item extraction
-
----
-
-*Built with ❤️ using modern web technologies* 
+[![AI Pair Programming](https://img.shields.io/badge/Built%20with%20❤️%20using-AI%20Pair%20Programming-ff69b4?style=for-the-badge&logo=sparkles&logoColor=white)](https://mariomosca.com) 
